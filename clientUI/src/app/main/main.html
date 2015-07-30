@@ -1,0 +1,193 @@
+<div class="container">
+
+    <div ng-include="'app/components/navbar/navbar.html'"></div>
+    <script><src="'app/components/RustTestClient.js'"></script>
+    <link rel="stylesheet" href="app/main/main.css">
+
+    <div class="container">
+        <div class="row">
+
+            <div class="col-sm-8 col-md-9 col-lg-9">
+                <div class="row">
+
+                    <!-- info, state, checkForUpdates buttons -->
+                    <div class="btn-group btn-group-justified col-sm-12 col-md-12 col-lg-12" role="group" aria-label="...">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-info btn-lg" ng-click="cameraInfo()">/osc/info</button>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-info btn-lg" ng-click="cameraState()">/osc/state</button>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-info btn-lg" ng-click="cameraCheckForUpdates()">/osc/checkForUpdates</button>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <p/>
+                    </div>
+
+                    <!-- OSC Console -->
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="row placeholders">
+                            <div class="col-sm-12 col-md-12 placeholder">
+                                <textarea ng-model="oscConsoleHistory" id="oscConsole" rows="22" cols="103" readonly style="overflow-y: scroll; font-family: 'Lucida Console', Monaco, monospace; color: white; background-color: black"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Command Status or StopOp -->
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="row">
+                            <div class="col-sm-5 col-md-5 col-lg-5">
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <span style="font-weight:bold; position:relative; top:18px; left:50px">command ID: </span>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <input type="text" ng-model="bublStatusCommandId" style="width:110%; position:relative; top:15px; left:0px"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btn-group col-sm-7 col-md-7 col-lg-7 btn-group-justified" role="group" aria-label="..." style="width:55%;">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-md" ng-click="cameraCommandsStatus()"><span style="font-weight:bold">Status</span><br/>(/osc/commands/status)</button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-md" ng-click="cameraCommandsBublStop()"><span style="font-weight:bold">Stop</span><br/>(/osc/commands/_bublStop)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <p/>
+                    </div>
+
+                    <!-- Bubl Poll -->
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="row">
+                            <div class="col-sm-5 col-md-5 col-lg-5">
+                                <!-- rows of field name and input box pair -->
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <span style="font-weight:bold; position:relative; left:50px">command ID: </span>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <input type="text" ng-model="bublPollCommandId" style="width:110%;"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <span style="font-weight:bold; position:relative; left:50px">fingerprint: </span>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <input type="text" ng-model="bublPollFingerprint" style="width:110%;"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <span style="font-weight:bold; position:relative; left:50px">waitTimeout(opt): </span>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <input type="text" ng-model="bublPollWaitTimeout" style="width:110%;"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btn-group col-sm-7 col-md-7 col-lg-7 btn-group-justified" role="group" aria-label="..." style="width:55%; position:relative; top:12px;">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-md" ng-click="cameraCommandsBublPoll()">
+                                        <span style="font-weight:bold">Poll</span><br/>(/osc/commands/_bublPoll)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <p/>
+                    </div>
+
+                    <!-- Download Image via osc/_bublGetImage/:uri -->
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="row">
+                            <div class="col-sm-5 col-md-5 col-lg-5">
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <span style="font-weight:bold; position:relative; top:18px; left:50px">Image URI: </span>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <input type="text" ng-model="bublGetImageUri" style="width:110%; position:relative; top:15px; left:0px"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btn-group col-sm-7 col-md-7 col-lg-7 btn-group-justified" role="group" aria-label="..." style="width:55%;">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-md" ng-click="cameraBublGetImage(false)">
+                                        <span style="font-weight:bold">Preview Media</span><br/>(/osc/_bublGetImage/:uri)
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-md" ng-click="cameraBublGetImage(true)">
+                                        <span style="font-weight:bold">Download Media</span><br/>(/osc/_bublGetImage/:uri)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <p/>
+                    </div>
+
+                    <!-- Firmware Update via osc/_bublUpdate -->
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="row">
+                            <!-- TODO: actual implementation will replace the text box -->
+                            <div class="col-sm-5 col-md-5 col-lg-5">
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <span style="font-weight:bold; position:relative; top:18px; left:50px">Update File: </span>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-6">
+                                        <input type="file" id="selectedFile" style="width:100%; position:relative; top:15px; left:0px">
+                                        <!--input type="file" ngf-select="" ng-model="bublcamUpdateFile" name="file" accept="*" style="width:100%; position:relative; top:15px; left:0px" required=""-->
+                                        <!--span class="progress" ng-show="bublcamUpdateFile[0].progress >= 0">
+                                            <div style="width:{{bublcamUpdateFile[0].progress}}%" ng-bind="bublcamUpdateFile[0].progress + '%'" class="ng-binding"></div>
+                                        </span-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btn-group col-sm-7 col-md-7 col-lg-7 btn-group-justified" role="group" aria-label="..." style="width:55%;">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-md" ng-click="cameraBublUpdate(bublcamUpdateFile)">
+                                        <span style="font-weight:bold">Update Firmware</span><br/>(/osc/_bublUpdate)
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <p/>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="col-sm-4 col-md-3 col-lg-3 sidebar">
+                <h4>OSC Commands</h4>
+                <ul class="nav nav-sidebar" style="overflow-y: scroll; height: 750px">
+                    <li class="form-group" ng-repeat="command in oscCommands"><a href="" ng-click="promptForParameters(command)">{{command}}</a></li>
+                </ul>
+            </div>
+
+            <div class="clearfix visible-md"></div>
+
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="footer">
+        <p><a href="http://bublcam.com/">Bubl Technology Inc.</a></p>
+    </div>
+
+</div>

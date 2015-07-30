@@ -1,0 +1,9 @@
+.ngdialog.ngdialog-theme-default.dialog720 .ngdialog-content{
+    width : 720px !important;
+    height : 720px !important;
+}
+
+.ngdialog.ngdialog-theme-default.dialogGetOptions .ngdialog-content{
+    width : 720px !important;
+    height : 520px !important;
+}

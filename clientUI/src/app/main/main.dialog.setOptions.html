@@ -1,0 +1,21 @@
+<h3>{{oscCommand.name}}</h3>
+<div>
+    <div>
+        <span>{{oscCommand.parameters[0].field}} : </span>
+        <input type="text" ng-model="oscCommand.parameters[0].value"/>
+    </div>
+    <div>
+        <span>{{oscCommand.parameters[1].field}} : </span>
+    </div>
+    <div align="right" ng-repeat-start="option in oscCommand.parameters[1].value" ng-if="hasLimitedOptions(option)">
+        <span> {{option.name}} : </span>
+	<select id="option_{{option.name}}">
+            <option ng-repeat="value in option.value">{{value}}</option>
+        </select>
+    </div>
+    <div align="right" ng-repeat-end ng-if="!hasLimitedOptions(option)">
+        <span> {{option.name}} : </span>
+        <input type="text" ng-model="option.value"/>
+    </div>
+</div>
+<a class="btn btn-md btn-info" ng-click="sendCommand(oscCommand)">Confirm and Send</a>

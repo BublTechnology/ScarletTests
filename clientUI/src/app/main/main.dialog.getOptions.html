@@ -1,0 +1,18 @@
+<h3>{{oscCommand.name}}</h3>
+<div>
+    <div>
+        <span>{{oscCommand.parameters[0].field}} : </span>
+        <input type="text" ng-model="oscCommand.parameters[0].value"/>
+    </div>
+    <div>
+        <span>{{oscCommand.parameters[1].field}} : </span>
+    </div>
+    <table width=100%>
+        <tr ng-repeat="option in oscCommand.parameters[1].value" ng-if="!($index % 3)">
+            <td><input type="checkbox" id="checkbox_{{option}}">{{option}}</input></td>
+            <td><input type="checkbox" id="checkbox_{{oscCommand.parameters[1].value[$index+1]}}" ng-if="oscCommand.parameters[1].value[$index+1] !== undefined">{{oscCommand.parameters[1].value[$index+1]}}</input></td>
+            <td><input type="checkbox" id="checkbox_{{oscCommand.parameters[1].value[$index+2]}}" ng-if="oscCommand.parameters[1].value[$index+2] !== undefined">{{oscCommand.parameters[1].value[$index+2]}}</input></td>
+        </tr>
+    </table>
+</div>
+<a class="btn btn-md btn-info" ng-click="sendCommand(oscCommand)">Confirm and Send</a>
