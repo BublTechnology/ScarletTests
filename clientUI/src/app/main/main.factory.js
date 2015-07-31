@@ -30,19 +30,19 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
             function() {
                 testClient.getInfo().then(
                     function(data) {
-                        if(data.error !== undefined) { _pushError(data); return; }
+                        if(data.body.error !== undefined) { _pushError(data.body); return; }
                         _pushResult({name: 'GET /osc/info'},
-                            '\nManufacturer: ' + data.manufacturer + '\n' +
-                            'Model: ' + data.model + '\n' +
-                            'Serial number: ' + data.serialNumber + '\n' +
-                            'Firmware version: ' + data.firmwareVersion + '\n' +
-                            'Support URL: ' + data.supportUrl + '\n' +
-                            'Http port: ' + data.endpoints.httpPort + '\n' +
-                            'Http Updates port: ' + data.endpoints.httpUpdatesPort + '\n' +
-                            'GPS: ' + data.gps + '\n' +
-                            'Gyro: ' + data.gyro + '\n' +
-                            'Uptime: ' + data.uptime + '\n' +
-                            'Apis: ' + data.api[0] + ', ' + data.api[1] + ', ' + data.api[2] + ', ' + data.api[3] + ', ' + data.api[4] + ', ' + data.api[5] + ', ' + data.api[6]);
+                            '\nManufacturer: ' + data.body.manufacturer + '\n' +
+                            'Model: ' + data.body.model + '\n' +
+                            'Serial number: ' + data.body.serialNumber + '\n' +
+                            'Firmware version: ' + data.body.firmwareVersion + '\n' +
+                            'Support URL: ' + data.body.supportUrl + '\n' +
+                            'Http port: ' + data.body.endpoints.httpPort + '\n' +
+                            'Http Updates port: ' + data.body.endpoints.httpUpdatesPort + '\n' +
+                            'GPS: ' + data.body.gps + '\n' +
+                            'Gyro: ' + data.body.gyro + '\n' +
+                            'Uptime: ' + data.body.uptime + '\n' +
+                            'Apis: ' + data.body.api[0] + ', ' + data.body.api[1] + ', ' + data.body.api[2] + ', ' + data.body.api[3] + ', ' + data.body.api[4] + ', ' + data.body.api[5] + ', ' + data.body.api[6]);
                     }
                 );
             }
@@ -54,23 +54,23 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
             [],
             function() {
                 testClient.getState().then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
                     _pushResult({name: 'GET /osc/state'},
-                        '\nfingerprint: ' + data.fingerprint + '\n' +
+                        '\nfingerprint: ' + data.body.fingerprint + '\n' +
                         'state:\n' +
-                        '\tsessionId: ' + data.state.sessionId + '\n' +
-                        '\tbatteryLevel: ' + data.state.batteryLevel + '\n' +
-                        '\tstorageChanged: ' + data.state.storageChanged + '\n' +
-                        '\t_bublCharging: ' + data.state._bublCharging + '\n' +
-                        '\t_bublChargingSufficientPower: ' + data.state._bublChargingSufficientPower + '\n' +
-                        '\t_bublCommands: ' + '\t'+JSON.stringify(data.state._bublCommands, null, '\t').split('\n').join('\n\t'));
+                        '\tsessionId: ' + data.body.state.sessionId + '\n' +
+                        '\tbatteryLevel: ' + data.body.state.batteryLevel + '\n' +
+                        '\tstorageChanged: ' + data.body.state.storageChanged + '\n' +
+                        '\t_bublCharging: ' + data.body.state._bublCharging + '\n' +
+                        '\t_bublChargingSufficientPower: ' + data.body.state._bublChargingSufficientPower + '\n' +
+                        '\t_bublCommands: ' + '\t'+JSON.stringify(data.body.state._bublCommands, null, '\t').split('\n').join('\n\t'));
                 });
             }
         );
 
         // get /osc/checkForUpdates
         this.getCheckForUpdates = new oscCommand(
-            '/osc/checkForUpdates',
+            'POST /osc/checkForUpdates',
             [
                 { field: 'stateFingerprint', value: '' },
                 { field: 'waitTimeout(optional)', value: undefined }
@@ -82,11 +82,11 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     this.parameters[0].value,
                     this.parameters[1].value
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
                     _pushResult({name: 'POST /osc/checkForUpdates'},
                         'result:' +
-                        '\n\tstateFingerprint : \"' + data.stateFingerprint + '\"' +
-                        '\n\tthrottleTimeout : ' + data.throttleTimeout);
+                        '\n\tstateFingerprint : \"' + data.body.stateFingerprint + '\"' +
+                        '\n\tthrottleTimeout : ' + data.body.throttleTimeout);
                 });
             }
         );
@@ -99,12 +99,12 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, [{field: 'commandId', value: scope.bublStatusCommandId}]);
                 testClient.commandsStatus(scope.bublStatusCommandId)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
                     _pushResult({name: 'POST /osc/commands/status'},
                         'result:' +
-                        '\n\tcommandId : ' + data.id + ' (' + data.name + ')' +
+                        '\n\tcommandId : ' + data.body.id + ' (' + data.body.name + ')' +
                         '\n\tprogress :' +
-                        '\n\t\t'+JSON.stringify(data.progress, null, '\t').split('\n').join('\n\t\t'));
+                        '\n\t\t'+JSON.stringify(data.body.progress, null, '\t').split('\n').join('\n\t\t'));
                 });
             }
         );
@@ -117,7 +117,7 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, [{field: 'commandId', value: scope.bublStatusCommandId}]);
                 testClient.bublStop(scope.bublStatusCommandId)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
                     _pushResult({name: '/osc/commands/_bublStop'}, '');
                 });
             }
@@ -141,14 +141,14 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     scope.bublPollFingerprint,
                     scope.bublPollWaitTimeout
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
                     // retrieved fingerprint will override the textbox's original value everytime
-                    scope.bublPollFingerprint = data.fingerprint;
+                    scope.bublPollFingerprint = data.body.fingerprint;
                     _pushResult({name: 'POST /osc/commands/status'},
                         'result:' +
-                        '\n\tcommandId : ' + data.command.id + ' (' + data.command.name + ')' +
-                        '\n\tfingerprint : \'' + data.fingerprint + '\'' +
-                        '\n\tthrottleTimeout : ' + data.throttleTimeout);
+                        '\n\tcommandId : ' + data.body.command.id + ' (' + data.body.command.name + ')' +
+                        '\n\tfingerprint : \'' + data.body.fingerprint + '\'' +
+                        '\n\tthrottleTimeout : ' + data.body.throttleTimeout);
                 });
             }
         );
@@ -177,8 +177,8 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 }
                 testClient.bublGetImage(encodeURIComponent(scope.bublGetImageUri))
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    var blob = new Blob([data], {type: 'image/jpeg'});// TODO: implement handler for raw image type
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    var blob = new Blob([data.body], {type: 'image/jpeg'});// TODO: implement handler for raw image type
                     if(downloadFile) {
                         _pushResult({name: 'GET /osc/_bublGetImage/:uri'},
                             '\n\t...prompting image download...');
@@ -220,21 +220,21 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                         );
                         testClient.bublUpdate(scope.uploadedFileBin)
                         .then(function(data) {
-                            if(data.error !== undefined) { _pushError(data); return; }
-                            if(data !== 200) {
+                            if(data.body.error !== undefined) { _pushError(data.body); return; }
+                            if(data.body !== 200) {
                                 _pushError(
                                     {
                                         name: 'POST /osc/_bublUpdate',
                                         error: {
                                             code: 'clientUIError',
-                                            message: 'statusCode-' + data
+                                            message: 'statusCode-' + data.body
                                         }
                                     }
                                 );
                             } else {
                                 _pushResult(
                                     {name: 'POST /osc/_bublUpdate'},
-                                    'statusCode ' + data
+                                    'statusCode ' + data.body
                                 );
                             }
                         });
@@ -269,11 +269,11 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, this.parameters);
                 testClient.startSession(this.parameters[0].value)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
                         'result:' +
-                        '\n\tsessionId : ' + data.results.sessionId +
-                        '\n\ttimeout : ' + data.results.timeout);
+                        '\n\tsessionId : ' + data.body.results.sessionId +
+                        '\n\ttimeout : ' + data.body.results.timeout);
                 });
             }
         );
@@ -291,11 +291,11 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     this.parameters[0].value,
                     this.parameters[1].value
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
                         'result:' +
-                        '\n\tsessionId : ' + data.results.sessionId +
-                        '\n\ttimeout : ' + data.results.timeout);
+                        '\n\tsessionId : ' + data.body.results.sessionId +
+                        '\n\ttimeout : ' + data.body.results.timeout);
                 });
             }
         );
@@ -310,8 +310,8 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, this.parameters);
                 testClient.closeSession(this.parameters[0].value)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data, '');
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body, '');
                 });
             }
         );
@@ -326,23 +326,21 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, this.parameters);
                 testClient.takePicture(this.parameters[0].value)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
                         'result:' +
-                        '\n\tcommandId : ' + data.id +
-                        '\n\timage capture in progress');
-                    var commandId = data.id;
+                        '\n\tcommandId : ' + data.body.id +
+                        '\n\timage capture in progress ...');
+                    var commandId = data.body.id;
                     var pollCaptureResult;
                     pollCaptureResult = window.setInterval( function() {
-                        testClient.commandsStatusCallback(commandId, function(err, res, body) {
-                            var data = JSON.parse(body);
-                            if(data.error !== undefined) { _pushError(data); window.clearInterval(pollCaptureResult); }
-                            if(data.state === 'inProgress') {
-                                scope.oscConsoleHistory += '.';
-                            } else {
-                                _pushResult({name: 'camera.takePicture'},
+                        testClient.commandsStatus(commandId)
+                        .then(function(data) {
+                            if(data.body.error !== undefined) { _pushError(data); window.clearInterval(pollCaptureResult); }
+                            if(data.body.state === 'done') {
+                                _pushResult({name: 'camera.takePicture [commandID : ' + commandId + ']'},
                                     'result:' +
-                                    '\n\tfileUri : ' + data.results.fileUri);
+                                    '\n\tfileUri : ' + data.body.results.fileUri);
                                 window.clearInterval(pollCaptureResult);
                             }
                             _scrollToBottom();
@@ -374,18 +372,18 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     this.parameters[2].value,
                     this.parameters[3].value
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
                     var result = 'result:\n\tentries:';
-                    for(var i = 0; i < data.results.entries.length; i++) {
+                    for(var i = 0; i < data.body.results.entries.length; i++) {
                         result +=
                             '\n\t['+i+']\t' +
-                            'name : ' + data.results.entries[i].name + '\n\t\t' +
-                            'uri : ' + data.results.entries[i].uri + '\n\t\t' +
-                            'size : ' + data.results.entries[i].size + '\n';
+                            'name : ' + data.body.results.entries[i].name + '\n\t\t' +
+                            'uri : ' + data.body.results.entries[i].uri + '\n\t\t' +
+                            'size : ' + data.body.results.entries[i].size + '\n';
                     }
-                    result += '\n\ttotalEntries : ' + data.results.totalEntries;
-                    result += '\n\tcontinuationToken : ' + data.results.continuationToken;
-                    _pushResult(data, result);
+                    result += '\n\ttotalEntries : ' + data.body.results.totalEntries;
+                    result += '\n\tcontinuationToken : ' + data.body.results.continuationToken;
+                    _pushResult(data.body, result);
                 });
             }
         );
@@ -400,8 +398,8 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, this.parameters);
                 testClient.delete(this.parameters[0].value)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data, '');
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body, '');
                 });
             }
         );
@@ -420,8 +418,8 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     this.parameters[0].value,
                     this.parameters[1].value
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    var blob = new Blob([data], {type: 'image/jpeg'});// TODO: implement handler for raw image type
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    var blob = new Blob([data.body], {type: 'image/jpeg'});// TODO: implement handler for raw image type
                     scope.picturePopup = ngDialog.open({
                       template: '<div><h4>{{imgUri}} : </h4></div><div><img src="' + URL.createObjectURL(blob) + '" style="height: 100%; width: 100%" ></div>',
                       className: 'ngdialog-theme-default dialog720',
@@ -444,11 +442,11 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, this.parameters);
                 testClient.getMetadata(this.parameters[0].value)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
                         'result:' +
-                        '\n\tmetadata JSON :' +
-                        '\n\t\t'+JSON.stringify(data.results, null, '\t').split('\n').join('\n\t\t'));
+                        '\n\tmetadata.body JSON :' +
+                        '\n\t\t'+JSON.stringify(data.body.results, null, '\t').split('\n').join('\n\t\t'));
                 });
             }
         );
@@ -529,8 +527,8 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     this.parameters[0].value,
                     parsedOption
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,'');
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,'');
                 });
             }
         );
@@ -608,11 +606,11 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     this.parameters[0].value,
                     selectedOptions
                 ).then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
                         'result:' +
                         '\n\toptions : ' +
-                        '\n\t\t'+JSON.stringify(data.results.options, null, '\t').split('\n').join('\n\t\t'));
+                        '\n\t\t'+JSON.stringify(data.body.results.options, null, '\t').split('\n').join('\n\t\t'));
                 });
             }
         );
@@ -627,25 +625,23 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 _pushCommandDetails(this.name, this.parameters);
                 testClient.bublTimelapse(this.parameters[0].value)
                 .then(function(data) {
-                    if(data.error !== undefined) { _pushError(data); return; }
-                    _pushResult(data,
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
                         'result:' +
-                        '\n\tcommandId : ' + data.id +
-                        '\n\ttimelapse capture in progress');
-                    var commandId = data.id;
+                        '\n\tcommandId : ' + data.body.id +
+                        '\n\ttimelapse capture in progress ...');
+                    var commandId = data.body.id;
                     var pollCaptureResult;
                     pollCaptureResult = window.setInterval( function() {
-                        testClient.commandsStatusCallback(commandId, function(err, res, body) {
-                            var data = JSON.parse(body);
-                            if(data.error !== undefined) { _pushError(data); window.clearInterval(pollCaptureResult); }
-                            if(data.state === 'inProgress') {
-                                scope.oscConsoleHistory += '.';
-                            } else {
+                        testClient.commandsStatus(commandId)
+                        .then(function(data) {
+                            if(data.body.error !== undefined) { _pushError(data.body); window.clearInterval(pollCaptureResult); }
+                            if(data.body.state === 'done') {
                                 var fileUris = '';
-                                for(var i = 0; i < data.results._bublFileUris.length; i++) {
-                                    fileUris += '\n\t[' + i + '] : \t' + data.results._bublFileUris[i];
+                                for(var i = 0; i < data.body.results._bublFileUris.length; i++) {
+                                    fileUris += '\n\t[' + i + '] : \t' + data.body.results._bublFileUris[i];
                                 }
-                                _pushResult({name: 'camera._bublTimelapse'},
+                                _pushResult({name: 'camera._bublTimelapse [commandID : ' + commandId + ']'},
                                     'result:' +
                                     '\n\t_bublFileUris : ' + fileUris);
                                 window.clearInterval(pollCaptureResult);
@@ -664,6 +660,30 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 { field: 'sessionId', value: '' }
             ],
             function() {
+                _pushCommandDetails(this.name, this.parameters);
+                testClient.bublCaptureVideo(this.parameters[0].value)
+                .then(function(data) {
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
+                        'result:' +
+                        '\n\tcommandId : ' + data.body.id +
+                        '\n\tvideo capture in progress ...');
+                    var commandId = data.body.id;
+                    var pollCaptureResult;
+                    pollCaptureResult = window.setInterval( function() {
+                        testClient.commandsStatus(commandId)
+                        .then(function(data) {
+                            if(data.body.error !== undefined) { _pushError(data); window.clearInterval(pollCaptureResult); }
+                            if(data.body.state === 'done') {
+                                _pushResult({name: 'camera._bublCaptureVideo [commandID : ' + commandId + ']'},
+                                    'result:' +
+                                    '\n\tfileUri : ' + data.body.results.fileUri);
+                                window.clearInterval(pollCaptureResult);
+                            }
+                            _scrollToBottom();
+                        });
+                    }, 500);
+                });
             }
         );
 
@@ -674,6 +694,28 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 { field: 'sessionId', value: '' }
             ],
             function() {
+                _pushCommandDetails(this.name, this.parameters);
+                testClient.bublStream(this.parameters[0].value)
+                .then(function(data) {
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
+                        'result:' +
+                        '\n\tcommandId : ' + data.body.id +
+                        '\n\tstreaming in progress ...');
+                    var commandId = data.body.id;
+                    var pollCaptureResult;
+                    pollCaptureResult = window.setInterval( function() {
+                        testClient.commandsStatus(commandId)
+                        .then(function(data) {
+                            if(data.body.error !== undefined) { _pushError(data); window.clearInterval(pollCaptureResult); }
+                            if(data.body.state === 'done') {
+                                _pushResult({name: 'camera._bublStream [commandID : ' + commandId + ']'}, '');
+                                window.clearInterval(pollCaptureResult);
+                            }
+                            _scrollToBottom();
+                        });
+                    }, 500);
+                });
             }
         );
 
@@ -685,6 +727,30 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                 { field: 'shutdownDelay(optional)', value: '' }
             ],
             function() {
+                _pushCommandDetails(this.name, this.parameters);
+                if(this.parameters[1].value === '') { this.parameters[1].value = undefined; }
+                testClient.bublShutdown(this.parameters[0].value, this.parameters[1].value)
+                .then(function(data) {
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    console.log(data.body);
+                    _pushResult(data.body,
+                        'result:' +
+                        '\n\tcommandId : ' + data.body.id +
+                        '\n\tcamera shutdown in progress ...');
+                    var commandId = data.body.id;
+                    var pollCaptureResult;
+                    pollCaptureResult = window.setInterval( function() {
+                        testClient.commandsStatus(commandId)
+                        .then(function(data) {
+                            if(data.body.error !== undefined) { _pushError(data); window.clearInterval(pollCaptureResult); }
+                            if(data.body.state === 'done') {
+                                _pushResult({name: 'camera._bublShutdown [commandID : ' + commandId + ']'}, '');
+                                window.clearInterval(pollCaptureResult);
+                            }
+                            _scrollToBottom();
+                        });
+                    }, 500);
+                });
             }
         );
 
