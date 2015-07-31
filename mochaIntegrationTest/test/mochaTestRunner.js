@@ -71,6 +71,7 @@ describe("RUST API TEST SUITE", function() {
         var oldFingerprint;
 
         beforeEach( function(done) {
+            this.timeout(timeoutValue);
             Utility.checkActiveSession()
             .then( function() {
                 done();
@@ -85,6 +86,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         afterEach( function(done) {
+            this.timeout(timeoutValue);
             Utility.checkActiveSession()
             .then( function() {
                 testClient.closeSession(sessionId)
@@ -1279,6 +1281,7 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
 
         before( function(done) {
+            this.timeout(timeoutValue);
             testClient.startSession()
             .then( function(res) {
                 sessionId = res.body.results.sessionId;
@@ -1287,6 +1290,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         beforeEach( function(done) {
+            this.timeout(timeoutValue);
             Utility.restoreDefaultOptions(defaultOptionsFile)
             .then(function() {
                 Utility.deleteAllImages()
@@ -1320,7 +1324,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when another timelapse capture procedure is already active', function(done) {
-            this.timeout(timeoutValue);
+            this.timeout(timeoutValue * 2);
             var firstTimelapseDone = false;
             var startTime = Date.now();
             var timeSendAnother = 1000;
@@ -1416,7 +1420,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it('Expect success. camera._bublTimelapse successfully captures with default settings', function(done) {
-            this.timeout(timeoutValue);
+            this.timeout(timeoutValue * 4);
             var timelapseCompleted = false;
             var bublStopTimer = 5500;
             var bublStopErr;
