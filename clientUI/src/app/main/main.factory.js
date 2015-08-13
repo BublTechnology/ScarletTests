@@ -36,6 +36,8 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                             'Model: ' + data.body.model + '\n' +
                             'Serial number: ' + data.body.serialNumber + '\n' +
                             'Firmware version: ' + data.body.firmwareVersion + '\n' +
+                            'Bubl Atmel version: ' + data.body._bublAtmelVersion + '\n' +
+                            'Bubl Altera version: ' + data.body._bublAlteraVersion + '\n' +
                             'Support URL: ' + data.body.supportUrl + '\n' +
                             'Http port: ' + data.body.endpoints.httpPort + '\n' +
                             'Http Updates port: ' + data.body.endpoints.httpUpdatesPort + '\n' +
@@ -175,7 +177,7 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
                     );
                     return;
                 }
-                testClient.bublGetImage(encodeURIComponent(scope.bublGetImageUri))
+                testClient.bublGetImage(scope.bublGetImageUri)
                 .then(function(data) {
                     if(data.body.error !== undefined) { _pushError(data.body); return; }
                     var blob = new Blob([data.body], {type: 'image/jpeg'});// TODO: implement handler for raw image type

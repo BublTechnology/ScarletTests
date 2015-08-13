@@ -13,6 +13,8 @@ factory.define('oscInfo', function() {
   this.model1 = 'bubl1';
   this.serialNumber = '000000000000';
   this.firmwareVersion = '0';
+  this._bublAtmelVersion = '__atmelVerMock__';
+  this._bublAlteraVersion = 0;
   this.supportUrl = 'http://www.bublcam.com/support';
   this.endpoints = {
     httpPort: 8888,
@@ -296,6 +298,8 @@ var Compare = function() {
         assert.ok(results.body.model === expected.model0 || results.body.model === expected.model1);
         assert.equal(results.body.serialNumber.length, expected.serialNumber.length);
         assert.ok(results.body.firmwareVersion >= expected.firmwareVersion);
+        assert.ok(results.body._bublAtmelVersion !== undefined);
+        assert.ok(results.body._bublAlteraVersion !== undefined);
         assert.equal(results.body.supportUrl, expected.supportUrl);
         assert.equal(typeof results.body.endpoints.httpPort, 'number');
         assert.equal(typeof results.body.endpoints.httpUpdatesPort, 'number');
