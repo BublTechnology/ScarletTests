@@ -14,8 +14,8 @@ var oscCommand = function(cmdName, cmdParams, cmdBinding) {
     this.run = cmdBinding;
 };
 
-clientUiApp.factory('Camera', function($timeout, ngDialog, RustTestClient) {
-    var testClient = new RustTestClient(null, 8000);
+clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
+    var testClient = new OscClient(null, 8000);
     var oscConsole = document.getElementById('oscConsole');
     var scope;
 

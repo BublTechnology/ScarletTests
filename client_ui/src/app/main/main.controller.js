@@ -3,10 +3,10 @@
 /*global window */
 /*global Blob */
 /*global URL */
-/*global RustTestClient */
+/*global OscClient */
 
 angular.module('clientUi')
-  .controller('MainCtrl', function ($scope, $http, $timeout, ngDialog, RustTestClient, Camera) {
+  .controller('MainCtrl', function ($scope, $http, $timeout, ngDialog, OscClient, Camera) {
     //Set up initial content within the osc read-only console
     $scope.oscConsoleHistory = 'Welcome to Bubl\'s OSC command output console';
 

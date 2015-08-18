@@ -1,0 +1,11 @@
+dependencies:
+    cache_directories:
+        - "server_tests/node_modules"
+        - "client_ui/node_modules"
+    post:
+        - cd server_tests && npm install
+        - cd client_ui && npm install && npm install bower && `npm bin`/bower install && `npm bin`/gulp
+
+test:
+    override:
+        - "true"

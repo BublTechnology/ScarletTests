@@ -5,7 +5,7 @@ var Poll;
 var Q;
 
 (function(isNode, isAngular) {
-    var RustTestClient = function(domainArg, portArg) {
+    var OscClient = function(domainArg, portArg) {
         var domain = domainArg || 'localhost';
         var port = portArg || 8000;
         var serverAddress = 'http://' + domain + ':' + port;
@@ -206,7 +206,7 @@ var Q;
     };
     if(isAngular) {
         angular.module('clientUi')
-            .factory('RustTestClient', function() { return RustTestClient; });
+            .factory('OscClient', function() { return OscClient; });
         var $http = angular.injector(['ng']).get('$http');
         var _convert2String = function(data) {
             if(data === null) { return 'null'; }
@@ -244,10 +244,10 @@ var Q;
         };
         Q = window.Q;
     } else if(isNode) {
-        request = require('./mochaIntegrationTest/node_modules/request');
-        Poll = require('./mochaIntegrationTest/lib/poll.js');
-        Q = require('./mochaIntegrationTest/node_modules/q');
-        module.exports = RustTestClient;
+        request = require('./server_tests/node_modules/request');
+        Poll = require('./server_tests/lib/poll.js');
+        Q = require('./server_tests/node_modules/q');
+        module.exports = OscClient;
     }
 })( typeof module !== 'undefined' && module.exports,
     typeof angular !== 'undefined');

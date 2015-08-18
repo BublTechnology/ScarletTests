@@ -1,16 +1,16 @@
 "use strict";
 
-var RustTestClient = require('../../RustTestClient.js');
+var OscClient = require('../../OscClient.js');
 var Compare = require('../lib/compare.js');
 var Q = require('../node_modules/q');
 var Util = require('../lib/util');
 
 describe("RUST API TEST SUITE", function() {
-    var testClient = new RustTestClient();
+    var testClient = new OscClient();
     var Comparison = new Compare();
     var Utility = new Util(testClient);
     var defaultOptionsFile = './defaults/mock.json';
-    var timeoutValue = 30000;  // Change this variable depending on real HW vs mock HW test
+    var timeoutValue = 30000;
 
     // OSC INFO
     describe("Testing /osc/info endpoint", function() {
