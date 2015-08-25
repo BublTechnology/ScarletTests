@@ -466,7 +466,7 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
                         { name: 'exposureProgram',      type: 'number',     value: [ 'UNCHANGED', 2 ] },
                         { name: 'whiteBalance',         type: 'string',     value: [ 'UNCHANGED', 'auto' ] },
                         { name: 'fileFormat',           type: 'object',     value: [ 'UNCHANGED', 'jpeg', 'raw' ] },
-                        { name: 'exposureDelay',        type: 'number',     value: [ 'UNCHANGED', 4 ] },
+                        { name: 'exposureDelay',        type: 'number',     value: [ 'UNCHANGED', 0, 1, 2, 3, 4 ] },
                         { name: 'sleepDelay',           type: 'number',     value: [ 'UNCHANGED', 1, 5, 10, 30, 60, 300, 600, 1200, 2400, 65535 ] },
                         { name: 'offDelay',             type: 'number',     value: [ 'UNCHANGED', 1, 5, 10, 30, 60, 300, 600, 1200, 2400, 65535 ] },
                         { name: 'hdr',                  type: 'boolean',    value: [ 'UNCHANGED', true, false ] },

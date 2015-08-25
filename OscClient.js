@@ -186,7 +186,7 @@ var Q;
 
         // BUBL COMMANDS CAPTURE VIDEO
         this.bublCaptureVideo = function(sessionId, statusCallback) {
-            return commandsExecute('camera._captureVideo', {'sessionId':sessionId}, statusCallback);
+            return commandsExecute('camera._bublCaptureVideo', {'sessionId':sessionId}, statusCallback);
         };
 
         // OSC COMMANDS BUBL TIMELAPSE
