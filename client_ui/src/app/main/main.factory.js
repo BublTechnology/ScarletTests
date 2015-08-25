@@ -22,7 +22,7 @@ var oscCommand = function(cmdName, cmdParams, cmdBinding) {
 };
 
 clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
-    var testClient = new OscClient(null, 8000);
+    var testClient = new OscClient(null, null);
     var oscConsole = document.getElementById('oscConsole');
     var scope;
 

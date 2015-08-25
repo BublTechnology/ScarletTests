@@ -1429,41 +1429,23 @@ describe("RUST API TEST SUITE", function() {
         it('Expect success. camera._bublTimelapse successfully captures with default settings', function(done) {
             this.timeout(timeoutValue * 4);
             var timelapseCompleted = false;
-            var bublStopTimer = 5500;
-            var bublStopErr;
-            var bublTimelapseErr;
-            var commandId;
-            //POST to _bublStop at 5000ms
-            setTimeout(function() {
-                if(typeof commandId === undefined) {
-                    bublStopErr = new Error('commandId not retrieved within 5 seconds');
-                    return;
-                }
-                testClient.bublStop(commandId)
-                .then(function(res) {
-                    bublStopErr = Comparison.bublStopOutput(res);
-                });
-            }, bublStopTimer);
+            var stopped = false;
             //Run camera._bublTimelapse
             testClient.bublTimelapse(sessionId, function(res) {
-                commandId = res.body.id;
+                if (!stopped) {
+                    stopped = true;
+                    Q.delay(5000).then(function() {
+                        return testClient.bublStop(res.body.id);
+                    })
+                    .then( Comparison.catchExceptions(done, function(res) {
+                        Comparison.bublStopOutput(res);
+                    }));
+                }
             })
-            .then( function(res) {
-                bublTimelapseErr = Comparison.bublTimelapseOutput(res);
-                timelapseCompleted = true;
-            });
-            //Wait for camera._bublTimelapse to complete before exiting the test
-            var waitForCompletion = setInterval(function() {
-                if(!timelapseCompleted) {
-                    return;
-                }
-                if(bublStopErr) {
-                    done(bublStopErr);
-                } else {
-                    done(bublTimelapseErr);
-                }
-                clearInterval(waitForCompletion);
-            }, 300);
+            .then( Comparison.catchExceptions(done, function(res) {
+                Comparison.bublTimelapseOutput(res);
+                done();
+            }));
         });
 
         it('Expect success. camera._bublTimelapse captures with specific timelapse interval and count, then finishes within the max tolerable completion time', function(done) {
@@ -1481,15 +1463,16 @@ describe("RUST API TEST SUITE", function() {
                     }
                 }
             )
-            .then(function(res) {
+            .then(Comparison.catchExceptions(done, function(res) {
+                Comparison.oscSetOptionsOutput(res);
                 return testClient.bublTimelapse(sessionId);
-            })
-            .then(function(res) {
+            }))
+            .then(Comparison.catchExceptions(done, function(res) {
                 //Under consistent latency, we can assume the following:
                 //  (1) timelapseRunTime ≈ finalResponseTime - initialResponseTime
                 //  (2) timeElapsed <= timelapseRunTime + pollingPeriod
                 var timeElapsed = res.timeElapsed;
-                var err = Comparison.bublTimelapseOutput(
+                Comparison.bublTimelapseOutput(
                     res,
                     {
                         results: {
@@ -1497,14 +1480,13 @@ describe("RUST API TEST SUITE", function() {
                             _bublFileUris: ['','','']
                         }
                     }
-                );
-                var timeErr = (timeElapsed > maxAcceptableTime)?new Error('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime):undefined;
-                if(err) {
-                    done(err);
+                )
+                if (timeElapsed > maxAcceptableTime) {
+                    done(new Error('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime));
                 } else {
-                    done(timeErr);
+                    done();
                 }
-            });
+            }));
         });
     });
 
