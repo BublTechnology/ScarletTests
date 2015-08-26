@@ -1303,7 +1303,7 @@ describe("RUST API TEST SUITE", function() {
                 Utility.deleteAllImages()
                 .then(function() {
                     done();
-                })
+                });
             });
         });
 
@@ -1428,7 +1428,6 @@ describe("RUST API TEST SUITE", function() {
 
         it('Expect success. camera._bublTimelapse successfully captures with default settings', function(done) {
             this.timeout(timeoutValue * 4);
-            var timelapseCompleted = false;
             var stopped = false;
             //Run camera._bublTimelapse
             testClient.bublTimelapse(sessionId, function(res) {
@@ -1480,7 +1479,7 @@ describe("RUST API TEST SUITE", function() {
                             _bublFileUris: ['','','']
                         }
                     }
-                )
+                );
                 if (timeElapsed > maxAcceptableTime) {
                     done(new Error('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime));
                 } else {

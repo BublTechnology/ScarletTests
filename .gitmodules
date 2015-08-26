@@ -1,0 +1,3 @@
+[submodule "server_tests/Standards"]
+	path = server_tests/Standards
+	url = https://github.com/BublTechnology/Standards.git

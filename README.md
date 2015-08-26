@@ -4,6 +4,8 @@ These unit tests document our current support of the Open Spherical Camera API.
 They are run and pass against our current implementation of the API, and
 describe the current Bubl vendor extensions to the API.
 
+**NOTE:** this is currently unreleased, you must use the beta firmware
+(linked below) in order to work with the API.
 
 ## Client UI
 
