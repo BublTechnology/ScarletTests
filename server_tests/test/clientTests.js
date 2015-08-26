@@ -1434,7 +1434,7 @@ describe("RUST API TEST SUITE", function() {
             testClient.bublTimelapse(sessionId, function(res) {
                 if (!stopped) {
                     stopped = true;
-                    Q.delay(5000).then(function() {
+                    Q.delay(15000).then(function() {
                         return testClient.bublStop(res.body.id);
                     })
                     .then( Comparison.catchExceptions(done, function(res) {
