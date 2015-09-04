@@ -9,7 +9,7 @@
     </div>
     <div align="right" ng-repeat-start="option in oscCommand.parameters[1].value" ng-if="hasLimitedOptions(option)">
         <span> {{option.name}} : </span>
-	<select id="option_{{option.name}}">
+        <select id="option_{{option.name}}">
             <option ng-repeat="value in option.value">{{value}}</option>
         </select>
     </div>
