@@ -477,7 +477,7 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
                         { name: 'sleepDelay',           type: 'number',     value: [ 'UNCHANGED', 1, 5, 10, 30, 60, 300, 600, 1200, 2400, 65535 ] },
                         { name: 'offDelay',             type: 'number',     value: [ 'UNCHANGED', 1, 5, 10, 30, 60, 300, 600, 1200, 2400, 65535 ] },
                         { name: 'hdr',                  type: 'boolean',    value: [ 'UNCHANGED', true, false ] },
-                        { name: 'exposureBracket',      type: 'object',     value: [ 'UNCHANGED', 'autoMode' ] },
+                        { name: 'exposureBracket',      type: 'object',     value: [ 'UNCHANGED', 'autoMode', '0.5', '1.0', '1.5', '2.0', '2.5', '3.0' ] },
                         { name: 'imageStabilization',   type: 'string',     value: [ 'UNCHANGED', 'off' ] },
                         { name: '_bublVideoFileFormat', type: 'object',     value: [ 'UNCHANGED', '1920', '1440' ] },
                         //{ name: '_bublTimelapse',       type: 'object',     value: [ 'UNCHANGED', 5 ] },
@@ -496,27 +496,32 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
                         if(strValue === 'UNCHANGED') { continue; }
                         var trueValue;
                         var _parseOptionObject = function(optionToSet, selection) {
-                            return
-                            (optionToSet == 'fileFormat')?(
-                                (selection == 'jpeg')?{ height: 3840, type: 'jpeg', width: 3840 }:
-                                (selection == 'raw')?{ height: 3840, type: 'raw', width: 3840 }:
+                            return (optionToSet === 'fileFormat')?(
+                                (selection === 'jpeg')?{ height: 3840, type: 'jpeg', width: 3840 }:
+                                (selection === 'raw')?{ height: 3840, type: 'raw', width: 3840 }:
                                 undefined
                             ):
-                            (optionToSet == 'exposureBracket')?(
-                                (selection == 'autoMode')?{ autoMode: true }:
+                            (optionToSet === 'exposureBracket')?(
+                                (selection === 'autoMode')?{ autoMode: true }:
+                                (selection === '0.5')?{ shots: 3, increment: 0.5}:
+                                (selection === '1.0')?{ shots: 3, increment: 1.0}:
+                                (selection === '1.5')?{ shots: 3, increment: 1.5}:
+                                (selection === '2.0')?{ shots: 3, increment: 2.0}:
+                                (selection === '2.5')?{ shots: 3, increment: 2.5}:
+                                (selection === '3.0')?{ shots: 3, increment: 3.0}:
                                 undefined
                             ):
-                            (optionToSet == '_bublVideoFileFormat')?(
-                                (selection == '1920')?{ height: 1920, type: 'mp4', width: 1920 }:
-                                (selection == '1440')?{ height: 1440, type: 'mp4', width: 1440 }:
+                            (optionToSet === '_bublVideoFileFormat')?(
+                                (selection === '1920')?{ height: 1920, type: 'mp4', width: 1920 }:
+                                (selection === '1440')?{ height: 1440, type: 'mp4', width: 1440 }:
                                 undefined
                             ):
                             undefined;
                         };
-                        trueValue = (option.type == 'string')?strValue:
-                                    (option.type == 'number')?(Number(strValue)):
-                                    (option.type == 'boolean')?(strValue === 'true'):
-                                    (option.type == 'object')?(_parseOptionObject(option.name, strValue)):
+                        trueValue = (option.type === 'string')?strValue:
+                                    (option.type === 'number')?(Number(strValue)):
+                                    (option.type === 'boolean')?(strValue === 'true'):
+                                    (option.type === 'object')?(_parseOptionObject(option.name, strValue)):
                                     undefined;
                         parsedOption[option.name] = trueValue;
 
@@ -741,7 +746,6 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
                 testClient.bublShutdown(this.parameters[0].value, this.parameters[1].value)
                 .then(function(data) {
                     if(data.body.error !== undefined) { _pushError(data.body); return; }
-                    console.log(data.body);
                     _pushResult(data.body,
                         'result:' +
                         '\n\tcommandId : ' + data.body.id +
