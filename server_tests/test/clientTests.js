@@ -1348,7 +1348,7 @@ describe("RUST API TEST SUITE", function() {
                     });
                 }
             })
-            .then( function(res) {
+            .then( function() {
                 firstTimelapseDone = true;
             });
             try {
@@ -1359,7 +1359,7 @@ describe("RUST API TEST SUITE", function() {
             }
             //instantiate the second camera._bublTimelapse command
             setTimeout(function() {
-                testClient.bublTimelapse(sessionId, function(res) {})
+                testClient.bublTimelapse(sessionId, function() {})
                 .then( function(res) {
                     var err = Comparison.cameraInExclusiveUseError(res);
                     //make sure first timelapse finished before entering next test
@@ -1396,7 +1396,7 @@ describe("RUST API TEST SUITE", function() {
                     });
                 }
             })
-            .then( function(res) {
+            .then( function() {
                 captureVideoDone = true;
             });
             try {
@@ -1407,7 +1407,7 @@ describe("RUST API TEST SUITE", function() {
             }
             //instantiate the camera._bublTimelapse command
             setTimeout(function() {
-                testClient.bublTimelapse(sessionId, function(res) {})
+                testClient.bublTimelapse(sessionId, function() {})
                 .then( function(res) {
                     var err = Comparison.cameraInExclusiveUseError(res);
                     //make sure first timelapse finished before entering next test
@@ -1876,9 +1876,9 @@ describe("RUST API TEST SUITE", function() {
                 Comparison.oscSetOptionsOutput(res);
                 done();
             }));
-       });
+        });
 
-       afterEach( function(done) {
+        afterEach( function(done) {
             Utility.checkActiveSession()
             .then( function() {
                 testClient.closeSession(sessionId)
@@ -1889,7 +1889,7 @@ describe("RUST API TEST SUITE", function() {
             }, function() {
                 done();
             });
-       });
+        });
 
         it('Expect missingParameter Error. camera._bublShutdown won\'t run unless the active session\'s sessionId is provided', function(done) {
             this.timeout(timeoutValue);
@@ -1936,6 +1936,18 @@ describe("RUST API TEST SUITE", function() {
                 Comparison.bublShutdownOutput(res);
                 var endTime = Date.now();
                 Comparison.shutdownDelay(startTime, endTime, expectedShutdownDelay);
+                done();
+            }));
+        });
+    });
+
+    // BUBL LOGS
+    describe('Testing /osc/commands/execute camera._bublLogs', function() {
+        it('Expect success. camera._bublLogs successfully completed within tolerated timeout', function(done) {
+            this.timeout(timeoutValue);
+            testClient.bublLogs()
+            .then( Comparison.catchExceptions(done, function(res) {
+                Comparison.bublLogsOutput(res);
                 done();
             }));
         });

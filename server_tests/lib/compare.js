@@ -264,6 +264,12 @@ factory.define('bublShutdownResults', function() {
     this.state = 'done';
 });
 
+/* bublLogs */
+factory.define('bublLogsResults', function() {
+    this.name = 'camera._bublLogs';
+    this.state = 'done';
+});
+
 /************************ ERRORS ************************/
 /* cameraInExclusiveUse error response */
 factory.define('cameraInExclusiveUseError', function() {
@@ -609,6 +615,15 @@ var Compare = function() {
 
     this.shutdownDelay = function(startTime, stopTime, expectedTime) {
         assert.isTrue((stopTime - startTime) > expectedTime);
+    };
+
+    /* bublLogsOutput():
+    * verifies if bublLogs returns correct name and state
+    * */
+    this.bublLogsOutput = function(results, overrideExpectation) {
+        var expected = factory.create('bublLogsResults', overrideExpectation);
+        assert.equal(results.body.name, expected.name);
+        assert.equal(results.body.state, expected.state);
     };
 
     /* invalidParameterValueError():
