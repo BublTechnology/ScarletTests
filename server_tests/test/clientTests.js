@@ -7,7 +7,7 @@
 
 "use strict";
 
-var OscClient = require('../../OscClient.js');
+var OscClient = require('osc-client').BublOscClient;
 var Compare = require('../lib/compare.js');
 var Q = require('../node_modules/q');
 var Util = require('../lib/util');
@@ -186,7 +186,7 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect success.  camera.startSession successfully starts a session when a timeout value of 30 is specified", function(done) {
+        it("Expect success. camera.startSession successfully starts a session when a timeout value of 30 is specified", function(done) {
             testClient.startSession(30)
             .then( Comparison.catchExceptions(done, function(res) {
                 sessionId = res.body.results.sessionId;
@@ -212,7 +212,7 @@ describe("RUST API TEST SUITE", function() {
                 done();
             }));
         });
-            
+
         it("Expect cameraInExclusiveUse Error. camera.startSession cannot start session while another session is already running", function(done) {
             testClient.startSession()
             .then( Comparison.catchExceptions(done, function(res) {
@@ -408,7 +408,7 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect success.  camera.takePicture successfully takes a picture", function(done) {
+        it("Expect success. camera.takePicture successfully takes a picture", function(done) {
             this.timeout(timeoutValue);
             testClient.takePicture(sessionId)
             .then( Comparison.catchExceptions(done, function(res) {
@@ -495,7 +495,7 @@ describe("RUST API TEST SUITE", function() {
             testClient.takePicture(sessionId)
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
+                return testClient.listImages(1, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, false, false, {entries: [{'one': 'one'}], totalEntries: 1});
@@ -512,7 +512,7 @@ describe("RUST API TEST SUITE", function() {
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
+                return testClient.listImages(1, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
@@ -529,7 +529,7 @@ describe("RUST API TEST SUITE", function() {
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
+                return testClient.listImages(1, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
@@ -550,7 +550,7 @@ describe("RUST API TEST SUITE", function() {
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(2, false); 
+                return testClient.listImages(2, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}, {'two': 'two'}], totalEntries: 2});
@@ -693,7 +693,7 @@ describe("RUST API TEST SUITE", function() {
             testClient.takePicture(sessionId)
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                fileUri = res.body.results.fileUri; 
+                fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri, 100);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
@@ -1230,7 +1230,7 @@ describe("RUST API TEST SUITE", function() {
                 Comparison.bublCaptureVideoOutput(res);
                 done();
             }));
-        });           
+        });
 
         it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no commandId is provided", function(done) {
             testClient.bublPoll(undefined, '')
@@ -1630,7 +1630,7 @@ describe("RUST API TEST SUITE", function() {
                     Q.delay(1000)
                     .then( function() {
                         return testClient.bublStop(commandId);
-                    }) 
+                    })
                     .then(Comparison.catchExceptions(done, function(res) {
                         Comparison.bublStopOutput(res);
                     }));
@@ -1654,7 +1654,7 @@ describe("RUST API TEST SUITE", function() {
                     testClient.bublStop(res.body.id)
                     .then( Comparison.catchExceptions(done, function(res) {
                         Comparison.bublStopOutput(res);
-                        return testClient.bublStop(res);
+                        return testClient.bublStop('bad param');
                     }))
                     .then(Comparison.catchExceptions(done, function(res) {
                         Comparison.invalidParameterValueError(res);

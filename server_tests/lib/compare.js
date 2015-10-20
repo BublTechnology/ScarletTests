@@ -542,7 +542,8 @@ var Compare = function() {
     this.bublStopOutput = function(results, overrideExpectation) {
         var expected = factory.create('bublStopResults', overrideExpectation);
         verifyHttpStatus200(results);
-        assert.equal(results.body, expected.body);
+        //assert.equal(results.body, expected.body);
+        assert.equal(results.error, null);
     };
 
     /* bublTimelapseOutput():
@@ -660,7 +661,7 @@ var Compare = function() {
     };
 
     var verifyHttpStatus400 = function(results) {
-        assert.equal(results.error, undefined);
+        assert.equal(results.body.state, "error");
         assert.equal(results.response.statusCode, 400);
     };
 
