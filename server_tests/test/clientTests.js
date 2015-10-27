@@ -1131,7 +1131,7 @@ describe("RUST API TEST SUITE", function() {
     });
 
     // BUBL POLL
-    describe("Testing /osc/commands/_bublPoll endpoint", function() {
+    describe.skip("Testing /osc/commands/_bublPoll endpoint", function() {
         var sessionId;
 
         before( function(done) {
