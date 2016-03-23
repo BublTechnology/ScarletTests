@@ -1315,6 +1315,27 @@ describe("RUST API TEST SUITE", function() {
             });
         });
 
+        var _bublTimelapseSucceeds = function (done, sessionId, context) {
+          context.timeout(timeoutValue * 4);
+          var stopped = false;
+          //Run camera._bublTimelapse
+          testClient.bublTimelapse(sessionId, function(res) {
+              if (!stopped) {
+                  stopped = true;
+                  Q.delay(15000).then(function() {
+                      return testClient.bublStop(res.body.id);
+                  })
+                  .then( Comparison.catchExceptions(done, function(res) {
+                      Comparison.bublStopOutput(res);
+                  }));
+              }
+          })
+          .then( Comparison.catchExceptions(done, function(res) {
+              Comparison.bublTimelapseOutput(res);
+              done();
+          }));
+        }
+
         it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function(done) {
             testClient.bublTimelapse()
             .then( function(res) {
@@ -1323,13 +1344,9 @@ describe("RUST API TEST SUITE", function() {
             });
         });
 
-        // it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function(done) {
-        //     testClient.bublTimelapse(sessionId + '0')
-        //     .then( function(res) {
-        //         var err = Comparison.invalidParameterValueError(res);
-        //         done(err);
-        //     });
-        // });
+        it('Expect success camera._bublTimelapse allows invalid sessionId', function(done) {
+            _bublTimelapseSucceeds(done, sessionId + '0', this);
+        });
 
         it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when another timelapse capture procedure is already active', function(done) {
             this.timeout(timeoutValue * 2);
@@ -1428,24 +1445,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it('Expect success. camera._bublTimelapse successfully captures with default settings', function(done) {
-            this.timeout(timeoutValue * 4);
-            var stopped = false;
-            //Run camera._bublTimelapse
-            testClient.bublTimelapse(sessionId, function(res) {
-                if (!stopped) {
-                    stopped = true;
-                    Q.delay(15000).then(function() {
-                        return testClient.bublStop(res.body.id);
-                    })
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.bublStopOutput(res);
-                    }));
-                }
-            })
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.bublTimelapseOutput(res);
-                done();
-            }));
+            _bublTimelapseSucceeds(done, sessionId, this);
         });
 
         it('Expect success. camera._bublTimelapse captures with specific timelapse interval and count, then finishes within the max tolerable completion time', function(done) {
