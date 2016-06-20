@@ -1,101 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta charset="UTF-8">
     <title>Bublcam SDK by BublTechnology</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
-    <div id="container">
-      <div class="inner">
+    <section class="page-header">
+      <h1 class="project-name">Bublcam SDK</h1>
+      <h2 class="project-tagline"></h2>
+      <a href="https://github.com/BublTechnology/ScarletTests" class="btn">View on GitHub</a>
+      <a href="https://github.com/BublTechnology/ScarletTests/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/BublTechnology/ScarletTests/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-        <header>
-          <h1>Bublcam SDK</h1>
-          <h2></h2>
-        </header>
+    <section class="main-content">
+      <h1>
+<a id="scarlettests" class="anchor" href="#scarlettests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>ScarletTests</h1>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/BublTechnology/ScarletTests" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
+<p>These unit tests document our current support of the Open Spherical Camera API.
+They are run and pass against our current implementation of the API, and
+describe the current Bubl vendor extensions to the API.</p>
 
-        <hr>
+<p><strong>NOTE:</strong> Upgrade your mobile app to the latest release. This contains the latest version of the camera firmware and will allow you to update that to the latest supported release.</p>
 
-        <section id="main_content">
-          <h3>
-<a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<h2>
+<a id="client-ui" class="anchor" href="#client-ui" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Client UI</h2>
 
-<p>Isn't it beautiful? This automatic page generator seems to think so.</p>
+<p>The <code>client_ui</code> folder contains an angular web app that can be used to control
+the camera. It's a very technical interface that allows you to try out different
+API endpoints and see what they return. To build and run it:</p>
 
-<h3>
-<a id="scarlet-beta-firmware" class="anchor" href="#scarlet-beta-firmware" aria-hidden="true"><span class="octicon octicon-link"></span></a>Scarlet Beta Firmware</h3>
+<pre><code>$ cd client_ui/
+$ npm install
+$ npm install bower
+$ `npm bin`/bower install
+$ `npm bin`/gulp serve
+</code></pre>
 
-<p><strong><a href="https://github.com/BublTechnology/ScarletTests/releases">Download Here!</a></strong></p>
+<h2>
+<a id="server-tests" class="anchor" href="#server-tests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Server Tests</h2>
 
-<p>Place the downloaded <code>BUBL_UPD.BIN</code> in the root directory of your SD card. Insert the card into
-your Bublcam when turned off and press the button to start it up. You should now be up and running
-with the beta firmware!</p>
+<p>These unit tests can be run against the API server, and test the camera's
+various functionality. To run the tests:</p>
 
-<h4>
-<a id="but-im-not" class="anchor" href="#but-im-not" aria-hidden="true"><span class="octicon octicon-link"></span></a>But I'm not!</h4>
+<pre><code>$ npm install
+$ `npm bin`/mocha
+</code></pre>
 
-<p>The beta firmware will refuse to start if your Bublcam's battery is too low - sorry! Charge it and try again!</p>
+<h2>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration</h2>
 
-<h3>
-<a id="important-notes" class="anchor" href="#important-notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Important Notes</h3>
+<p>Both projects use the <code>OscClient.js</code> file to connect to the camera. You will
+have to adjust its default IP and port to match the camera on your network.
+It will likely be <code>192.168.0.100:80</code>.</p>
 
-<p>Please read and understand all of these!</p>
+<h1>
+<a id="licensing-information" class="anchor" href="#licensing-information" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Licensing Information</h1>
 
-<ul>
-<li>Your camera will boot directly off of the SD card. <strong>Removing the SD card when the Bublcam is on will cause bad things to happen.</strong> Your camera's main firmware will be unaffected, and operation will resume as normal once the camera is off and SD card removed.</li>
-<li>
-<strong>It is possible that your camera settings will be erased.</strong> While we are making a best effort to ensure the beta is stable, you may possibly lose settings such as: clock time, image alignment settings, capture settings, etc. These can be mostly restored the next time you connect the camera to the app.</li>
-<li>
-<strong>This is a beta and will contain bugs.</strong> Yell at Aaron on Slack to report them! The firmware may or may not be good enough for casual use - updates to it will be announced on Slack.</li>
-<li>
-<strong>Everything is subject to change.</strong> It's relatively stable right now, but nothing is guaranteed until a final release is made, particularly concerning the Bubl API extensions. It may evolve as we receive more feedback from our mobile team and community developers (yes you!).</li>
-</ul>
+<p>This source release is licensed under the MIT license, which can be found
+<a href="https://github.com/BublTechnology/ScarletTests/blob/master/COPYING">here</a>.</p>
 
-<h3>
-<a id="development-resources" class="anchor" href="#development-resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development Resources</h3>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/BublTechnology/ScarletTests">Bublcam SDK</a> is maintained by <a href="https://github.com/BublTechnology">BublTechnology</a>.</span>
 
-<h4>
-<a id="usb-connectivity" class="anchor" href="#usb-connectivity" aria-hidden="true"><span class="octicon octicon-link"></span></a>USB Connectivity</h4>
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
 
-<p>The beta firmware will attempt to connect to your computer via USB networking whenever it detects a connection. It will automatically assign itself the <code>192.168.2.2</code> IP. A simple <code>ifconfig usb0 192.168.2.1</code> should be enough to access it - modulo OS configuration differences. <code>BUBL_IP.TXT</code> on the SD card can provide a different IP to use (single line file). The magic "dhcp" string can be used to obtain an IP over DHCP, but no guarantees on how well that works - it may mesh better with the internet sharing features of OS X and Windows.</p>
+    </section>
 
-<h4>
-<a id="api-documentation" class="anchor" href="#api-documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>API Documentation</h4>
-
-<p>First and foremost, we are implementing Google's <a href="https://developers.google.com/open-spherical-camera/">Open Spherical Camera API</a>, so go there for more information and documentation of the API. Additional Bubl vendor extensions are provided for our unique functionality such as video capture and preview, timelapses, and more. Documentation on these extensions will be available shortly*. For now, you're free to ask questions in chat..! The <a href="https://github.com/BublTechnology/ScarletTests">ScarletTests</a> source code is provided as an example of how to interact and control the camera.</p>
-
-<p>* <em>valve time</em></p>
-
-<h4>
-<a id="will-the-current-bublcam-api-still-exist" class="anchor" href="#will-the-current-bublcam-api-still-exist" aria-hidden="true"><span class="octicon octicon-link"></span></a>Will the current Bublcam API still exist?</h4>
-
-<p>It's gone. Done. Laid to rest. Let's not talk about that.</p>
-
-<h3>
-<a id="what-is-this" class="anchor" href="#what-is-this" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is this?</h3>
-
-<p>A program for our community developers interested in controlling their shiny new Bublcam! If you came here by accident and this sounds interesting to you, <a href="https://support.bubl.io/hc/en-us/requests/new">contact us</a> to get access to our private Slack chatroom and more information!</p>
-        </section>
-
-        <footer>
-          Bublcam SDK is maintained by <a href="https://github.com/BublTechnology">BublTechnology</a><br>
-          This page was generated by <a href="https://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-        
-      </div>
-    </div>
+  
   </body>
 </html>
