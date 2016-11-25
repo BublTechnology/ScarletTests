@@ -13,7 +13,7 @@ var Q = require('../node_modules/q');
 var Util = require('../lib/util');
 
 describe("RUST API TEST SUITE", function() {
-    var testClient = new OscClient();
+    var testClient = new OscClient(process.env.SCARLET_TEST_HOST, process.env.SCARLET_TEST_PORT);
     var Comparison = new Compare();
     var Utility = new Util(testClient);
     var defaultOptionsFile = './defaults/mock.json';
