@@ -63,7 +63,7 @@ var Q;
         var stateUrl = serverAddress + '/osc/state';
 
         this.getState = function() {
-            return makeHttpRequest('POST', stateUrl, applicationJsonType); 
+            return makeHttpRequest('POST', stateUrl, applicationJsonType);
         };
 
         // OSC CHECK FOR UPDATES
