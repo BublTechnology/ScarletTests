@@ -18,6 +18,17 @@ describe("RUST API TEST SUITE", function() {
     var Utility = new Util(testClient);
     var defaultOptionsFile = './defaults/mock.json';
     var timeoutValue = 30000;
+    var camModels = {
+      BUBLCAM1_0 : "bubl1",
+      BUBLCAM1_2 : "bubl2",
+      GENERIC : "osc",
+      BUBLMOCK : "bublmock"
+    };
+    var testModel = process.env.SCARLET_TEST_MODEL || camModels.BUBLMOCK;
+    var isBublcam = testModel === camModels.BUBLCAM1_0 || testModel === camModels.BUBLCAM1_2 || testModel === camModels.BUBLMOCK;
+    var isMock = testModel === camModels.BUBLMOCK;
+    var testViaWifi = !isMock && process.env.SCARLET_TEST_WIFI === 1;
+
 
     // OSC INFO
     describe("Testing /osc/info endpoint", function() {
@@ -1057,6 +1068,10 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it("Expect success. camera.setOptions successfully sets options when wifiPassword option is set to supported value", function(done) {
+            if (testViaWifi) {
+                return this.skip();
+            }
+
             testClient.setOptions(sessionId, {'wifiPassword': '12345678'})
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscSetOptionsOutput(res);
@@ -1135,6 +1150,10 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
 
         before( function(done) {
+            if (!isBublcam) {
+              return this.skip();
+            }
+
             testClient.startSession()
             .then( Comparison.catchExceptions(done, function(res) {
                 sessionId = res.body.results.sessionId;
@@ -1285,9 +1304,14 @@ describe("RUST API TEST SUITE", function() {
 
     // BUBL TIMELAPSE
     describe('Testing /osc/commands/execute camera._bublTimelapse command', function() {
+
         var sessionId;
 
         before( function(done) {
+            if (!isBublcam) {
+              return this.skip();
+            }
+
             this.timeout(timeoutValue);
             testClient.startSession()
             .then( function(res) {
@@ -1494,6 +1518,10 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
 
         before( function(done) {
+            if (!isBublcam) {
+                return this.skip();
+            }
+
             testClient.startSession()
             .then( Comparison.catchExceptions(done, function(res) {
                 sessionId = res.body.results.sessionId;
@@ -1591,6 +1619,10 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
 
         before( function(done) {
+            if (!isBublcam) {
+                return this.skip();
+            }
+
             testClient.startSession()
             .then( Comparison.catchExceptions(done, function(res) {
                 sessionId = res.body.results.sessionId;
@@ -1630,7 +1662,7 @@ describe("RUST API TEST SUITE", function() {
                     Q.delay(1000)
                     .then( function() {
                         return testClient.bublStop(commandId);
-                    }) 
+                    })
                     .then(Comparison.catchExceptions(done, function(res) {
                         Comparison.bublStopOutput(res);
                     }));
@@ -1691,20 +1723,24 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var commandId;
 
-        before( function(done) {
+        before(function (done) {
+            if (!isBublcam) {
+                return this.skip();
+            }
+
             testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then(Comparison.catchExceptions(done, function (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then(Comparison.catchExceptions(done, function (res) {
                 Comparison.oscSetOptionsOutput(res);
                 done();
             }));
         });
 
-        afterEach( function(done) {
+        afterEach(function (done) {
             this.timeout(timeoutValue);
             Utility.restoreDefaultOptions(defaultOptionsFile)
             .then( Comparison.catchExceptions(done, function(res) {
@@ -1801,7 +1837,6 @@ describe("RUST API TEST SUITE", function() {
                 done();
             }));
         });
-
     });
 
     // BUBL GET IMAGE
@@ -1810,6 +1845,10 @@ describe("RUST API TEST SUITE", function() {
         var fileUri;
 
         before( function(done) {
+            if (!isBublcam) {
+                return this.skip();
+            }
+
             testClient.startSession()
             .then( Comparison.catchExceptions(done, function(res) {
                 sessionId = res.body.results.sessionId;
@@ -1851,6 +1890,12 @@ describe("RUST API TEST SUITE", function() {
 
     // BUBL UPDATE
     describe('Testing /osc/_bublUpdate endpoint', function() {
+        before(function() {
+            if (!isMock) {
+                return this.skip();
+            }
+        });
+
         it('Expect success. /osc/_bublUpdate endpoint successfully returned status code 200', function(done) {
             this.timeout(timeoutValue);
             testClient.bublUpdate('dummy_content')
@@ -1863,6 +1908,12 @@ describe("RUST API TEST SUITE", function() {
 
     // BUBL SHUTDOWN
     describe('Testing /osc/commands/execute camera._bublShutdown', function() {
+        before(function() {
+            if (!isBublcam) {
+                return this.skip();
+            }
+        });
+
         var sessionId;
 
         beforeEach( function(done) {
@@ -1876,9 +1927,9 @@ describe("RUST API TEST SUITE", function() {
                 Comparison.oscSetOptionsOutput(res);
                 done();
             }));
-       });
+        });
 
-       afterEach( function(done) {
+        afterEach( function(done) {
             Utility.checkActiveSession()
             .then( function() {
                 testClient.closeSession(sessionId)
@@ -1889,7 +1940,7 @@ describe("RUST API TEST SUITE", function() {
             }, function() {
                 done();
             });
-       });
+        });
 
         it('Expect missingParameter Error. camera._bublShutdown won\'t run unless the active session\'s sessionId is provided', function(done) {
             this.timeout(timeoutValue);
@@ -1919,6 +1970,12 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it('Expect success. camera._bublShutdown successfully returned', function(done) {
+            if (!isMock) {
+              //FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
+              testClient.closeSession(sessionId);
+              return this.skip();
+            }
+
             this.timeout(timeoutValue);
             testClient.bublShutdown(sessionId)
             .then( Comparison.catchExceptions(done, function(res) {
@@ -1928,6 +1985,12 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it('Expect success. camera._bublShutdown successfully returned when specific shutdownDelay is provided and returned at appropriate time', function(done) {
+            if (!isMock) {
+              //FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
+              testClient.closeSession(sessionId);
+              return this.skip();
+            }
+
             this.timeout(timeoutValue);
             var expectedShutdownDelay = 3000;
             var startTime = Date.now();
