@@ -7,17 +7,20 @@
 
 "use strict";
 
-var OscClient = require('../../OscClient.js');
+var OscClient = require('osc-client').BublOscClient;
 var Compare = require('../lib/compare.js');
 var Q = require('../node_modules/q');
 var Util = require('../lib/util');
+var chai = require('chai');
+var assert = chai.assert;
+
+Q.longStackSupport = true;
 
 describe("RUST API TEST SUITE", function() {
     var testClient = new OscClient(process.env.SCARLET_TEST_HOST, process.env.SCARLET_TEST_PORT);
     var Comparison = new Compare();
     var Utility = new Util(testClient);
     var defaultOptionsFile = './defaults/mock.json';
-    var timeoutValue = 30000;
     var camModels = {
       BUBLCAM1_0 : "bubl1",
       BUBLCAM1_2 : "bubl2",
@@ -27,18 +30,32 @@ describe("RUST API TEST SUITE", function() {
     var testModel = process.env.SCARLET_TEST_MODEL || camModels.BUBLMOCK;
     var isBublcam = testModel === camModels.BUBLCAM1_0 || testModel === camModels.BUBLCAM1_2 || testModel === camModels.BUBLMOCK;
     var isMock = testModel === camModels.BUBLMOCK;
-    var testViaWifi = !isMock && process.env.SCARLET_TEST_WIFI === 1;
-
+    var testViaWifi = process.env.SCARLET_TEST_WIFI === '1';
+    var timeoutValue = 30000;
+    function wrapError(err) {
+        if (!(err instanceof Error)) {
+            if (err.error && err.error.response) {
+                err = err.error.response.text;
+            } else {
+                err = "Code execution should not have reached here";
+            }
+            throw new Error(err);
+        } else {
+            throw err;
+        }
+    }
+    function expectError(res) {
+        assert.fail("Should not resolve, expecting an error.");
+    }
 
     // OSC INFO
     describe("Testing /osc/info endpoint", function() {
 
-        it("Expect success. /osc/info returns correct info", function(done) {
-            testClient.getInfo()
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. /osc/info returns correct info", function() {
+            return testClient.getInfo()
+            .then( function onSuccess (res) {
                 Comparison.oscInfoOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
     });
 
@@ -46,40 +63,38 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/state endpoint", function() {
         var sessionId;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. /osc/state endpoint successfully returns state when state has not changed", function(done) {
-            testClient.getState()
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. /osc/state endpoint successfully returns state when state has not changed", function() {
+            return testClient.getState()
+            .then( function onSuccess (res) {
                 Comparison.oscStateOutput(res, {'sessionId' : sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. confirming /osc/state endpoint returns correct value when state has changed", function(done) {
+        it("Expect success. confirming /osc/state endpoint returns correct value when state has changed", function() {
             var oldFingerprint;
 
-            testClient.getState()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.getState()
+            .then( function onSuccess (res) {
                 Comparison.oscStateOutput(res, {'sessionId' : sessionId});
-                oldFingerprint = res.fingerprint;
+                oldFingerprint = res.body.fingerprint;
                 return testClient.closeSession(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscCloseSessionOutput(res);
                 return testClient.getState();
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscStateOutput(res, {'sessionId': '', 'fingerprint': oldFingerprint});
-                done();
-            }));
+            })
+            .catch(wrapError)
         });
     });
 
@@ -88,85 +103,75 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var oldFingerprint;
 
-        beforeEach( function(done) {
-            this.timeout(timeoutValue);
-            Utility.checkActiveSession()
-            .then( function() {
-                done();
-            }, function() {
-                testClient.startSession()
-                .then( Comparison.catchExceptions(done, function(res) {
-                    sessionId = res.body.results.sessionId;
-                    Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                    done();
-                }));
-            });
+        beforeEach( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
+                sessionId = res.body.results.sessionId;
+                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
+            }, wrapError);
         });
 
-        afterEach( function(done) {
-            this.timeout(timeoutValue);
-            Utility.checkActiveSession()
-            .then( function() {
-                testClient.closeSession(sessionId)
-                .then( Comparison.catchExceptions(done, function(res) {
-                    Comparison.oscCloseSessionOutput(res);
-                    done();
-                }));
-            }, function() {
-                done();
-            });
+        afterEach( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed", function(done) {
-            testClient.getState()
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed", function() {
+            return testClient.getState()
+            .then( function onSuccess (res) {
                 Comparison.oscStateOutput(res, {'sessionId': sessionId});
                 oldFingerprint = res.body.fingerprint;
                 return testClient.checkForUpdates(oldFingerprint);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscCheckForUpdatesOutput(res, false, {stateFingerprint: oldFingerprint});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has changed", function(done) {
-            testClient.getState()
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has changed", function() {
+            return testClient.getState()
+            .then( function onSuccess (res) {
                 Comparison.oscStateOutput(res, {'sessionId': sessionId});
                 oldFingerprint = res.body.fingerprint;
                 return testClient.closeSession(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscCloseSessionOutput(res);
                 return testClient.checkForUpdates(oldFingerprint);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscCheckForUpdatesOutput(res, true, {stateFingerprint: oldFingerprint});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed with waitTimeout set to 5", function(done) {
+        it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed with waitTimeout set to 5", function() {
             this.timeout(timeoutValue);
-            testClient.getState()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.getState()
+            .then( function onSuccess (res) {
                 Comparison.oscStateOutput(res, {'sessionId': sessionId});
                 oldFingerprint = res.body.fingerprint;
                 return testClient.checkForUpdates(oldFingerprint, 5);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscCheckForUpdatesOutput(res, false, {stateFingerprint: oldFingerprint});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect missingParameter Error. /osc/checkForUpdates endpoint cannot get updates when no fingerprint is provided", function(done) {
-            testClient.checkForUpdates()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. /osc/checkForUpdates endpoint cannot get updates when no fingerprint is provided", function() {
+            return testClient.checkForUpdates()
+            .then(expectError,
+                (res) => Comparison.missingParameterError(res)
+            )
         });
     });
 
@@ -175,74 +180,70 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera.startSession endpoint", function() {
         var sessionId;
 
-        afterEach( function(done) {
-            Utility.checkActiveSession()
-            .then( function() {
-                testClient.closeSession(sessionId)
-                .then( Comparison.catchExceptions(done, function(res) {
-                    Comparison.oscCloseSessionOutput(res);
-                    done();
-                }));
-            }, function() {
-                done();
-            });
+        afterEach( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.startSession successfully starts a session", function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.startSession successfully starts a session", function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success.  camera.startSession successfully starts a session when a timeout value of 30 is specified", function(done) {
-            testClient.startSession(30)
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success.  camera.startSession successfully starts a session when a timeout value of 30 is specified", function() {
+            return testClient.startSession(30)
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId, 'timeout': 30});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.startSession will timeout after the the specified timeout value", function(done) {
+        it("Expect success. camera.startSession will timeout after the the specified timeout value", function() {
             this.timeout(timeoutValue);
-            testClient.startSession(5)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.startSession(5)
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId, 'timeout': 5});
                 return Q.delay(8000);
-            }))
+            })
             .then( function() {
                 return testClient.startSession();
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
-            
-        it("Expect cameraInExclusiveUse Error. camera.startSession cannot start session while another session is already running", function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+
+        it("Expect cameraInExclusiveUse Error. camera.startSession cannot start session while another session is already running", function() {
+            return testClient.startSession()
+            .then(
+              function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return testClient.startSession();
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.cameraInExclusiveUseError(res);
-                done();
-            }));
+              },wrapError)
+              .then(expectError,
+                  (err) => Comparison.cameraInExclusiveUseError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.startSession cannot start session when incorrect timeout type is provided", function(done) {
-            testClient.startSession('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.startSession cannot start session when incorrect timeout type is provided", function() {
+            return testClient.startSession('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
@@ -250,71 +251,59 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera.updateSession endpoint", function() {
         var sessionId;
 
-        before( function(done) {
-            Utility.checkActiveSession()
-            .then( function() {
-                done();
-            }, function() {
-                testClient.startSession()
-                .then( Comparison.catchExceptions(done, function(res) {
-                    sessionId = res.body.results.sessionId;
-                    Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                    done();
-                }));
-            });
-        });
-
-        after( function(done) {
-            Utility.checkActiveSession()
-            .then( function() {
-                testClient.closeSession(sessionId)
-                .then( Comparison.catchExceptions(done, function(res) {
-                    Comparison.oscCloseSessionOutput(res);
-                    done();
-                }));
-            }, function() {
-                done();
-            });
-        });
-
-        it("Expect success. camera.updateSession successfully updates a session", function(done) {
-            testClient.updateSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+        beforeEach( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
+                sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.updateSession successfully updates a session with a timeout value specified", function(done) {
-            testClient.updateSession(sessionId, 15)
-            .then( Comparison.catchExceptions(done, function(res) {
+        afterEach( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
+        });
+
+        it("Expect success. camera.updateSession successfully updates a session", function() {
+            return testClient.updateSession(sessionId)
+            .then( function onSuccess (res) {
+                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
+            }, wrapError);
+        });
+
+        it("Expect success. camera.updateSession successfully updates a session with a timeout value specified", function() {
+            return testClient.updateSession(sessionId, 15)
+            .then( function onSuccess (res) {
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId, timeout: 15});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect missingParameter Error. camera.updateSession cannot update session when sessionId is not specified", function(done) {
-            testClient.updateSession()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.updateSession cannot update session when sessionId is not specified", function() {
+            return testClient.updateSession()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.updateSession cannot update session when sessionId is an incorrect type", function(done) {
-            testClient.updateSession('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.updateSession cannot update session when sessionId is an incorrect type", function() {
+            return testClient.updateSession('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.updateSession cannot update session when timeout is an incorrect type", function(done) {
-            testClient.updateSession(sessionId, 'wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.updateSession cannot update session when timeout is an incorrect type", function() {
+            return testClient.updateSession(sessionId, 'wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
@@ -322,67 +311,56 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera.closeSession endpoint", function() {
         var sessionId;
 
-        beforeEach( function(done) {
-            Utility.checkActiveSession()
-            .then( function() {
-                done();
-            }, function() {
-                testClient.startSession()
-                .then( Comparison.catchExceptions(done, function(res) {
-                    sessionId = res.body.results.sessionId;
-                    Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                    done();
-                }));
-            });
+        beforeEach( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
+                sessionId = res.body.results.sessionId;
+                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
+            }, wrapError);
         });
 
-        afterEach( function(done) {
-            Utility.checkActiveSession()
-            .then( function() {
-                testClient.closeSession(sessionId)
-                .then( Comparison.catchExceptions(done, function(res) {
-                    Comparison.oscCloseSessionOutput(res);
-                    done();
-                }));
-            }, function() {
-                done();
-            });
+        afterEach( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.closeSession successfully closes a session", function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.closeSession successfully closes a session", function() {
+            return testClient.closeSession(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect missingParameter Error. camera.closeSession cannot close session when sessionId is not provided", function(done) {
-            testClient.closeSession()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.closeSession cannot close session when sessionId is not provided", function() {
+            return testClient.closeSession()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.closeSession cannot close session when sessionId is an incorrect type", function(done) {
-            testClient.closeSession('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.closeSession cannot close session when sessionId is an incorrect type", function() {
+            return testClient.closeSession('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.closeSession cannot close session when no session is active", function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect invalidParameterValue Error. camera.closeSession cannot close session when no session is active", function() {
+            return testClient.closeSession(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscCloseSessionOutput(res);
                 return testClient.closeSession(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+            }, wrapError)
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
@@ -390,71 +368,70 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera.takePicture endpoint", function() {
         var sessionId;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        afterEach( function(done) {
-            Utility.restoreDefaultOptions(defaultOptionsFile)
-            .then( Comparison.catchExceptions(done, function(res) {
+        afterEach( function() {
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success.  camera.takePicture successfully takes a picture", function(done) {
+        it("Expect success.  camera.takePicture successfully takes a picture", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.takePicture successfully takes an HDR picture", function(done) {
+        it("Expect success. camera.takePicture successfully takes an HDR picture", function() {
             this.timeout(timeoutValue * 2);
-            testClient.setOptions(sessionId, {'hdr': true})
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.setOptions(sessionId, {'hdr': true})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
                 return testClient.takePicture(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscTakeHdrPictureOutput(res);
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.takePicture cannot take picture when incorrect sessionId type is provided", function(done) {
-            testClient.takePicture('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.takePicture cannot take picture when incorrect sessionId type is provided", function() {
+            return testClient.takePicture('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.takePicture cannot take picture when sessionId is not provided", function(done) {
-            testClient.takePicture()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.takePicture cannot take picture when sessionId is not provided", function() {
+            return testClient.takePicture()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
     });
 
@@ -462,151 +439,148 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera.listImage endpoint", function() {
         var sessionId;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        beforeEach( function(done) {
+        beforeEach( function() {
             this.timeout(timeoutValue);
-            Utility.deleteAllImages()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return Utility.deleteAllImages()
+            .then( function onSuccess (res) {
                 Comparison.deleteAllImagesOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.listImages returns one entry when provided with entryCount = 1 when server has 1 image", function(done) {
+        it("Expect success. camera.listImages returns one entry when provided with entryCount = 1 when server has 1 image", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 return testClient.listImages(1, true, 100);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, false, true, {entries: [{'one': 'one'}], totalEntries: 1});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages returns one entry wihtout thumbnail when provided with entryCount = 1 and includeThumb = false when server has 1 image", function(done) {
+        it("Expect success. camera.listImages returns one entry wihtout thumbnail when provided with entryCount = 1 and includeThumb = false when server has 1 image", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+                return testClient.listImages(1, false);
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, false, false, {entries: [{'one': 'one'}], totalEntries: 1});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages returns one entry and a continuation token when provided with entryCount = 1 when server has 2 images", function(done) {
+        it("Expect success. camera.listImages returns one entry and a continuation token when provided with entryCount = 1 when server has 2 images", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 return testClient.takePicture(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+                return testClient.listImages(1, false);
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages returns one entry when provided with a continuation token and  entryCount = 1 when server has 2 images", function(done) {
+        it("Expect success. camera.listImages returns one entry when provided with a continuation token and  entryCount = 1 when server has 2 images", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 return testClient.takePicture(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+                return testClient.listImages(1, false);
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
                 return testClient.listImages(1, false, undefined, res.body.results.continuationToken);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, false, false, {entries: [{'one': 'one'}], totalEntries: 2});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages returns two entries and and no continuation token when provided with entryCount = 2 when server has 2 images", function(done) {
+        it("Expect success. camera.listImages returns two entries and and no continuation token when provided with entryCount = 2 when server has 2 images", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 return testClient.takePicture(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(2, false); 
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+                return testClient.listImages(2, false);
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}, {'two': 'two'}], totalEntries: 2});
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages lists zero images when no images are in the system", function(done) {
-            testClient.listImages(2, false)
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.listImages lists zero images when no images are in the system", function() {
+            return testClient.listImages(2, false)
+            .then( function onSuccess (res) {
                 Comparison.oscListImagesOutput(res, false, false, {totalEntries: 0});
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect missingParameter Error. camera.listImages cannot list images when entryCount is not provided", function(done) {
-            testClient.listImages()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.listImages cannot list images when entryCount is not provided", function() {
+            return testClient.listImages()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided", function(done) {
-            testClient.listImages(1, true)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided", function() {
+            return testClient.listImages(1, true)
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided and includeThumb defaults to true", function(done) {
-            testClient.listImages(1, undefined)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided and includeThumb defaults to true", function() {
+            return testClient.listImages(1, undefined)
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.listImages cannot list images when false token is given", function(done) {
-            testClient.listImages('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.listImages cannot list images when false token is given", function() {
+            return testClient.listImages('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
@@ -615,51 +589,52 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var fileUri;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.delete successfully deletes file when provided with a valid fileUri", function(done) {
+        it("Expect success. camera.delete successfully deletes file when provided with a valid fileUri", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 fileUri = res.body.results.fileUri;
                 return testClient.delete(fileUri);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscDeleteOutput(res);
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.delete cannot delete file when incorrect fileUri type is provided", function(done) {
-            testClient.delete('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.delete cannot delete file when incorrect fileUri type is provided", function() {
+            return testClient.delete('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.delete cannot delete file when fileUri is not provided", function(done) {
-            testClient.delete()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.delete cannot delete file when fileUri is not provided", function() {
+            return testClient.delete()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
     });
 
@@ -668,65 +643,64 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var fileUri;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.getImage successfully gets image when provided with a valid fileUri", function(done) {
+        it("Expect success. camera.getImage successfully gets image when provided with a valid fileUri", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then(function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscGetImageOutput(res);
-                done();
-            }));
+            })
+            .then((res) => Comparison.oscGetImageOutput(res))
+            .catch(wrapError);
         });
 
-        it("Expect success. camera.getImage successfully gets image when provided with a valid fileUri and maxSize", function(done) {
+        it("Expect success. camera.getImage successfully gets image when provided with a valid fileUri and maxSize", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                fileUri = res.body.results.fileUri; 
+                fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri, 100);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscGetImageOutput(res);
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect missingParameter Error. camera.getImage cannot get image when fileUri is not provided", function(done) {
-            testClient.getImage()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.getImage cannot get image when fileUri is not provided", function() {
+            return testClient.getImage()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera.getImage cannot get image when fileUri is incorrect", function(done) {
-            testClient.getImage('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.getImage cannot get image when fileUri is incorrect", function() {
+            return testClient.getImage('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
@@ -735,51 +709,51 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var fileUri;
 
-        before( function(done) {
+        before( function() {
             this.timeout(timeoutValue);
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return testClient.takePicture(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 fileUri = res.body.results.fileUri;
                 Comparison.oscTakePictureOutput(res);
-                done();
-             }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.getMetadata successfully gets metadata when provided with a valid fileUri", function(done) {
-            testClient.getMetadata(fileUri)
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.getMetadata successfully gets metadata when provided with a valid fileUri", function() {
+            return testClient.getMetadata(fileUri)
+            .then( function onSuccess (res) {
                 Comparison.oscGetMetadataOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.getMetadata cannot get metadata when fileUri does not exist", function(done) {
-            testClient.getMetadata('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.getMetadata cannot get metadata when fileUri does not exist", function() {
+            return testClient.getMetadata('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.getMetadata cannot get metadata when fileUri is not provided", function(done) {
-            testClient.getMetadata()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.getMetadata cannot get metadata when fileUri is not provided", function() {
+            return testClient.getMetadata()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
     });
 
@@ -791,54 +765,53 @@ describe("RUST API TEST SUITE", function() {
                                 'sleepDelay', 'offDelay', 'hdr', 'exposureBracket', 'gyro', 'gps',
                                 'imageStabilization', '_bublVideoFileFormat'];
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera.getOptions gets correct options when gettable options are set to supported values", function(done) {
-            testClient.getOptions(sessionId, specifiedOptions)
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.getOptions gets correct options when gettable options are set to supported values", function() {
+            return testClient.getOptions(sessionId, specifiedOptions)
+            .then( function onSuccess (res) {
                 Comparison.oscGetOptionsOutput(specifiedOptions, res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect missingParameter Error. camera.getOptions cannot get options when options is not provided", function(done) {
-            testClient.getOptions(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.getOptions cannot get options when options is not provided", function() {
+            return testClient.getOptions(sessionId)
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.getOptions cannot get options when sessionId is not provided", function(done) {
-            testClient.getOptions(undefined, specifiedOptions)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.getOptions cannot get options when sessionId is not provided", function() {
+            return testClient.getOptions(undefined, specifiedOptions)
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
         // RE-ADD ONCE EXTRA FIELD CHECKING HAS BEEN IMPLEMENTED
-        it.skip("Expect invalidParameterValue Error. camera.getOptions cannot get options when options is set to unsupported value", function(done) {
-            testClient.getOptions(sessionId, ['wrongtype'])
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it.skip("Expect invalidParameterValue Error. camera.getOptions cannot get options when options is set to unsupported value", function() {
+            return testClient.getOptions(sessionId, ['wrongtype'])
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
@@ -846,253 +819,223 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera.setOptions endpoint", function() {
         var sessionId;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            Utility.restoreDefaultOptions(defaultOptionsFile)
-            .then( Comparison.catchExceptions(done, function(res) {
+        after( function() {
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
                 return testClient.closeSession(sessionId);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.setOptions successfully sets options when sleepDelay option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'sleepDelay': 5})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when sleepDelay option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'sleepDelay': 5})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when sleepDelay option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'sleepDelay': -1})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when sleepDelay option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'sleepDelay': -1})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when offDelay option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'offDelay': 5})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when offDelay option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'offDelay': 5})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when offDelay option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'offDelay': -1})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when offDelay option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'offDelay': -1})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when imageStabilization option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'imageStabilization': 'off'})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when imageStabilization option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'imageStabilization': 'off'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when imageStabilization option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'imageStabilization': 'UNSUPPORTED'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when imageStabilization option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'imageStabilization': 'UNSUPPORTED'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when hdr option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'hdr': true})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when hdr option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'hdr': true})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when hdr option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'hdr': 'UNSUPPORTED'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when hdr option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'hdr': 'UNSUPPORTED'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value _bublVideo", function(done) {
-            testClient.setOptions(sessionId, {'captureMode': '_bublVideo'})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value _bublVideo", function() {
+            return testClient.setOptions(sessionId, {'captureMode': '_bublVideo'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value Image", function(done) {
-            testClient.setOptions(sessionId, {'captureMode': 'image'})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value Image", function() {
+            return testClient.setOptions(sessionId, {'captureMode': 'image'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when captureMode option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'captureMode': 'UNSUPPORTED'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when captureMode option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'captureMode': 'UNSUPPORTED'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when exposureProgram option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'exposureProgram': 2})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when exposureProgram option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'exposureProgram': 2})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureProgram option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'exposureProgram': -1})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureProgram option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'exposureProgram': -1})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when whiteBalance option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'whiteBalance': 'auto'})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when whiteBalance option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'whiteBalance': 'auto'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when whiteBalance option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'whiteBalance': 'UNSUPPORTED'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when whiteBalance option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'whiteBalance': 'UNSUPPORTED'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value raw for image", function(done) {
-            testClient.setOptions(sessionId, {'fileFormat': {'type':'raw', 'width': 3840, 'height': 3840}})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value raw for image", function() {
+            return testClient.setOptions(sessionId, {'fileFormat': {'type':'raw', 'width': 3840, 'height': 3840}})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value jpeg for image", function(done) {
-            testClient.setOptions(sessionId, {'fileFormat': {'type':'jpeg', 'width': 3840, 'height': 3840}})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value jpeg for image", function() {
+            return testClient.setOptions(sessionId, {'fileFormat': {'type':'jpeg', 'width': 3840, 'height': 3840}})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when fileFormat option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'fileFormat': 'UNSUPPORTED'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when fileFormat option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'fileFormat': 'UNSUPPORTED'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920", function(done) {
-            testClient.setOptions(sessionId, {'_bublVideoFileFormat': {'type':'mp4', 'width': 1920, 'height': 1920}})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920", function() {
+            return testClient.setOptions(sessionId, {'_bublVideoFileFormat': {'type':'mp4', 'width': 1920, 'height': 1920}})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920", function(done) {
-            testClient.setOptions(sessionId, {'_bublVideoFileFormat': {'type':'mp4', 'width': 1920, 'height': 1920}})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920", function() {
+            return testClient.setOptions(sessionId, {'_bublVideoFileFormat': {'type':'mp4', 'width': 1920, 'height': 1920}})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when _bublVideoFileFormat option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'_bublVideoFileFormat': 'UNSUPPORTED'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when _bublVideoFileFormat option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'_bublVideoFileFormat': 'UNSUPPORTED'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when exposureDelay option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'exposureDelay': 4})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when exposureDelay option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'exposureDelay': 4})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureDelay option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'exposureDelay': -1})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureDelay option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'exposureDelay': -1})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value", function(done) {
-            testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00'})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value", function() {
+            return testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value and bubl timezone", function(done) {
-            testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00|America/Toronto'})
-            .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value and bubl timezone", function() {
+            return testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00|America/Toronto'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. camera.setOptions successfully sets options when wifiPassword option is set to supported value", function(done) {
+        it("Expect success. camera.setOptions successfully sets options when wifiPassword option is set to supported value", function() {
             if (testViaWifi) {
                 return this.skip();
             }
 
-            testClient.setOptions(sessionId, {'wifiPassword': '12345678'})
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.setOptions(sessionId, {'wifiPassword': '12345678'})
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when wifiPassword option is set to unsupported value", function(done) {
-            testClient.setOptions(sessionId, {'wifiPassword': '1234'})
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera.setOptions cannot set options when wifiPassword option is set to unsupported value", function() {
+            return testClient.setOptions(sessionId, {'wifiPassword': '1234'})
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera.setOptions cannot set options when options is not provided", function(done) {
-            testClient.setOptions(sessionId, undefined)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera.setOptions cannot set options when options is not provided", function() {
+            return testClient.setOptions(sessionId, undefined)
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
     });
 
@@ -1100,205 +1043,211 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/status endpoint", function() {
         var sessionId;
 
-        before( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        before( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function(done) {
+        it("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId, Comparison.catchExceptions(done, function(res) {
-                 Comparison.oscCommandsStatusOutput(res, {'name': 'camera.takePicture', 'id': res.body.id});
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId, function(res) {
+                Comparison.oscCommandsStatusOutput(res, {'name': 'camera.takePicture', 'id': res.body.id});
+            })
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                done();
-            }));
+            })
+            .catch(wrapError);
         });
 
-        it("Expect missingParameter Error. /osc/commands/status endpoint cannot get status when command ID is not provided", function(done) {
-            testClient.commandsStatus()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. /osc/commands/status endpoint cannot get status when command ID is not provided", function() {
+            return testClient.commandsStatus()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. /osc/commands/status endpoint cannot get status when incorrect sessionId is provided", function(done) {
-            testClient.commandsStatus('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. /osc/commands/status endpoint cannot get status when incorrect sessionId is provided", function() {
+            return testClient.commandsStatus('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
     });
 
     // BUBL POLL
-    describe.skip("Testing /osc/commands/_bublPoll endpoint", function() {
+    describe("Testing /osc/commands/_bublPoll endpoint", function() {
         var sessionId;
 
-        before( function(done) {
+        before( function() {
             if (!isBublcam) {
               return this.skip();
             }
 
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. /osc/commands/_bublPoll returns immediately if no waitTimeout argument is provided", function(done) {
+        it("Expect success. /osc/commands/_bublPoll returns immediately if no waitTimeout argument is provided", function() {
             this.timeout(timeoutValue);
             var fingerprint = '';
-            testClient.takePicture(sessionId, function(res) {
+            return testClient.takePicture(sessionId, function(res) {
                 var commandId = res.body.id;
-                testClient.bublPoll(res.body.id, fingerprint)
-                .then( Comparison.catchExceptions(done, function(res) {
+                return testClient.bublPoll(res.body.id, fingerprint)
+                .then( function onSuccess (res) {
                     Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
-                }));
+                }, wrapError);
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect success. /osc/commands/_bublPoll returns once command state has changed", function(done) {
+        it("Expect success. /osc/commands/_bublPoll returns once command state has changed", function() {
             this.timeout(timeoutValue);
             var fingerprint = '';
             var commandId = '';
-            testClient.bublCaptureVideo(sessionId, function(res) {
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublCaptureVideo(sessionId, function(res) {
                 if (commandId === '') {
                     commandId = res.body.id;
                     Q.delay(8000)
                     .then( function() {
                         return testClient.bublPoll(commandId, fingerprint);
                     })
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    .then( function onSuccess (res) {
                         Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
                         fingerprint = res.body.fingerprint;
                         return testClient.bublStop(commandId);
-                    }))
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    })
+                    .then( function onSuccess (res) {
                         Comparison.bublStopOutput(res);
                         return testClient.bublPoll(commandId, fingerprint, 4);
-                    }))
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    })
+                    .then( function onSuccess (res) {
                         Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
-                    }));
+                    })
+                    .then(deferred.resolve, deferred.reject);
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.bublCaptureVideoOutput(res);
-                done();
-            }));
+            }, wrapError), deferred.promise])
         });
 
-        it("Expect success. /osc/commands/_bublPoll endpoint successfully gets updates when state has not changed with waitTimeout set to 5", function(done) {
+        it("Expect success. /osc/commands/_bublPoll endpoint successfully gets updates when state has not changed with waitTimeout set to 5", function() {
             this.timeout(timeoutValue);
             var fingerprint = '';
             var commandId = '';
-            testClient.bublCaptureVideo(sessionId, function(res) {
+            var deferred = Q.defer();
+            return Q.all([testClient.bublCaptureVideo(sessionId, function(res) {
                 if (commandId === '') {
                     commandId = res.body.id;
                     Q.delay(8000)
                     .then( function() {
                         return testClient.bublPoll(commandId, fingerprint);
                     })
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    .then( function onSuccess (res) {
                         Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
                         fingerprint = res.body.fingerprint;
                         return Q.delay(4000);
-                    }))
-                    .then( function() {
-                        return testClient.bublPoll(commandId, fingerprint, 4);
                     })
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    .then( function() {
+                        return testClient.bublPoll(commandId, fingerprint, 5);
+                    })
+                    .then( function onSuccess (res) {
                         Comparison.bublPollOutput(res, false, {'id': commandId, 'fingerprint': fingerprint});
                         return testClient.bublStop(commandId);
-                    }))
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    })
+                    .then( function onSuccess (res) {
                         Comparison.bublStopOutput(res);
-                    }));
+                    })
+                    .then(deferred.resolve, deferred.reject);
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.bublCaptureVideoOutput(res);
-                done();
-            }));
-        });           
-
-        it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no commandId is provided", function(done) {
-            testClient.bublPoll(undefined, '')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+            }, wrapError), deferred.promise])
         });
 
-        it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no fingerprint is provided", function(done) {
+        it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no commandId is provided", function() {
+            return testClient.bublPoll(undefined, '')
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
+        });
+
+        it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no fingerprint is provided", function() {
             this.timeout(timeoutValue);
             var stopped = false;
-            testClient.takePicture(sessionId, function(res) {
+            var deferred = Q.defer();
+            return Q.all([testClient.takePicture(sessionId, function(res) {
                 if (!stopped) {
                     testClient.bublPoll(res.body.id)
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.missingParameterError(res);
-                    }));
+                    .then( expectError,
+                        (err) => {Comparison.missingParameterError(err);
+                        stopped = true;
+                    })
+                    .then(deferred.resolve, deferred.reject);
                 }
-                stopped = true;
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 Comparison.assertTrue(stopped);
-                done();
-            }));
+            }, wrapError), deferred.promise]);
         });
 
-        it("Expect invalidParameterValue Error. /osc/commands/_bublPoll cannot get updates when commandId is invalid", function(done) {
+        it("Expect invalidParameterValue Error. /osc/commands/_bublPoll cannot get updates when commandId is invalid", function() {
             this.timeout(timeoutValue);
-            testClient.bublPoll('wrongtype', '')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+            return testClient.bublPoll('wrongtype', '')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. /osc/commands/_bublPoll cannot get updates when waitTimeout is invalid", function(done) {
+        it("Expect invalidParameterValue Error. /osc/commands/_bublPoll cannot get updates when waitTimeout is invalid", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId, function(res) {
+            var deferred = Q.defer();
+
+            return Q.all([testClient.takePicture(sessionId, function(res) {
                 testClient.bublPoll(res.body.id, '', 'wrongtype')
-                .then( Comparison.catchExceptions(done, function(res) {
-                    Comparison.invalidParameterValueError(res);
-                }));
+                .then( expectError,
+                    (err) => {Comparison.invalidParameterValueError(err);
+                })
+                .then( deferred.resolve, deferred.reject);
             })
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscTakePictureOutput(res);
-                done();
-            }));
+            .then( (res) => Comparison.oscTakePictureOutput(res),
+            wrapError), deferred.promise]);
         });
     });
 
@@ -1307,177 +1256,132 @@ describe("RUST API TEST SUITE", function() {
 
         var sessionId;
 
-        before( function(done) {
+        before( function() {
             if (!isBublcam) {
               return this.skip();
             }
 
             this.timeout(timeoutValue);
-            testClient.startSession()
+            return testClient.startSession()
             .then( function(res) {
                 sessionId = res.body.results.sessionId;
-                done();
             });
         });
 
-        beforeEach( function(done) {
+        beforeEach( function() {
             this.timeout(timeoutValue);
-            Utility.restoreDefaultOptions(defaultOptionsFile)
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then(function() {
-                Utility.deleteAllImages()
+                return Utility.deleteAllImages()
                 .then(function() {
-                    done();
                 });
             });
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( function() {
-                done();
-            });
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function(done) {
-            testClient.bublTimelapse()
-            .then( function(res) {
-                var err = Comparison.missingParameterError(res);
-                done(err);
-            });
+        it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function() {
+            return testClient.bublTimelapse()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
 
-        it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function(done) {
-            testClient.bublTimelapse(sessionId + '0')
-            .then( function(res) {
-                var err = Comparison.invalidParameterValueError(res);
-                done(err);
-            });
+        it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function() {
+            return testClient.bublTimelapse(sessionId + '0')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when another timelapse capture procedure is already active', function(done) {
+        it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when another timelapse capture procedure is already active', function() {
             this.timeout(timeoutValue * 2);
-            var firstTimelapseDone = false;
-            var startTime = Date.now();
-            var timeSendAnother = 1000;
-            var stopTime = 5000;
-            var stopSent = false;
-            var stopErr;
-            //instantiate the first camera._bublTimelapse command
-            testClient.bublTimelapse(sessionId, function(res) {
-                if(Date.now() - startTime >= stopTime && !stopSent) {
-                    stopSent = true;
-                    testClient.bublStop(res.body.id)
-                    .then(function(res) {
-                        stopErr = Comparison.bublStopOutput(res);
-                    });
+            var expectedResults = {
+                results: {
+                    _bublFileUris: ['']
+                }
+            };
+            var commandId;
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublTimelapse(sessionId, function onUpdate (res) {
+                if (!commandId) {
+                    commandId = res.body.id;
+
+                    testClient.bublTimelapse(sessionId)
+                    .then(
+                        () => assert.fail('Should have received cameraInExclusiveUse'),
+                        (err) => Comparison.cameraInExclusiveUseError(err)
+                    )
+                    .then(() => testClient.bublStop(commandId))
+                    .then((res) => Comparison.bublStopOutput(res))
+                    .then(deferred.resolve, deferred.reject)
                 }
             })
-            .then( function(res) {
-                firstTimelapseDone = true;
-            });
-            try {
-                require('assert')(!firstTimelapseDone, 'first _bublTimelapse should not return at this point');
-            } catch(e) {
-                done(e);
-                return;
-            }
-            //instantiate the second camera._bublTimelapse command
-            setTimeout(function() {
-                testClient.bublTimelapse(sessionId, function(res) {})
-                .then( function(res) {
-                    var err = Comparison.cameraInExclusiveUseError(res);
-                    //make sure first timelapse finished before entering next test
-                    var checkTimelapseDone;
-                    checkTimelapseDone = setInterval(function() {
-                        if(firstTimelapseDone) {
-                            if(stopErr) {
-                                done(stopErr);
-                            } else {
-                                done(err);
-                            }
-                            clearInterval(checkTimelapseDone);
-                        }
-                    }, 300);
-                });
-            }, timeSendAnother);
+            .then((res) => Comparison.bublTimelapseOutput(res, expectedResults), wrapError), deferred.promise])
         });
 
-        it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when a video capture procedure is already active', function(done) {
-            this.timeout(timeoutValue);
-            var captureVideoDone = false;
-            var startTime = Date.now();
-            var timeSendAnother = 1000;
-            var stopTime = 5000;
-            var stopSent = false;
-            var stopErr;
-            //instantiate the first camera._bublTimelapse command
-            testClient.bublCaptureVideo(sessionId, function(res) {
-                if(Date.now() - startTime >= stopTime && !stopSent) {
-                    stopSent = true;
-                    testClient.bublStop(res.body.id)
-                    .then(function(res) {
-                        stopErr = Comparison.bublStopOutput(res);
-                    });
-                }
+        it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when a video capture procedure is already active', function() {
+            this.timeout(timeoutValue * 2);
+            var commandId;
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublCaptureVideo(sessionId, function onUpdate (res) {
+                if(!commandId) {
+                    commandId = res.body.id;
+                    testClient.bublTimelapse(sessionId)
+                    .then(
+                        () => assert.fail("Should have received cameraInExclusiveUseError"),
+                        (err) => Comparison.cameraInExclusiveUseError(err)
+                    )
+                    .then(() => testClient.bublStop(commandId))
+                    .then((res) => Comparison.bublStopOutput(res))
+                    .then(deferred.resolve, deferred.reject)
+                  }
             })
-            .then( function(res) {
-                captureVideoDone = true;
-            });
-            try {
-                require('assert')(!captureVideoDone, 'first _bublCaptureVideo should not return at this point');
-            } catch(e) {
-                done(e);
-                return;
-            }
-            //instantiate the camera._bublTimelapse command
-            setTimeout(function() {
-                testClient.bublTimelapse(sessionId, function(res) {})
-                .then( function(res) {
-                    var err = Comparison.cameraInExclusiveUseError(res);
-                    //make sure first timelapse finished before entering next test
-                    var checkTimelapseDone;
-                    checkTimelapseDone = setInterval(function() {
-                        if(captureVideoDone) {
-                            if(stopErr) {
-                                done(stopErr);
-                            } else {
-                                done(err);
-                            }
-                            clearInterval(checkTimelapseDone);
-                        }
-                    }, 300);
-                });
-            }, timeSendAnother);
+            .then((res) => Comparison.bublCaptureVideoOutput(res), wrapError), deferred.promise])
         });
 
-        it('Expect success. camera._bublTimelapse successfully captures with default settings', function(done) {
+        it('Expect success. camera._bublTimelapse successfully captures with default settings', function() {
             this.timeout(timeoutValue * 4);
             var stopped = false;
+            var deferred = Q.defer();
+
             //Run camera._bublTimelapse
-            testClient.bublTimelapse(sessionId, function(res) {
+            return Q.all([testClient.bublTimelapse(sessionId, function(res) {
                 if (!stopped) {
                     stopped = true;
-                    Q.delay(15000).then(function() {
-                        return testClient.bublStop(res.body.id);
-                    })
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.bublStopOutput(res);
-                    }));
+                    Q.delay(15000)
+                    .then(() => testClient.bublStop(res.body.id))
+                    .then((res) => Comparison.bublStopOutput(res))
+                    .then(deferred.resolve, deferred.reject)
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.bublTimelapseOutput(res);
-                done();
-            }));
+            .then((res) => Comparison.bublTimelapseOutput(res), wrapError), deferred.promise])
         });
 
-        it('Expect success. camera._bublTimelapse captures with specific timelapse interval and count, then finishes within the max tolerable completion time', function(done) {
+        it('Expect success. camera._bublTimelapse captures with specific timelapse interval and count, then finishes within the max tolerable completion time', function() {
             this.timeout(120000);
             var timelapseInterval = 10;
             var timelapseCount = 3;
             var assumedMaxOverhead = 15000;
             var maxAcceptableTime = (timelapseInterval * timelapseCount * 1000) + assumedMaxOverhead;
-            testClient.setOptions(
+            var expectedResults = {
+              results: {
+                  _bublFileUris: ['','','']
+              }
+            };
+            return testClient.setOptions(
                 sessionId,
                 {
                     "_bublTimelapse": {
@@ -1486,30 +1390,22 @@ describe("RUST API TEST SUITE", function() {
                     }
                 }
             )
-            .then(Comparison.catchExceptions(done, function(res) {
+            .then(function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
                 return testClient.bublTimelapse(sessionId);
-            }))
-            .then(Comparison.catchExceptions(done, function(res) {
+            })
+            .then(function onSuccess (res) {
                 //Under consistent latency, we can assume the following:
                 //  (1) timelapseRunTime ≈ finalResponseTime - initialResponseTime
                 //  (2) timeElapsed <= timelapseRunTime + pollingPeriod
                 var timeElapsed = res.timeElapsed;
-                Comparison.bublTimelapseOutput(
-                    res,
-                    {
-                        results: {
-                            fileUri: 'bublfile://dcim/100bublc/t0000001.jpg',
-                            _bublFileUris: ['','','']
-                        }
-                    }
-                );
                 if (timeElapsed > maxAcceptableTime) {
-                    done(new Error('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime));
+                    assert.fail('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime);
                 } else {
-                    done();
+                    Comparison.bublTimelapseOutput(res, expectedResults);
                 }
-            }));
+            })
+            .catch(wrapError);
         });
     });
 
@@ -1517,100 +1413,100 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/execute camera._bublCaptureVideo endpoint", function() {
         var sessionId;
 
-        before( function(done) {
+        before( function() {
             if (!isBublcam) {
                 return this.skip();
             }
 
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        afterEach( function(done) {
+        afterEach( function() {
             this.timeout(timeoutValue);
-            Utility.restoreDefaultOptions(defaultOptionsFile)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success.  camera._bublCaptureVideo successfully captures a video", function(done) {
+        it("Expect success.  camera._bublCaptureVideo successfully captures a video", function() {
             this.timeout(timeoutValue);
             var stopped = false;
-            testClient.bublCaptureVideo(sessionId, function(res) {
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublCaptureVideo(sessionId, function(res) {
                 if (!stopped) {
                     Q.delay(2000)
-                    .then( function() {
-                        return testClient.bublStop(res.body.id);
-                    })
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.bublStopOutput(res);
-                    }));
+                    .then( () => testClient.bublStop(res.body.id))
+                    .then( (res) => Comparison.bublStopOutput(res))
+                    .then(deferred.resolve, deferred.reject);
                     stopped = true;
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.bublCaptureVideoOutput(res);
                 Comparison.assertTrue(stopped);
-                done();
-            }));
+            }, wrapError), deferred.promise])
         });
 
-        it("Expect cameraInExclusiveUse Error. camera._bublCaptureVideo cannot start video capture when a video capture is already active", function(done) {
+        it("Expect cameraInExclusiveUse Error. camera._bublCaptureVideo cannot start video capture when a video capture is already active", function() {
             this.timeout(timeoutValue);
             var stopped = false;
-            testClient.bublCaptureVideo(sessionId, function(res) {
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublCaptureVideo(sessionId, function(res) {
                 var commandId = res.body.id;
                 if (!stopped) {
                     testClient.bublCaptureVideo(sessionId)
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.cameraInExclusiveUseError(res);
+                    .then( expectError,
+                        (err) => {Comparison.cameraInExclusiveUseError(err);
+                        stopped = true;
                         return testClient.bublStop(commandId);
-                    }))
-                    .then( Comparison.catchExceptions(done, function(res){
+                    })
+                    .then( function onSuccess(res){
                         Comparison.bublStopOutput(res);
-                    }));
+                    })
+                    .then(deferred.resolve, deferred.reject);
                 }
-                stopped = true;
-            })
-            .then( Comparison.catchExceptions(done, function(res) {
+
+            }).then( function onSuccess (res) {
                 Comparison.bublCaptureVideoOutput(res);
                 Comparison.assertTrue(stopped);
-                done();
-            }));
+            }, wrapError), deferred.promise])
         });
 
-        it("Expect invalidParameterValue Error. camera._bublCaptureVideo cannot capture video when incorrect sessionId type is provided", function(done) {
-            testClient.bublCaptureVideo('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera._bublCaptureVideo cannot capture video when incorrect sessionId type is provided", function() {
+            return testClient.bublCaptureVideo('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect missingParameter Error. camera._bublCaptureVideo cannot capture video when sessionId is not provided", function(done) {
-            testClient.bublCaptureVideo()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera._bublCaptureVideo cannot capture video when sessionId is not provided", function() {
+            return testClient.bublCaptureVideo()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
     });
 
@@ -1618,103 +1514,80 @@ describe("RUST API TEST SUITE", function() {
     describe("Testing /osc/commands/_bublStop endpoint", function() {
         var sessionId;
 
-        before( function(done) {
+        before( function() {
             if (!isBublcam) {
                 return this.skip();
             }
 
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        afterEach( function(done) {
+        afterEach( function() {
             this.timeout(timeoutValue);
-            Utility.restoreDefaultOptions(defaultOptionsFile)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success.  camera._bublStop successfully stops a video capture", function(done) {
+        it("Expect success.  camera._bublStop successfully stops a video capture", function() {
             this.timeout(timeoutValue);
             var stopped = false;
             var commandId;
-            testClient.bublStream(sessionId, function(res) {
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublStream(sessionId, function(res) {
                 if (!stopped) {
                     commandId = res.body.id;
                     Q.delay(1000)
                     .then( function() {
                         return testClient.bublStop(commandId);
                     })
-                    .then(Comparison.catchExceptions(done, function(res) {
+                    .then( function onSuccess (res) {
                         Comparison.bublStopOutput(res);
-                    }));
+                    })
+                    .then(deferred.resolve, deferred.reject);
                     stopped = true;
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.bublStreamOutput(res, {'id': commandId});
                 Comparison.assertTrue(stopped);
-                done();
-            }));
+            }, wrapError), deferred.promise])
         });
 
-        it("Expect invalidParameterValue Error. camera._bublStop cannot stop video capture when no video capture is currently active", function(done) {
-            this.timeout(timeoutValue);
-            var stopped = false;
-            var commandId;
-            testClient.bublStream(sessionId, function(res) {
-                if (!stopped) {
-                    commandId = res.body.id;
-                    testClient.bublStop(res.body.id)
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.bublStopOutput(res);
-                        return testClient.bublStop(res);
-                    }))
-                    .then(Comparison.catchExceptions(done, function(res) {
-                        Comparison.invalidParameterValueError(res);
-                    }));
-                    stopped = true;
-                }
-            })
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.bublStreamOutput(res, {'id': commandId});
-                Comparison.assertTrue(stopped);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera._bublStop cannot stop video capture when incorrect commandId type is provided", function() {
+            return testClient.bublStop('wrongtype')
+            .then( expectError,
+                (err) => Comparison.invalidParameterValueError(err)
+            );
         });
 
-        it("Expect invalidParameterValue Error. camera._bublStop cannot stop video capture when incorrect sessionId type is provided", function(done) {
-            testClient.bublStop('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
-        });
-
-        it("Expect missingParameter Error. camera._bublStop cannot stop video capture when sessionId is not provided", function(done) {
-            testClient.bublStop()
-            .then( function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            });
+        it("Expect missingParameter Error. camera._bublStop cannot stop video capture when commandId is not provided", function() {
+            return testClient.bublStop()
+            .then( expectError,
+                (err) => Comparison.missingParameterError(err)
+            );
         });
     });
 
@@ -1723,119 +1596,105 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var commandId;
 
-        before(function (done) {
+        before(function () {
             if (!isBublcam) {
                 return this.skip();
             }
 
-            testClient.startSession()
-            .then(Comparison.catchExceptions(done, function (res) {
+            return testClient.startSession()
+            .then(function onSuccess  (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
-            }))
-            .then(Comparison.catchExceptions(done, function (res) {
+            }).then(function onSuccess  (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        afterEach(function (done) {
+        afterEach(function () {
             this.timeout(timeoutValue);
-            Utility.restoreDefaultOptions(defaultOptionsFile)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success.  camera._bublStream successfully streams", function(done) {
-            this.timeout(timeoutValue);
-            var stopped = false;
-            testClient.bublStream(sessionId, function(res) {
-                commandId = res.body.id;
-                if (!stopped) {
-                    Q.delay(5000)
-                    .then( function() {
-                        return testClient.bublStop(res.body.id);
-                    })
-                    .then( Comparison.catchExceptions(done, function(res) {
+        it("Expect success.  camera._bublStream successfully streams", function() {
+            this.timeout(10000);
+            var commandId;
+            var deferred = Q.defer();
+
+            return Q.all([testClient.bublStream(sessionId, function onStatusUpdate (res) {
+                if (!commandId) {
+                    commandId = res.body.id;
+                    testClient.bublStop(commandId).then( function onSuccess (res) {
                         Comparison.bublStopOutput(res);
-                    }));
-                    stopped = true;
+                    })
+                    .then(deferred.resolve, deferred.reject);
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onStreamCompleted (res) {
                 Comparison.bublStreamOutput(res, {'id': commandId});
-                done();
-            }));
+            }, wrapError), deferred.promise])
         });
 
-        it("Expect success. camera._bublStream can start another stream when a stream is already active", function(done) {
+        it("Expect success. camera._bublStream can start another stream when a stream is already active", function() {
             this.timeout(timeoutValue);
-            var count = 0;
-            var stopped1 = false;
-            var stopped2 = false;
             var commandId1;
             var commandId2;
-            testClient.bublStream(sessionId, function(res) {
-                commandId1 = res.body.id;
-                if (!stopped1) {
-                    testClient.bublStream(sessionId, function(res) {
-                        if (!stopped2) {
+            var deferred1 = Q.defer();
+            var deferred2 = Q.defer();
+
+            return Q.all([testClient.bublStream(sessionId, function onStatusUpdate (res) {
+                if (!commandId1) {
+                    commandId1 = res.body.id;
+                    //Starting this stream, stops the first one
+                    testClient.bublStream(sessionId, function onStatusUpdate (res) {
+                        if (!commandId2) {
                             commandId2 = res.body.id;
                             testClient.bublStop(commandId2)
-                            .then( Comparison.catchExceptions(done, function(res) {
+                            .then( function onSuccess (res) {
                                 Comparison.bublStopOutput(res);
-                            }));
-                            stopped2 = true;
+                            })
+                            .then(deferred1.resolve, deferred1.reject);
                         }
                     })
-                    .then( Comparison.catchExceptions(done, function(res) {
+                    .then( function onSuccess (res) {
                         Comparison.bublStreamOutput(res, {'id': commandId2});
-                        count++;
-                        if (count === 2) {
-                            Comparison.assertTrue(stopped1);
-                            Comparison.assertTrue(stopped2);
-                            done();
-                        }
-                    }));
-                    stopped1 = true;
+                    })
+                    .then(deferred2.resolve, deferred2.reject);
                 }
             })
-            .then( Comparison.catchExceptions(done, function(res) {
+            .then( function onSuccess (res) {
                 Comparison.bublStreamOutput(res, {'id': commandId1});
-                count++;
-                if (count === 2) {
-                    Comparison.assertTrue(stopped1);
-                    Comparison.assertTrue(stopped2);
-                    done();
-                }
-            }));
+            }, wrapError), deferred1.promise, deferred2.promise])
+
         });
 
-        it("Expect invalidParameterValue Error. camera._bublStream cannot stream when incorrect sessionId type is provided", function(done) {
-            testClient.bublStream('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera._bublStream cannot stream when incorrect sessionId type is provided", function() {
+            return testClient.bublStream('wrongtype')
+            .then( wrapError, function onError (err) {
+                Comparison.invalidParameterValueError(err);
+            });
         });
 
-        it("Expect missingParameter Error. camera._bublStream cannot stream when sessionId is not provided", function(done) {
-            testClient.bublStream()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+        it("Expect missingParameter Error. camera._bublStream cannot stream when sessionId is not provided", function() {
+            return testClient.bublStream()
+            .then( wrapError, function onError (err) {
+                Comparison.missingParameterError(err);
+            });
         });
     });
 
@@ -1844,47 +1703,48 @@ describe("RUST API TEST SUITE", function() {
         var sessionId;
         var fileUri;
 
-        before( function(done) {
+        before( function() {
             if (!isBublcam) {
                 return this.skip();
             }
 
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-                done();
-            }));
+            }, wrapError);
         });
 
-        after( function(done) {
-            testClient.closeSession(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.oscCloseSessionOutput(res);
-                done();
-            }));
+        after( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
         });
 
-        it("Expect success. camera._bublGetImage successfully gets image when provided with a valid fileUri", function(done) {
+        it("Expect success. camera._bublGetImage successfully gets image when provided with a valid fileUri", function() {
             this.timeout(timeoutValue);
-            testClient.takePicture(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.takePicture(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.oscTakePictureOutput(res);
                 fileUri = res.body.results.fileUri;
                 return testClient.bublGetImage(fileUri);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 Comparison.oscGetImageOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it("Expect invalidParameterValue Error. camera._bublGetImage cannot get image when fileUri is incorrect", function(done) {
-            testClient.bublGetImage('wrongtype')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it("Expect invalidParameterValue Error. camera._bublGetImage cannot get image when fileUri is incorrect", function() {
+            return testClient.bublGetImage('wrongtype')
+            .then( wrapError, function onError (err) {
+                Comparison.invalidParameterValueError(err);
+            });
         });
     });
 
@@ -1896,13 +1756,12 @@ describe("RUST API TEST SUITE", function() {
             }
         });
 
-        it('Expect success. /osc/_bublUpdate endpoint successfully returned status code 200', function(done) {
+        it('Expect success. /osc/_bublUpdate endpoint successfully returned status code 200', function() {
             this.timeout(timeoutValue);
-            testClient.bublUpdate('dummy_content')
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.bublUpdate('dummy_content')
+            .then( function onSuccess (res) {
                 Comparison.bublUpdateOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
     });
 
@@ -1916,91 +1775,85 @@ describe("RUST API TEST SUITE", function() {
 
         var sessionId;
 
-        beforeEach( function(done) {
-            testClient.startSession()
-            .then( Comparison.catchExceptions(done, function(res) {
+        beforeEach( function() {
+            return testClient.startSession()
+            .then( function onSuccess (res) {
                 sessionId = res.body.results.sessionId;
                 Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
-            }))
-            .then( Comparison.catchExceptions(done, function(res) {
+            }, wrapError)
+            .then( function onSuccess (res) {
                 Comparison.oscSetOptionsOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        afterEach( function(done) {
-            Utility.checkActiveSession()
-            .then( function() {
-                testClient.closeSession(sessionId)
-                .then( Comparison.catchExceptions(done, function(res) {
-                    Comparison.oscCloseSessionOutput(res);
-                    done();
-                }));
-            }, function() {
-                done();
+        afterEach( function() {
+            return Utility.checkActiveSession()
+            .then( function(isActive) {
+                if (isActive) {
+                    return testClient.closeSession(sessionId)
+                    .then( function onSuccess (res) {
+                        Comparison.oscCloseSessionOutput(res);
+                    }, wrapError);
+                }
+            }, wrapError);
+        });
+
+        it('Expect missingParameter Error. camera._bublShutdown won\'t run unless the active session\'s sessionId is provided', function() {
+            this.timeout(timeoutValue);
+            return testClient.bublShutdown()
+            .then( wrapError, function onError (err) {
+                Comparison.missingParameterError(err);
             });
         });
 
-        it('Expect missingParameter Error. camera._bublShutdown won\'t run unless the active session\'s sessionId is provided', function(done) {
+        it('Expect invalidParameterValue Error. camera._bublShutdown cannot shutdown camera when incorrect sessionId is provided', function() {
             this.timeout(timeoutValue);
-            testClient.bublShutdown()
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.missingParameterError(res);
-                done();
-            }));
+            return testClient.bublShutdown(sessionId + '0')
+            .then( wrapError, function onError (err) {
+                Comparison.invalidParameterValueError(err);
+            });
         });
 
-        it('Expect invalidParameterValue Error. camera._bublShutdown cannot shutdown camera when incorrect sessionId is provided', function(done) {
+        it('Expect invalidParameterValue Error. camera._bublShutdown cannot shutdown camera when incorrect shutdownDelay value type is provided', function() {
             this.timeout(timeoutValue);
-            testClient.bublShutdown(sessionId + '0')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+            return testClient.bublShutdown(sessionId, '...')
+            .then( wrapError,
+            function onError (err) {
+                Comparison.invalidParameterValueError(err);
+            });
         });
 
-        it('Expect invalidParameterValue Error. camera._bublShutdown cannot shutdown camera when incorrect shutdownDelay value type is provided', function(done) {
-            this.timeout(timeoutValue);
-            testClient.bublShutdown(sessionId, '...')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
-        });
-
-        it('Expect success. camera._bublShutdown successfully returned', function(done) {
+        it('Expect success. camera._bublShutdown successfully returned', function() {
             if (!isMock) {
               //FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
-              testClient.closeSession(sessionId);
-              return this.skip();
+              return testClient.closeSession(sessionId)
+              .then( () => this.skip(), wrapError)
             }
 
             this.timeout(timeoutValue);
-            testClient.bublShutdown(sessionId)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.bublShutdown(sessionId)
+            .then( function onSuccess (res) {
                 Comparison.bublShutdownOutput(res);
-                done();
-            }));
+            }, wrapError);
         });
 
-        it('Expect success. camera._bublShutdown successfully returned when specific shutdownDelay is provided and returned at appropriate time', function(done) {
+        it('Expect success. camera._bublShutdown successfully returned when specific shutdownDelay is provided and returned at appropriate time', function() {
             if (!isMock) {
               //FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
-              testClient.closeSession(sessionId);
-              return this.skip();
+              return testClient.closeSession(sessionId)
+              .then( () => this.skip(), wrapError)
             }
 
             this.timeout(timeoutValue);
             var expectedShutdownDelay = 3000;
             var startTime = Date.now();
-            testClient.bublShutdown(sessionId, expectedShutdownDelay)
-            .then( Comparison.catchExceptions(done, function(res) {
+            return testClient.bublShutdown(sessionId, expectedShutdownDelay)
+            .then( function onSuccess (res) {
                 Comparison.bublShutdownOutput(res);
                 var endTime = Date.now();
                 Comparison.shutdownDelay(startTime, endTime, expectedShutdownDelay);
-                done();
-            }));
+            }, wrapError);
         });
     });
 });
