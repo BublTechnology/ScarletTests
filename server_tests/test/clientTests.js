@@ -223,7 +223,7 @@ describe("RUST API TEST SUITE", function() {
                 done();
             }));
         });
-            
+
         it("Expect cameraInExclusiveUse Error. camera.startSession cannot start session while another session is already running", function(done) {
             testClient.startSession()
             .then( Comparison.catchExceptions(done, function(res) {
@@ -301,10 +301,10 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect invalidParameterValue Error. camera.updateSession cannot update session when sessionId is an incorrect type", function(done) {
-            testClient.updateSession('wrongtype')
+        it("Expect success. camera.updateSession cannot updates sessionId even if it's incorrect", function(done) {
+            testClient.updateSession('wrongtype', 25)
             .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
+                Comparison.oscSessionOpOutput(res, {'sessionId': 'wrongtype', timeout: 25});
                 done();
             }));
         });
@@ -365,10 +365,10 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect invalidParameterValue Error. camera.closeSession cannot close session when sessionId is an incorrect type", function(done) {
+        it("Expect invalidParameterValue Error. camera.closeSession pretends to close session even if sessionId is an incorrect type", function(done) {
             testClient.closeSession('wrongtype')
             .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
+                Comparison.oscCloseSessionOutput(res);
                 done();
             }));
         });
@@ -441,10 +441,11 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect invalidParameterValue Error. camera.takePicture cannot take picture when incorrect sessionId type is provided", function(done) {
+        it("Expect success. camera.takePicture takes a picture even when incorrect sessionId type is provided", function(done) {
+            this.timeout(timeoutValue);
             testClient.takePicture('wrongtype')
             .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
+                Comparison.oscTakePictureOutput(res);
                 done();
             }));
         });
@@ -501,12 +502,12 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect success. camera.listImages returns one entry wihtout thumbnail when provided with entryCount = 1 and includeThumb = false when server has 1 image", function(done) {
+        it("Expect success. camera.listImages returns one entry without thumbnail when provided with entryCount = 1 and includeThumb = false when server has 1 image", function(done) {
             this.timeout(timeoutValue);
             testClient.takePicture(sessionId)
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
+                return testClient.listImages(1, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, false, false, {entries: [{'one': 'one'}], totalEntries: 1});
@@ -523,7 +524,7 @@ describe("RUST API TEST SUITE", function() {
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
+                return testClient.listImages(1, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
@@ -540,7 +541,7 @@ describe("RUST API TEST SUITE", function() {
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(1, false); 
+                return testClient.listImages(1, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
@@ -561,7 +562,7 @@ describe("RUST API TEST SUITE", function() {
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                return testClient.listImages(2, false); 
+                return testClient.listImages(2, false);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}, {'two': 'two'}], totalEntries: 2});
@@ -704,7 +705,7 @@ describe("RUST API TEST SUITE", function() {
             testClient.takePicture(sessionId)
             .then( Comparison.catchExceptions(done, function(res) {
                 Comparison.oscTakePictureOutput(res);
-                fileUri = res.body.results.fileUri; 
+                fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri, 100);
             }))
             .then( Comparison.catchExceptions(done, function(res) {
@@ -1249,7 +1250,7 @@ describe("RUST API TEST SUITE", function() {
                 Comparison.bublCaptureVideoOutput(res);
                 done();
             }));
-        });           
+        });
 
         it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no commandId is provided", function(done) {
             testClient.bublPoll(undefined, '')
@@ -1338,6 +1339,27 @@ describe("RUST API TEST SUITE", function() {
             });
         });
 
+        var _bublTimelapseSucceeds = function (done, sessionId, context) {
+          context.timeout(timeoutValue * 4);
+          var stopped = false;
+          //Run camera._bublTimelapse
+          testClient.bublTimelapse(sessionId, function(res) {
+              if (!stopped) {
+                  stopped = true;
+                  Q.delay(15000).then(function() {
+                      return testClient.bublStop(res.body.id);
+                  })
+                  .then( Comparison.catchExceptions(done, function(res) {
+                      Comparison.bublStopOutput(res);
+                  }));
+              }
+          })
+          .then( Comparison.catchExceptions(done, function(res) {
+              Comparison.bublTimelapseOutput(res);
+              done();
+          }));
+        }
+
         it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function(done) {
             testClient.bublTimelapse()
             .then( function(res) {
@@ -1346,12 +1368,8 @@ describe("RUST API TEST SUITE", function() {
             });
         });
 
-        it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function(done) {
-            testClient.bublTimelapse(sessionId + '0')
-            .then( function(res) {
-                var err = Comparison.invalidParameterValueError(res);
-                done(err);
-            });
+        it('Expect success camera._bublTimelapse allows invalid sessionId', function(done) {
+            _bublTimelapseSucceeds(done, sessionId + '0', this);
         });
 
         it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when another timelapse capture procedure is already active', function(done) {
@@ -1451,24 +1469,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it('Expect success. camera._bublTimelapse successfully captures with default settings', function(done) {
-            this.timeout(timeoutValue * 4);
-            var stopped = false;
-            //Run camera._bublTimelapse
-            testClient.bublTimelapse(sessionId, function(res) {
-                if (!stopped) {
-                    stopped = true;
-                    Q.delay(15000).then(function() {
-                        return testClient.bublStop(res.body.id);
-                    })
-                    .then( Comparison.catchExceptions(done, function(res) {
-                        Comparison.bublStopOutput(res);
-                    }));
-                }
-            })
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.bublTimelapseOutput(res);
-                done();
-            }));
+            _bublTimelapseSucceeds(done, sessionId, this);
         });
 
         it('Expect success. camera._bublTimelapse captures with specific timelapse interval and count, then finishes within the max tolerable completion time', function(done) {
@@ -1598,9 +1599,23 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it("Expect invalidParameterValue Error. camera._bublCaptureVideo cannot capture video when incorrect sessionId type is provided", function(done) {
-            testClient.bublCaptureVideo('wrongtype')
+            this.timeout(timeoutValue);
+            var stopped = false;
+            testClient.bublCaptureVideo('wrongtype', function(res) {
+                if (!stopped) {
+                    Q.delay(2000)
+                    .then( function() {
+                        return testClient.bublStop(res.body.id);
+                    })
+                    .then( Comparison.catchExceptions(done, function(res) {
+                        Comparison.bublStopOutput(res);
+                    }));
+                    stopped = true;
+                }
+            })
             .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
+                Comparison.bublCaptureVideoOutput(res);
+                Comparison.assertTrue(stopped);
                 done();
             }));
         });
@@ -1822,10 +1837,24 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it("Expect invalidParameterValue Error. camera._bublStream cannot stream when incorrect sessionId type is provided", function(done) {
-            testClient.bublStream('wrongtype')
+        it("Expect success. camera._bublStream streams even when an incorrect sessionId type is provided", function(done) {
+            this.timeout(timeoutValue);
+            var stopped = false;
+            testClient.bublStream('wrongtype', function(res) {
+                commandId = res.body.id;
+                if (!stopped) {
+                    Q.delay(5000)
+                    .then( function() {
+                        return testClient.bublStop(res.body.id);
+                    })
+                    .then( Comparison.catchExceptions(done, function(res) {
+                        Comparison.bublStopOutput(res);
+                    }));
+                    stopped = true;
+                }
+            })
             .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
+                Comparison.bublStreamOutput(res, {'id': commandId});
                 done();
             }));
         });
@@ -1951,13 +1980,13 @@ describe("RUST API TEST SUITE", function() {
             }));
         });
 
-        it('Expect invalidParameterValue Error. camera._bublShutdown cannot shutdown camera when incorrect sessionId is provided', function(done) {
-            this.timeout(timeoutValue);
-            testClient.bublShutdown(sessionId + '0')
-            .then( Comparison.catchExceptions(done, function(res) {
-                Comparison.invalidParameterValueError(res);
-                done();
-            }));
+        it('Expect success. camera._bublShutdown will shutdown camera even when incorrect sessionId is provided', function(done) {
+          this.timeout(timeoutValue);
+          testClient.bublShutdown(sessionId + '0')
+          .then( Comparison.catchExceptions(done, function(res) {
+              Comparison.bublShutdownOutput(res);
+              done();
+          }));
         });
 
         it('Expect invalidParameterValue Error. camera._bublShutdown cannot shutdown camera when incorrect shutdownDelay value type is provided', function(done) {
