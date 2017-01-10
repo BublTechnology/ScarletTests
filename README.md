@@ -4,8 +4,9 @@ These unit tests document our current support of the Open Spherical Camera API.
 They are run and pass against our current implementation of the API, and
 describe the current Bubl vendor extensions to the API.
 
-**NOTE:** this is currently unreleased, you must use the beta firmware
-(linked below) in order to work with the API.
+**NOTE:** Upgrade your mobile app to the latest release. This contains the
+latest version of the camera firmware and will allow you to update that to the
+latest supported release.
 
 ## Client UI
 
@@ -31,20 +32,27 @@ various functionality. To run the tests:
 
 ## Configuration
 
-Both projects use the `OscClient.js` file to connect to the camera. You will
-have to adjust its default IP and port to match the camera on your network.
-It will likely be `192.168.0.100:80` unless you're using the USB networking
-method described on the beta firmware page.
+The tests use the environment variables `SCARLET_TEST_HOST` and
+`SCARLET_TEST_PORT` to determine how to connect to the camera. You will likely
+need to specify these to match the camera on your network, like so:
 
-# Beta Firmware
+    $ SCARLET_TEST_HOST=192.168.0.100 SCARLET_TEST_PORT=80 `npm bin`/mocha
 
-The latest beta firmware can be tested on your own bublcam! It exposes the
-OSC API, see our beta download page for more information:
+### Model Variants
 
-http://bubltechnology.github.io/ScarletTests/
+The `SCARLET_TEST_MODEL` environment variable may be used to specify the API
+variant and model to be tested. Valid values are:
 
+- `osc` to test against an OSC-compliant API.
+- `bubl1` for the Bublcam, testing our exclusive functionality extensions.
+
+### Wi-Fi
+
+`SCARLET_TEST_WIFI=1` may be used to indicate that the test is being performed
+over Wi-Fi, and therefore should not execute tests that may interrupt
+connectivity such as changing the access point password.
 
 # Licensing Information
 
 This source release is licensed under the MIT license, which can be found
-[here](https://github.com/BublTechnology/ScarletTests/blob/master/COPYING).
+[here](COPYING).
