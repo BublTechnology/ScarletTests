@@ -6,6 +6,11 @@
 // except according to those terms.
 
 'use strict';
+/*global window */
+/*global document */
+/*global Blob */
+/*global URL */
+/*global FileReader */
 
 var clientUiApp = angular.module('clientUi');
 
@@ -28,7 +33,7 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
 
     function Camera($scope) {
         scope = $scope; // this is needed for updating the console
-        scope._gridHelper = function(obj,idx){return !(inx%2);};
+        //scope._gridHelper = function(obj,idx){return !(inx%2);};
 
         // get /osc/info
         this.getInfo = new oscCommand(
@@ -526,7 +531,7 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
                         parsedOption[option.name] = trueValue;
 
                     } else if(angular.isString(option.value)) {
-                        if(option.value == '') { continue; }
+                        if(option.value === '') { continue; }
                         parsedOption[option.name] = option.value;
                     }
                 }
@@ -767,7 +772,37 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
             }
         );
 
-    };
+        // _bublLogs wrapper
+        this._bublLogs = new oscCommand(
+            'camera._bublLogs',
+            [],
+            function() {
+                _pushCommandDetails(this.name, this.parameters);
+                testClient.bublLogs()
+                .then(function(data) {
+                    if(data.body.error !== undefined) { _pushError(data.body); return; }
+                    _pushResult(data.body,
+                        'result:' +
+                        '\n\tcommandId : ' + data.body.id +
+                        '\n\texporting logs in progress ...');
+                    var commandId = data.body.id;
+                    var pollLogsResult;
+                    pollLogsResult = window.setInterval( function() {
+                        testClient.commandsStatus(commandId)
+                        .then(function(data) {
+                            if(data.body.error !== undefined) { _pushError(data.body); window.clearInterval(pollLogsResult); }
+                            if(data.body.state === 'done') {
+                                _pushResult({name: 'camera._bublLogs [commandID : ' + commandId + ']'},
+                                    '\n\texport logs completed.');
+                                window.clearInterval(pollLogsResult);
+                            }
+                            _scrollToBottom();
+                        });
+                    }, 500);
+                });
+            }
+        );
+    }
 
     // Helper functions below
     var _pushCommandDetails = function(name, parameters) {
@@ -792,12 +827,12 @@ clientUiApp.factory('Camera', function($timeout, ngDialog, OscClient) {
         $timeout(function() {
             $timeout(function() {
                 oscConsole.scrollTop = oscConsole.scrollHeight;
-            })
+            });
         });
     };
     var _parseCurrentTime = function() {
         var currentTime = new Date();
-        var _padZero = function(number) { return (number<10)?('0'+number):(''+number) };
+        var _padZero = function(number) { return (number<10)?('0'+number):(''+number); };
         var hh = _padZero(currentTime.getHours());
         var mm = _padZero(currentTime.getMinutes());
         var ss = _padZero(currentTime.getSeconds());

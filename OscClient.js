@@ -6,6 +6,9 @@
 // except according to those terms.
 
 'use strict';
+/*global require */
+/*global Uint8Array */
+/*global window */
 
 var request;
 var Poll;
@@ -209,6 +212,11 @@ var Q;
         // OSC COMMANDS BUBL SHUTDOWN
         this.bublShutdown = function(sessionId, shutdownDelay) {
             return commandsExecute('camera._bublShutdown', {'sessionId':sessionId, 'shutdownDelay':shutdownDelay});
+        };
+
+        // OSC COMMANDS BUBL LOGS
+        this.bublLogs = function(statusCallback) {
+            return commandsExecute('camera._bublLogs', undefined, statusCallback);
         };
     };
     if(isAngular) {

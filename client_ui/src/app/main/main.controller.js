@@ -6,11 +6,9 @@
 // except according to those terms.
 
 'use strict';
+/*global alert */
 /*global document */
 /*global window */
-/*global Blob */
-/*global URL */
-/*global OscClient */
 
 angular.module('clientUi')
   .controller('MainCtrl', function ($scope, $http, $timeout, ngDialog, OscClient, Camera) {
@@ -86,6 +84,7 @@ angular.module('clientUi')
       'camera._bublTimelapse',
       'camera._bublCaptureVideo',
       'camera._bublStream',
+      'camera._bublLogs',
       'camera._bublShutdown'
     ];
 
