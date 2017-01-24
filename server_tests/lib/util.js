@@ -50,16 +50,10 @@ var Util = function(client) {
      * checks to see if there is an active session on the camera
     */
     this.checkActiveSession = function() {
-        var deferred = Q.defer();
-        testClient.getState()
+        return testClient.getState()
         .then( function(res) {
-            if (res.body.state.sessionId !== '') {
-                deferred.resolve();
-            } else {
-                deferred.reject();
-            }
+            return res.body.state.sessionId !== '';
         });
-        return deferred.promise;
     };
 
     /* deleteAllImages():

@@ -27,8 +27,11 @@ These unit tests can be run against the API server, and test the camera's
 various functionality. To run the tests:
 
     $ npm install
-    $ `npm bin`/mocha
+    $ npm test
 
+To run pre-configured tests for the Bublcam over Wi-Fi, you can use:
+
+    $ npm run test-bubl
 
 ## Configuration
 

@@ -248,7 +248,7 @@ factory.define('bublStreamResults', function() {
 
 /* bublStop */
 factory.define('bublStopResults', function() {
-    this.body = '';
+    this.body = {};
 });
 
 /* bublPoll */
@@ -429,6 +429,8 @@ var Compare = function() {
     this.oscTakeHdrPictureOutput = function(results, overrideExpectation) {
         var expected = factory.create('oscTakeHdrPictureResults', overrideExpectation);
         verifyHttpStatus200(results);
+        assert.isObject(results.body.results);
+        assert.isArray(results.body.results._bublFileUris);
         assert.equal(results.body.results._bublFileUris.length, 3);
         for(var i = 0; i < results.body.results._bublFileUris.length; i++) {
             assert.notEqual(results.body.results._bublFileUris[i], expected.emptyString);
@@ -540,9 +542,8 @@ var Compare = function() {
      * verifies if bublStop fields match
      */
     this.bublStopOutput = function(results, overrideExpectation) {
-        var expected = factory.create('bublStopResults', overrideExpectation);
         verifyHttpStatus200(results);
-        assert.equal(results.body, expected.body);
+        verifyEmptyBody(results);
     };
 
     /* bublTimelapseOutput():
@@ -617,7 +618,7 @@ var Compare = function() {
     this.invalidParameterValueError = function(results, overrideExpectation) {
         var expected = factory.create('invalidParameterValueError', overrideExpectation);
         verifyHttpStatus400(results);
-        assert.equal(results.body.error.code, expected.code);
+        assert.equal(results.error.response.body.error.code, expected.code);
     };
 
     /* cameraInExclusiveUseError():
@@ -626,7 +627,7 @@ var Compare = function() {
     this.cameraInExclusiveUseError = function(results, overrideExpectation) {
         var expected = factory.create('cameraInExclusiveUseError', overrideExpectation);
         verifyHttpStatus400(results);
-        assert.equal(results.body.error.code, expected.code);
+        assert.equal(results.error.response.body.error.code, expected.code);
     };
 
     /* missingParameterError():
@@ -635,7 +636,7 @@ var Compare = function() {
     this.missingParameterError = function(results, overrideExpectation) {
         var expected = factory.create('missingParameterError', overrideExpectation);
         verifyHttpStatus400(results);
-        assert.equal(results.body.error.code, expected.code);
+        assert.equal(results.error.response.body.error.code, expected.code);
     };
 
     /* pageNotFoundError():
@@ -660,8 +661,8 @@ var Compare = function() {
     };
 
     var verifyHttpStatus400 = function(results) {
-        assert.equal(results.error, undefined);
-        assert.equal(results.response.statusCode, 400);
+        assert.equal(results.error.response.body.state, "error");
+        assert.equal(results.error.response.statusCode, 400);
     };
 
     var verifyHttpStatus404 = function(results) {
@@ -680,6 +681,15 @@ var Compare = function() {
     this.verifyStatus200 = function(results) {
         verifyHttpStatus200(results);
     };
+
+    var isEmptyObject = function (obj) {
+        return Object.keys(obj).length === 0 && obj.constructor === Object;
+    };
+
+    var verifyEmptyBody = function (results) {
+        assert(isEmptyObject(results.body), 'Body is not empty');
+    };
+
 
     this.catchExceptions = function(done, func) {
         return function(res) {
