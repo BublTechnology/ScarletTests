@@ -9,7 +9,8 @@
 
 var OscClient = require('osc-client').BublOscClient;
 var Compare = require('../lib/compare.js');
-var Q = require('../node_modules/q');
+var Schema = require('../lib/schema.js');
+var Q = require('q');
 var Util = require('../lib/util');
 var chai = require('chai');
 var assert = chai.assert;
@@ -32,6 +33,7 @@ describe("RUST API TEST SUITE", function() {
     var isMock = testModel === camModels.BUBLMOCK;
     var testViaWifi = process.env.SCARLET_TEST_WIFI === '1';
     var timeoutValue = 30000;
+    var schema = new Schema({ bubl: isBublcam, apiLevel: 1});
     function wrapError(err) {
         if (!(err instanceof Error)) {
             if (err.error && err.error.response) {
@@ -54,7 +56,7 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. /osc/info returns correct info", function() {
             return testClient.getInfo()
             .then( function onSuccess (res) {
-                Comparison.oscInfoOutput(res);
+                schema.validate(schema.oscInfo(), res.body);
             }, wrapError);
         });
     });
@@ -66,15 +68,16 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
         it("Expect success. /osc/state endpoint successfully returns state when state has not changed", function() {
             return testClient.getState()
             .then( function onSuccess (res) {
-                Comparison.oscStateOutput(res, {'sessionId' : sessionId});
+                schema.validate(schema.oscState(), res.body);
+                assert.equal(res.body.state.sessionId, sessionId);
             }, wrapError);
         });
 
@@ -83,16 +86,20 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.getState()
             .then( function onSuccess (res) {
-                Comparison.oscStateOutput(res, {'sessionId' : sessionId});
+                schema.validate(schema.oscState(), res.body);
+                assert.equal(res.body.state.sessionId, sessionId);
                 oldFingerprint = res.body.fingerprint;
                 return testClient.closeSession(sessionId);
             })
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandCloseSession), res.body);
                 Comparison.oscCloseSessionOutput(res);
                 return testClient.getState();
             })
             .then( function onSuccess (res) {
-                Comparison.oscStateOutput(res, {'sessionId': '', 'fingerprint': oldFingerprint});
+                schema.validate(schema.oscState(), res.body);
+                assert.notEqual(res.body.state.fingerprint, oldFingerprint);
+                assert.notEqual(res.body.state.sessionId, sessionId);
             })
             .catch(wrapError)
         });
@@ -106,8 +113,8 @@ describe("RUST API TEST SUITE", function() {
         beforeEach( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -117,7 +124,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        schema.validate(schema.oscDone(schema.names.commandCloseSession), res.body);
                     }, wrapError);
                 }
             }, wrapError);
@@ -126,12 +133,14 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed", function() {
             return testClient.getState()
             .then( function onSuccess (res) {
-                Comparison.oscStateOutput(res, {'sessionId': sessionId});
+                schema.validate(schema.oscState(), res.body);
+                assert.equal(res.body.state.sessionId, sessionId);
                 oldFingerprint = res.body.fingerprint;
                 return testClient.checkForUpdates(oldFingerprint);
             })
             .then( function onSuccess (res) {
-                Comparison.oscCheckForUpdatesOutput(res, false, {stateFingerprint: oldFingerprint});
+                schema.validate(schema.oscCheckForUpdates(), res.body);
+                assert.equal(res.body.stateFingerprint, oldFingerprint);
             })
             .catch(wrapError);
         });
@@ -139,16 +148,18 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has changed", function() {
             return testClient.getState()
             .then( function onSuccess (res) {
-                Comparison.oscStateOutput(res, {'sessionId': sessionId});
+                schema.validate(schema.oscState(), res.body);
+                assert.equal(res.body.state.sessionId, sessionId);
                 oldFingerprint = res.body.fingerprint;
                 return testClient.closeSession(sessionId);
             })
             .then( function onSuccess (res) {
-                Comparison.oscCloseSessionOutput(res);
+                schema.validate(schema.oscDone(schema.names.commandCloseSession), res.body);
                 return testClient.checkForUpdates(oldFingerprint);
             })
             .then( function onSuccess (res) {
-                Comparison.oscCheckForUpdatesOutput(res, true, {stateFingerprint: oldFingerprint});
+                schema.validate(schema.oscCheckForUpdates(), res.body);
+                assert.notEqual(res.body.stateFingerprint, oldFingerprint);
             })
             .catch(wrapError);
         });
@@ -157,12 +168,14 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.getState()
             .then( function onSuccess (res) {
-                Comparison.oscStateOutput(res, {'sessionId': sessionId});
+                schema.validate(schema.oscState(), res.body);
+                assert.equal(res.body.state.sessionId, sessionId);
                 oldFingerprint = res.body.fingerprint;
                 return testClient.checkForUpdates(oldFingerprint, 5);
             })
             .then( function onSuccess (res) {
-                Comparison.oscCheckForUpdatesOutput(res, false, {stateFingerprint: oldFingerprint});
+                schema.validate(schema.oscCheckForUpdates(), res.body);
+                assert.equal(res.body.stateFingerprint, oldFingerprint);
             })
             .catch(wrapError);
         });
@@ -170,7 +183,7 @@ describe("RUST API TEST SUITE", function() {
         it("Expect missingParameter Error. /osc/checkForUpdates endpoint cannot get updates when no fingerprint is provided", function() {
             return testClient.checkForUpdates()
             .then(expectError,
-                (res) => Comparison.missingParameterError(res)
+                (res) => schema.validate(schema.oscError(schema.names.checkForUpdates, schema.errors.missingParameter), res.error.response.body)
             )
         });
     });
@@ -186,7 +199,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        schema.validate(schema.oscDone(schema.names.commandCloseSession), res.body);
                     }, wrapError);
                 }
             }, wrapError);
@@ -195,16 +208,17 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. camera.startSession successfully starts a session", function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
         it("Expect success.  camera.startSession successfully starts a session when a timeout value of 30 is specified", function() {
             return testClient.startSession(30)
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId, 'timeout': 30});
+                assert.equal(res.body.results.timeout, 30);
             }, wrapError);
         });
 
@@ -212,16 +226,17 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.startSession(5)
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId, 'timeout': 5});
+                assert.equal(res.body.results.timeout, 5);
                 return Q.delay(8000);
             })
             .then( function() {
                 return testClient.startSession();
             })
             .then( function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             })
             .catch(wrapError);
         });
@@ -230,19 +245,19 @@ describe("RUST API TEST SUITE", function() {
             return testClient.startSession()
             .then(
               function onSuccess (res) {
+                schema.validate(schema.oscDone(schema.names.commandStartSession), res.body);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return testClient.startSession();
               },wrapError)
               .then(expectError,
-                  (err) => Comparison.cameraInExclusiveUseError(err)
+                  (err) => schema.validate(schema.oscError(schema.names.commandStartSession, schema.errors.cameraInExclusiveUse), err.error.response.body)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.startSession cannot start session when incorrect timeout type is provided", function() {
             return testClient.startSession('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => schema.validate(schema.oscError(schema.names.commandStartSession, schema.errors.invalidParameterError), err.error.response.body)
             );
         });
     });
