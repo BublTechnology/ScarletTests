@@ -7,12 +7,16 @@
 
 "use strict";
 
-let jsen = require('jsen');
-
 let Schema = function(options_) {
     let options = options_ || {};
     this.apiLevel = options.apiLevel || 1;
     this.bubl = options.bubl || false;
+
+    this.states = {
+        done: "done",
+        inProgress: "inProgress",
+        error: "error",
+    };
 
     this.names = {
         info: "camera.info",
@@ -54,7 +58,7 @@ let Schema = function(options_) {
         invalidParameterValue: "invalidParameterValue",
     };
 
-    this._info = {
+    this.info = {
         type: "object",
         additionalProperties: false,
         patternProperties: {
@@ -861,7 +865,7 @@ let Schema = function(options_) {
         [this.names.commandBublCaptureVideo]: inProgressCapture,
     };
 
-    this._commandsStatus = {
+    this.status = {
         type: "object",
         additionalProperties: false,
         patternProperties: {
@@ -871,7 +875,7 @@ let Schema = function(options_) {
         properties: {
             state: {
                 type: "string",
-                enum: ["done", "inProgress", "error"],
+                enum: [this.states.done, this.states.inProgress, this.states.error],
             },
             id: {
                 type: "string",
@@ -926,7 +930,7 @@ let Schema = function(options_) {
                     {
                         properties: {
                             state: {
-                                enum: ["done"],
+                                enum: [this.states.done],
                             },
                         },
                         not: {
@@ -941,7 +945,7 @@ let Schema = function(options_) {
                         required: ["progress"],
                         properties: {
                             state: {
-                                enum: ["inProgress"],
+                                enum: [this.states.inProgress],
                             },
                         },
                         not: {
@@ -956,7 +960,7 @@ let Schema = function(options_) {
                         required: ["error"],
                         properties: {
                             state: {
-                                enum: ["error"],
+                                enum: [this.states.error],
                             },
                         },
                     },
@@ -1025,12 +1029,12 @@ let Schema = function(options_) {
     for (let name in commandResults) {
         let results = commandResults[name];
 
-        this._commandsStatus.allOf[0].oneOf.push(
+        this.status.allOf[0].oneOf.push(
             {
                 required: (results.properties && Object.keys(results.properties).length > 0) ? ["results"] : undefined,
                 properties: {
                     state: {
-                        enum: ["done"],
+                        enum: [this.states.done],
                     },
                     name: {
                         enum: [name],
@@ -1039,19 +1043,19 @@ let Schema = function(options_) {
                 },
             }
         );
-        this._commandsStatus.allOf[0].oneOf[0].not.properties.name.enum.push(name);
+        this.status.allOf[0].oneOf[0].not.properties.name.enum.push(name);
     }
 
     let commandInProgress = this.apiLevel == 1 ? this._commandInProgress1 : this._commandInProgress2;
     for (let name in commandInProgress) {
         let progress = commandInProgress[name];
 
-        this._commandsStatus.allOf[0].oneOf.push(
+        this.status.allOf[0].oneOf.push(
             {
                 required: ["progress"],
                 properties: {
                     state: {
-                        enum: ["inProgress"],
+                        enum: [this.states.inProgress],
                     },
                     name: {
                         enum: [name],
@@ -1060,10 +1064,10 @@ let Schema = function(options_) {
                 },
             }
         );
-        this._commandsStatus.allOf[0].oneOf[1].not.properties.name.enum.push(name);
+        this.status.allOf[0].oneOf[1].not.properties.name.enum.push(name);
     }
 
-    this._state = {
+    this.state = {
         type: "object",
         additionalProperties: false,
         patternProperties: {
@@ -1104,7 +1108,7 @@ let Schema = function(options_) {
                     },
                     _bublCommands: {
                         type: "array",
-                        items: this._commandsStatus,
+                        items: this.status,
                     },
                     _bublCharging: {
                         type: "boolean",
@@ -1122,7 +1126,7 @@ let Schema = function(options_) {
         },
     };
 
-    this._checkForUpdates = {
+    this.checkForUpdates = {
         type: "object",
         additionalProperties: false,
         patternProperties: {
@@ -1138,81 +1142,6 @@ let Schema = function(options_) {
                 minimum: 0,
             },
         },
-    };
-
-    this.oscInProgress = function(name) {
-        return {
-            properties: {
-                state: {
-                    enum: ["inProgress"],
-                },
-                name: {
-                    enum: [name],
-                },
-            },
-            allOf: [this._commandsStatus],
-        };
-    };
-
-    this.oscDone = function(name) {
-        return {
-            properties: {
-                state: {
-                    enum: ["done"],
-                },
-                name: {
-                    enum: [name],
-                },
-            },
-            allOf: [this._commandsStatus],
-        };
-    };
-
-    this.oscError = function(name, error) {
-        return {
-            required: ["error"],
-            properties: {
-                state: {
-                    enum: ["error"],
-                },
-                name: {
-                    enum: [name],
-                },
-                error: error ? {
-                    properties: {
-                        code: {
-                            enum: [error],
-                        },
-                    },
-                } : undefined,
-            },
-            allOf: [this._commandsStatus],
-        };
-    };
-
-    this.oscInfo = function() {
-        return this._info;
-    }
-
-    this.oscState = function() {
-        return this._state;
-    }
-
-    this.oscCheckForUpdates = function() {
-        return this._checkForUpdates;
-    }
-
-    this._validator = jsen({ $ref: "http://json-schema.org/draft-04/schema#" });
-
-    this.validate = function(schema, data) {
-        if (!this._validator(schema)) {
-            throw new Error("JSON schema failed to validate: " + JSON.stringify(this._validator.errors, null, 2));
-        }
-
-        let validator = jsen(schema);
-        if (!validator(data)) {
-            throw new Error("JSON validation failed: " + JSON.stringify(validator.errors, null, 2));
-        }
     };
 };
 
