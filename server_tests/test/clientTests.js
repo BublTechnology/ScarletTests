@@ -478,7 +478,12 @@ describe("RUST API TEST SUITE", function() {
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandListImages);
-                assert.equal(res.body.results.entries.length, 1)
+                assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 1);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.property(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -492,8 +497,12 @@ describe("RUST API TEST SUITE", function() {
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandListImages);
-                assert.notProperty(results.body.results.entries[i], 'thumbnail')
                 assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 1);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -511,9 +520,12 @@ describe("RUST API TEST SUITE", function() {
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandListImages);
-                assert.notEqual(res.body.results.continuationToken, undefined);
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
+                assert.property(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -531,16 +543,22 @@ describe("RUST API TEST SUITE", function() {
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandListImages);
-                assert.notEqual(res.body.results.continuationToken, undefined);
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
                 return testClient.listImages(1, false, undefined, res.body.results.continuationToken);
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandListImages);
-                assert.equal(res.body.results.continuationToken, undefined);
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
+                assert.property(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -558,9 +576,12 @@ describe("RUST API TEST SUITE", function() {
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandListImages);
-                assert.equal(res.body.results.continuationToken, undefined);
                 assert.equal(res.body.results.entries.length, 2);
                 assert.equal(res.body.results.totalEntries, 2);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -571,6 +592,10 @@ describe("RUST API TEST SUITE", function() {
                 validate.done(res.body, schema.names.commandListImages);
                 assert.equal(res.body.results.entries.length, 0);
                 assert.equal(res.body.results.totalEntries, 0);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             }, wrapError);
         });
 
@@ -840,8 +865,8 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
             }, wrapError);
         });
 
@@ -1004,6 +1029,10 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value", function() {
+            if (!isbublcam) {
+                return this.skip();
+            }
+
             return testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00'})
             .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
                 wrapError);
@@ -1047,8 +1076,8 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
             }, wrapError);
         });
 
@@ -1101,8 +1130,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
             }, wrapError);
         });
 
@@ -1414,7 +1443,7 @@ describe("RUST API TEST SUITE", function() {
                     assert.fail('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime);
                 } else {
                     validate.done(res.body, schema.names.commandBublTimelapse);
-                    assert.notEqual(res.body.results.fileUri, expectedResults);
+                    assert.notEqual(res.body.results.fileUri.length, timelapseCount);
                 }
             })
             .catch(wrapError);
@@ -1432,8 +1461,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }, wrapError)
             .then( function onSuccess (res) {
@@ -1533,8 +1562,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }, wrapError)
             .then( function onSuccess (res) {
@@ -1616,8 +1645,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then(function onSuccess  (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }).then(function onSuccess  (res) {
                 validate.done(res.body, schema.names.commandSetOptions)
@@ -1726,8 +1755,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
             }, wrapError);
         });
 
@@ -1794,8 +1823,8 @@ describe("RUST API TEST SUITE", function() {
         beforeEach( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
-                sessionId = res.body.results.sessionId;
                 validate.done(res.body, schema.names.commandStartSession);
+                sessionId = res.body.results.sessionId;
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }, wrapError)
             .then( function onSuccess (res) {
@@ -1868,7 +1897,7 @@ describe("RUST API TEST SUITE", function() {
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandBublShutdown);
                 var endTime = Date.now();
-                assert.isTrue((stopTime - endTime) > expectedShutdownDelay);
+                assert.isTrue((endTime - startTime) > expectedShutdownDelay);
             }, wrapError);
         });
     });
