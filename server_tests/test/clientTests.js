@@ -61,7 +61,7 @@ describe("RUST API TEST SUITE", function() {
     });
 
     // OSC STATE
-    describe("Testing /osc/state endpoint", function() {
+    describe.skip("Testing /osc/state endpoint", function() {
         var sessionId;
 
         before( function() {
@@ -715,7 +715,11 @@ describe("RUST API TEST SUITE", function() {
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri);
             })
-            .then((res) => validate.done(res.body, schema.names.commandGetImage))
+            .then((res) => {require('istextorbinary').isBinary(null, res.body, function(err, res) {
+                if(err) { throw err; }
+                assert(res, 'Response is not of binaries.');
+                });
+            })
             .catch(wrapError);
         });
 
@@ -727,8 +731,10 @@ describe("RUST API TEST SUITE", function() {
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri, 100);
             })
-            .then( function onSuccess (res) {
-                validate.done(res.body, schema.names.commandGetImage);
+            .then((res) => {require('istextorbinary').isBinary(null, res.body, function(err, res) {
+                if(err) { throw err; }
+                assert(res, 'Response is not of binaries.');
+                });
             })
             .catch(wrapError);
         });
@@ -831,7 +837,10 @@ describe("RUST API TEST SUITE", function() {
 
         it("Expect success. camera.getOptions gets correct options when gettable options are set to supported values", function() {
             return testClient.getOptions(sessionId, specifiedOptions)
-            .then( (res) => validate.done(res.body, schema.names.commandGetOptions),
+            .then( (res) => {validate.done(res.body, schema.names.commandGetOptions);
+                for(var i = 0; i < specifiedOptions.length; i++) {
+                    assert.deepEqual(res.body.results.options[specifiedOptions[i]], specifiedOptions[i]);
+                }},
                 wrapError);
         });
 
@@ -1029,7 +1038,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value", function() {
-            if (!isbublcam) {
+            if (!isbBublcam) {
                 return this.skip();
             }
 
@@ -1093,15 +1102,26 @@ describe("RUST API TEST SUITE", function() {
             }, wrapError);
         });
 
-        it("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function() {
+        it.skip("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function() {
             this.timeout(timeoutValue);
-            return testClient.takePicture(sessionId, function(res) {
-                validate.done(res.body, schema.names.commandsStatus);
-            })
-            .then( function onSuccess (res) {
-                validate.done(res.body, schema.names.commandTakePicture);
-            })
-            .catch(wrapError);
+            var deferred = Q.defer();
+
+            return Q.all(
+                [
+                    testClient.takePicture(sessionId, function(res) {
+                        var commandId = res.body.id;
+                        testClient.commandsStatus(commandId)
+
+                        .then(validate.inProgress(res.body, schema.names.commandsStatus))
+                        .then(deferred.resolve, deferred.rejecet)
+
+                    })
+                    .then( function onSuccess (res) {
+                        validate.done(res.body, schema.names.commandTakePicture);
+                    }, wrapError)
+                    .then(() => console.log('takePictureFinished')),
+                    deferred.promise
+                ])
         });
 
         it("Expect missingParameter Error. /osc/commands/status endpoint cannot get status when command ID is not provided", function() {
@@ -1385,7 +1405,7 @@ describe("RUST API TEST SUITE", function() {
                         (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
                     )
                     .then(() => testClient.bublStop(commandId))
-                    .then((res) => validate.done(res.body, schema.names.commandsBublStop)
+                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
                     .then(deferred.resolve, deferred.reject)
                   }
             })
@@ -1403,7 +1423,7 @@ describe("RUST API TEST SUITE", function() {
                     stopped = true;
                     Q.delay(15000)
                     .then(() => testClient.bublStop(res.body.id))
-                    .then((res) => validate.done(res.body, schema.names.commandsBublStop)
+                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
                     .then(deferred.resolve, deferred.reject)
                 }
             })

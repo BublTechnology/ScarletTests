@@ -57,6 +57,10 @@ let Validator = function(schema) {
         }
     };
 
+    this.inProgress = function(data, name) {
+        this.status(data, {name: name, state: this.schema.state.inProgress});
+    };
+
     // initial validation
     let draft04 = { $ref: "http://json-schema.org/draft-04/schema#" };
     this.validate(draft04, this.schema.info);
