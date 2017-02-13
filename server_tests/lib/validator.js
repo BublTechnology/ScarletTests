@@ -9,6 +9,7 @@
 
 let jsen = require("jsen");
 let assert = require("chai").assert;
+let textorbinary = require("istextorbinary");
 
 let Validator = function(schema) {
     this.schema = schema;
@@ -59,6 +60,13 @@ let Validator = function(schema) {
 
     this.inProgress = function(data, name) {
         this.status(data, {name: name, state: this.schema.state.inProgress});
+    };
+
+    this.checkForBinary = function (data) {
+        textorbinary.isBinary(null, data, function(err, res) {
+            if(err) { throw err; }
+            assert(res, 'Response is not of binaries.');
+            });
     };
 
     // initial validation

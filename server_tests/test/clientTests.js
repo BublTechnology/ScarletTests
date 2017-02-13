@@ -481,7 +481,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 1);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.property(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -500,7 +500,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 1);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -523,7 +523,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
                 assert.property(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -545,8 +545,8 @@ describe("RUST API TEST SUITE", function() {
                 validate.done(res.body, schema.names.commandListImages);
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
-                assert.notProperty(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                assert.property(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
                 return testClient.listImages(1, false, undefined, res.body.results.continuationToken);
@@ -555,8 +555,8 @@ describe("RUST API TEST SUITE", function() {
                 validate.done(res.body, schema.names.commandListImages);
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
-                assert.property(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -579,7 +579,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 2);
                 assert.equal(res.body.results.totalEntries, 2);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -593,7 +593,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 0);
                 assert.equal(res.body.results.totalEntries, 0);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(i = 0; i < res.body.results.entries.length; i++) {
+                for(var i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             }, wrapError);
@@ -715,11 +715,7 @@ describe("RUST API TEST SUITE", function() {
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri);
             })
-            .then((res) => {require('istextorbinary').isBinary(null, res.body, function(err, res) {
-                if(err) { throw err; }
-                assert(res, 'Response is not of binaries.');
-                });
-            })
+            .then((res) => validate.checkForBinary(res.body))
             .catch(wrapError);
         });
 
@@ -731,11 +727,7 @@ describe("RUST API TEST SUITE", function() {
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri, 100);
             })
-            .then((res) => {require('istextorbinary').isBinary(null, res.body, function(err, res) {
-                if(err) { throw err; }
-                assert(res, 'Response is not of binaries.');
-                });
-            })
+            .then((res) => validate.checkForBinary(res.body))
             .catch(wrapError);
         });
 
@@ -837,11 +829,12 @@ describe("RUST API TEST SUITE", function() {
 
         it("Expect success. camera.getOptions gets correct options when gettable options are set to supported values", function() {
             return testClient.getOptions(sessionId, specifiedOptions)
-            .then( (res) => {validate.done(res.body, schema.names.commandGetOptions);
+            .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandGetOptions);
                 for(var i = 0; i < specifiedOptions.length; i++) {
-                    assert.deepEqual(res.body.results.options[specifiedOptions[i]], specifiedOptions[i]);
-                }},
-                wrapError);
+                    assert.property(res.body.results.options, specifiedOptions[i]);
+                    }
+                }, wrapError);
         });
 
         it("Expect missingParameter Error. camera.getOptions cannot get options when options is not provided", function() {
@@ -868,7 +861,7 @@ describe("RUST API TEST SUITE", function() {
     });
 
     // SET OPTIONS
-    describe("Testing /osc/commands/execute camera.setOptions endpoint", function() {
+    describe.only("Testing /osc/commands/execute camera.setOptions endpoint", function() {
         var sessionId;
 
         before( function() {
@@ -1038,7 +1031,7 @@ describe("RUST API TEST SUITE", function() {
         });
 
         it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value", function() {
-            if (!isbBublcam) {
+            if (!isBublcam) {
                 return this.skip();
             }
 
@@ -1102,26 +1095,20 @@ describe("RUST API TEST SUITE", function() {
             }, wrapError);
         });
 
-        it.skip("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function() {
+        it("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function() {
             this.timeout(timeoutValue);
             var deferred = Q.defer();
 
-            return Q.all(
-                [
-                    testClient.takePicture(sessionId, function(res) {
-                        var commandId = res.body.id;
-                        testClient.commandsStatus(commandId)
+            return Q.all([testClient.takePicture(sessionId, function(res) {
+                var commandId = res.body.id;
 
-                        .then(validate.inProgress(res.body, schema.names.commandsStatus))
-                        .then(deferred.resolve, deferred.rejecet)
-
-                    })
-                    .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandTakePicture);
-                    }, wrapError)
-                    .then(() => console.log('takePictureFinished')),
-                    deferred.promise
-                ])
+                return testClient.commandsStatus(commandId)
+                .then((res) => validate.inProgress(res.body, schema.names.commandTakePicture))
+                .then(deferred.resolve, deferred.reject)
+            })
+            .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandTakePicture);
+            }, wrapError), deferred.promise])
         });
 
         it("Expect missingParameter Error. /osc/commands/status endpoint cannot get status when command ID is not provided", function() {
@@ -1360,7 +1347,7 @@ describe("RUST API TEST SUITE", function() {
         it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function() {
             return testClient.bublTimelapse(sessionId + '0')
             .then( expectError,
-                (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.missingParameter)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.invalidParameterValue)
             );
         });
 
@@ -1559,14 +1546,14 @@ describe("RUST API TEST SUITE", function() {
         it("Expect invalidParameterValue Error. camera._bublCaptureVideo cannot capture video when incorrect sessionId type is provided", function() {
             return testClient.bublCaptureVideo('wrongtype')
             .then( expectError,
-                (err) => validate.error(err.error.response.body, schema.name.commandBublCaptureVideo, schema.errors.invalidParameterValue)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect missingParameter Error. camera._bublCaptureVideo cannot capture video when sessionId is not provided", function() {
             return testClient.bublCaptureVideo()
             .then( expectError,
-                (err) => validate.error(err.error.response.body, schema.name.commandBublCaptureVideo, schema.errors.missingParameter)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.missingParameter)
             );
         });
     });
@@ -1801,7 +1788,7 @@ describe("RUST API TEST SUITE", function() {
                 return testClient.bublGetImage(fileUri);
             }, wrapError)
             .then( function onSuccess (res) {
-                validate.done(res.body, schema.names.commandGetImage);
+                validate.checkForBinary(res.body);
             }, wrapError);
         });
 
