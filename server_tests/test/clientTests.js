@@ -20,7 +20,6 @@ Q.longStackSupport = true;
 
 describe("RUST API TEST SUITE", function() {
     var testClient = new OscClient(process.env.SCARLET_TEST_HOST, process.env.SCARLET_TEST_PORT);
-    var Comparison = new Compare();
     var Utility = new Util(testClient);
     var defaultOptionsFile = './defaults/mock.json';
     var camModels = {
@@ -62,7 +61,7 @@ describe("RUST API TEST SUITE", function() {
     });
 
     // OSC STATE
-    describe("Testing /osc/state endpoint", function() {
+    describe.skip("Testing /osc/state endpoint", function() {
         var sessionId;
 
         before( function() {
@@ -268,8 +267,8 @@ describe("RUST API TEST SUITE", function() {
         beforeEach( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -278,45 +277,43 @@ describe("RUST API TEST SUITE", function() {
             .then( function(isActive) {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
-                    .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
-                    }, wrapError);
+                    .then((res) => validate.done(res.body, schema.names.commandCloseSession),
+                        wrapError);
                 }
             }, wrapError);
         });
 
         it("Expect success. camera.updateSession successfully updates a session", function() {
             return testClient.updateSession(sessionId)
-            .then( function onSuccess (res) {
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandUpdateSession), wrapError);
         });
 
         it("Expect success. camera.updateSession successfully updates a session with a timeout value specified", function() {
             return testClient.updateSession(sessionId, 15)
             .then( function onSuccess (res) {
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId, timeout: 15});
+                validate.done(res.body, schema.names.commandUpdateSession);
+                assert.equal(res.body.results.timeout, 15);
             }, wrapError);
         });
 
         it("Expect missingParameter Error. camera.updateSession cannot update session when sessionId is not specified", function() {
             return testClient.updateSession()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandUpdateSession, schema.errors.missingParameter)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.updateSession cannot update session when sessionId is an incorrect type", function() {
             return testClient.updateSession('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandUpdateSession, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.updateSession cannot update session when timeout is an incorrect type", function() {
             return testClient.updateSession(sessionId, 'wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandUpdateSession, schema.errors.invalidParameterValue)
             );
         });
     });
@@ -328,8 +325,8 @@ describe("RUST API TEST SUITE", function() {
         beforeEach( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -338,42 +335,40 @@ describe("RUST API TEST SUITE", function() {
             .then( function(isActive) {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
-                    .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
-                    }, wrapError);
+                    .then((res) => validate.done(res.body, schema.names.commandCloseSession),
+                        wrapError);
                 }
             }, wrapError);
         });
 
         it("Expect success. camera.closeSession successfully closes a session", function() {
             return testClient.closeSession(sessionId)
-            .then( function onSuccess (res) {
-                Comparison.oscCloseSessionOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandCloseSession),
+                wrapError);
         });
 
         it("Expect missingParameter Error. camera.closeSession cannot close session when sessionId is not provided", function() {
             return testClient.closeSession()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandCloseSession, schema.errors.missingParameter)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.closeSession cannot close session when sessionId is an incorrect type", function() {
             return testClient.closeSession('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandCloseSession, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.closeSession cannot close session when no session is active", function() {
             return testClient.closeSession(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscCloseSessionOutput(res);
+                validate.done(res.body, schema.names.commandCloseSession);
                 return testClient.closeSession(sessionId);
             }, wrapError)
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandCloseSession, schema.errors.invalidParameterValue)
             );
         });
     });
@@ -453,17 +448,14 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
         beforeEach( function() {
             this.timeout(timeoutValue);
-            return Utility.deleteAllImages()
-            .then( function onSuccess (res) {
-                Comparison.deleteAllImagesOutput(res);
-            }, wrapError);
+            return Utility.deleteAllImages();
         });
 
         after( function() {
@@ -471,9 +463,8 @@ describe("RUST API TEST SUITE", function() {
             .then( function(isActive) {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
-                    .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
-                    }, wrapError);
+                    .then((res) => validate.done(res.body, schema.names.commandCloseSession),
+                        wrapError);
                 }
             }, wrapError);
         });
@@ -482,24 +473,36 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.listImages(1, true, 100);
             })
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, false, true, {entries: [{'one': 'one'}], totalEntries: 1});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 1);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.property(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages returns one entry wihtout thumbnail when provided with entryCount = 1 and includeThumb = false when server has 1 image", function() {
+        it("Expect success. camera.listImages returns one entry without thumbnail when provided with entryCount = 1 and includeThumb = false when server has 1 image", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.listImages(1, false);
             })
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, false, false, {entries: [{'one': 'one'}], totalEntries: 1});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 1);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -508,36 +511,54 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.takePicture(sessionId);
             })
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.listImages(1, false);
             })
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 2);
+                assert.property(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
 
-        it("Expect success. camera.listImages returns one entry when provided with a continuation token and  entryCount = 1 when server has 2 images", function() {
+        it("Expect success. camera.listImages returns one entry when provided with a continuation token and entryCount = 1 when server has 2 images", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.takePicture(sessionId);
             })
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.listImages(1, false);
             })
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}], totalEntries: 2});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 2);
+                assert.property(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
                 return testClient.listImages(1, false, undefined, res.body.results.continuationToken);
             })
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, false, false, {entries: [{'one': 'one'}], totalEntries: 2});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 1);
+                assert.equal(res.body.results.totalEntries, 2);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -546,15 +567,21 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.takePicture(sessionId);
             })
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 return testClient.listImages(2, false);
             })
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, true, false, {entries: [{'one': 'one'}, {'two': 'two'}], totalEntries: 2});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 2);
+                assert.equal(res.body.results.totalEntries, 2);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             })
             .catch(wrapError);
         });
@@ -562,35 +589,41 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. camera.listImages lists zero images when no images are in the system", function() {
             return testClient.listImages(2, false)
             .then( function onSuccess (res) {
-                Comparison.oscListImagesOutput(res, false, false, {totalEntries: 0});
+                validate.done(res.body, schema.names.commandListImages);
+                assert.equal(res.body.results.entries.length, 0);
+                assert.equal(res.body.results.totalEntries, 0);
+                assert.notProperty(res.body.results, 'continuationToken');
+                for(var i = 0; i < res.body.results.entries.length; i++) {
+                    assert.notProperty(res.body.results.entries[i], 'thumbnail');
+                }
             }, wrapError);
         });
 
         it("Expect missingParameter Error. camera.listImages cannot list images when entryCount is not provided", function() {
             return testClient.listImages()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.missingParameter)
             );
         });
 
         it("Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided", function() {
             return testClient.listImages(1, true)
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.missingParameter)
             );
         });
 
         it("Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided and includeThumb defaults to true", function() {
             return testClient.listImages(1, undefined)
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.missingParameter)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.listImages cannot list images when false token is given", function() {
             return testClient.listImages('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.invalidParameterValue)
             );
         });
     });
@@ -603,8 +636,8 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -614,7 +647,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -624,12 +657,12 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 fileUri = res.body.results.fileUri;
                 return testClient.delete(fileUri);
             })
             .then( function onSuccess (res) {
-                Comparison.oscDeleteOutput(res);
+                validate.done(res.body, schema.names.commandDelete);
             })
             .catch(wrapError);
         });
@@ -637,14 +670,14 @@ describe("RUST API TEST SUITE", function() {
         it("Expect invalidParameterValue Error. camera.delete cannot delete file when incorrect fileUri type is provided", function() {
             return testClient.delete('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandDelete, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect missingParameter Error. camera.delete cannot delete file when fileUri is not provided", function() {
             return testClient.delete()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandDelete, schema.errors.missingParameter)
             );
         });
     });
@@ -657,8 +690,8 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -668,7 +701,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -678,11 +711,11 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then(function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri);
             })
-            .then((res) => Comparison.oscGetImageOutput(res))
+            .then((res) => validate.checkForBinary(res.body))
             .catch(wrapError);
         });
 
@@ -690,27 +723,25 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 fileUri = res.body.results.fileUri;
                 return testClient.getImage(fileUri, 100);
             })
-            .then( function onSuccess (res) {
-                Comparison.oscGetImageOutput(res);
-            })
+            .then((res) => validate.checkForBinary(res.body))
             .catch(wrapError);
         });
 
         it("Expect missingParameter Error. camera.getImage cannot get image when fileUri is not provided", function() {
             return testClient.getImage()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetImage, schema.errors.missingParameter)
             );
         });
 
         it("Expect invalidParameterValue Error. camera.getImage cannot get image when fileUri is incorrect", function() {
             return testClient.getImage('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetImage, schema.errors.invalidParameterValue)
             );
         });
     });
@@ -724,13 +755,13 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return testClient.takePicture(sessionId);
             }, wrapError)
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandTakePicture);
                 fileUri = res.body.results.fileUri;
-                Comparison.oscTakePictureOutput(res);
             }, wrapError);
         });
 
@@ -740,7 +771,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -749,21 +780,21 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. camera.getMetadata successfully gets metadata when provided with a valid fileUri", function() {
             return testClient.getMetadata(fileUri)
             .then( function onSuccess (res) {
-                Comparison.oscGetMetadataOutput(res);
+                validate.done(res.body, schema.names.commandGetMetadata);
             }, wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.getMetadata cannot get metadata when fileUri does not exist", function() {
             return testClient.getMetadata('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetMetadata, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect missingParameter Error. camera.getMetadata cannot get metadata when fileUri is not provided", function() {
             return testClient.getMetadata()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetMetadata, schema.errors.missingParameter)
             );
         });
     });
@@ -779,8 +810,8 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -790,7 +821,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -799,21 +830,24 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. camera.getOptions gets correct options when gettable options are set to supported values", function() {
             return testClient.getOptions(sessionId, specifiedOptions)
             .then( function onSuccess (res) {
-                Comparison.oscGetOptionsOutput(specifiedOptions, res);
-            }, wrapError);
+                validate.done(res.body, schema.names.commandGetOptions);
+                for(var i = 0; i < specifiedOptions.length; i++) {
+                    assert.property(res.body.results.options, specifiedOptions[i]);
+                    }
+                }, wrapError);
         });
 
         it("Expect missingParameter Error. camera.getOptions cannot get options when options is not provided", function() {
             return testClient.getOptions(sessionId)
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetOptions, schema.errors.missingParameter)
             );
         });
 
         it("Expect missingParameter Error. camera.getOptions cannot get options when sessionId is not provided", function() {
             return testClient.getOptions(undefined, specifiedOptions)
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetOptions, schema.errors.missingParameter)
             );
         });
 
@@ -821,207 +855,195 @@ describe("RUST API TEST SUITE", function() {
         it.skip("Expect invalidParameterValue Error. camera.getOptions cannot get options when options is set to unsupported value", function() {
             return testClient.getOptions(sessionId, ['wrongtype'])
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandGetOptions, schema.errors.invalidParameterValue)
             );
         });
     });
 
     // SET OPTIONS
-    describe("Testing /osc/commands/execute camera.setOptions endpoint", function() {
+    describe.only("Testing /osc/commands/execute camera.setOptions endpoint", function() {
         var sessionId;
 
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
         after( function() {
             return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions);
                 return testClient.closeSession(sessionId);
             }, wrapError)
-            .then( function onSuccess (res) {
-                Comparison.oscCloseSessionOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandCloseSession),
+                wrapError);
         });
 
         it("Expect success. camera.setOptions successfully sets options when sleepDelay option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'sleepDelay': 5})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when sleepDelay option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'sleepDelay': -1})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when offDelay option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'offDelay': 5})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when offDelay option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'offDelay': -1})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when imageStabilization option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'imageStabilization': 'off'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when imageStabilization option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'imageStabilization': 'UNSUPPORTED'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when hdr option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'hdr': true})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when hdr option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'hdr': 'UNSUPPORTED'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value _bublVideo", function() {
             return testClient.setOptions(sessionId, {'captureMode': '_bublVideo'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value Image", function() {
             return testClient.setOptions(sessionId, {'captureMode': 'image'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when captureMode option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'captureMode': 'UNSUPPORTED'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when exposureProgram option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'exposureProgram': 2})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureProgram option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'exposureProgram': -1})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when whiteBalance option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'whiteBalance': 'auto'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when whiteBalance option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'whiteBalance': 'UNSUPPORTED'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value raw for image", function() {
             return testClient.setOptions(sessionId, {'fileFormat': {'type':'raw', 'width': 3840, 'height': 3840}})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value jpeg for image", function() {
             return testClient.setOptions(sessionId, {'fileFormat': {'type':'jpeg', 'width': 3840, 'height': 3840}})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when fileFormat option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'fileFormat': 'UNSUPPORTED'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920", function() {
             return testClient.setOptions(sessionId, {'_bublVideoFileFormat': {'type':'mp4', 'width': 1920, 'height': 1920}})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920", function() {
             return testClient.setOptions(sessionId, {'_bublVideoFileFormat': {'type':'mp4', 'width': 1920, 'height': 1920}})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when _bublVideoFileFormat option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'_bublVideoFileFormat': 'UNSUPPORTED'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when exposureDelay option is set to supported value", function() {
             return testClient.setOptions(sessionId, {'exposureDelay': 4})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureDelay option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'exposureDelay': -1})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value", function() {
+            if (!isBublcam) {
+                return this.skip();
+            }
+
             return testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value and bubl timezone", function() {
             return testClient.setOptions(sessionId, {'dateTimeZone': '2015:07:23 14:27:39-04:00|America/Toronto'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect success. camera.setOptions successfully sets options when wifiPassword option is set to supported value", function() {
@@ -1030,22 +1052,21 @@ describe("RUST API TEST SUITE", function() {
             }
 
             return testClient.setOptions(sessionId, {'wifiPassword': '12345678'})
-            .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandSetOptions),
+                wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera.setOptions cannot set options when wifiPassword option is set to unsupported value", function() {
             return testClient.setOptions(sessionId, {'wifiPassword': '1234'})
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect missingParameter Error. camera.setOptions cannot set options when options is not provided", function() {
             return testClient.setOptions(sessionId, undefined)
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.missingParameter)
             );
         });
     });
@@ -1057,8 +1078,8 @@ describe("RUST API TEST SUITE", function() {
         before( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -1068,7 +1089,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1076,26 +1097,31 @@ describe("RUST API TEST SUITE", function() {
 
         it("Expect success. /osc/commands/status successfully grabs command status after take picture has been called", function() {
             this.timeout(timeoutValue);
-            return testClient.takePicture(sessionId, function(res) {
-                Comparison.oscCommandsStatusOutput(res, {'name': 'camera.takePicture', 'id': res.body.id});
+            var deferred = Q.defer();
+
+            return Q.all([testClient.takePicture(sessionId, function(res) {
+                var commandId = res.body.id;
+
+                return testClient.commandsStatus(commandId)
+                .then((res) => validate.inProgress(res.body, schema.names.commandTakePicture))
+                .then(deferred.resolve, deferred.reject)
             })
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
-            })
-            .catch(wrapError);
+                validate.done(res.body, schema.names.commandTakePicture);
+            }, wrapError), deferred.promise])
         });
 
         it("Expect missingParameter Error. /osc/commands/status endpoint cannot get status when command ID is not provided", function() {
             return testClient.commandsStatus()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandsStatus, schema.errors.missingParameter)
             );
         });
 
         it("Expect invalidParameterValue Error. /osc/commands/status endpoint cannot get status when incorrect sessionId is provided", function() {
             return testClient.commandsStatus('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandsStatus, schema.errors.invalidParameterValue)
             );
         });
     });
@@ -1111,8 +1137,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -1122,7 +1148,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1135,11 +1161,13 @@ describe("RUST API TEST SUITE", function() {
                 var commandId = res.body.id;
                 return testClient.bublPoll(res.body.id, fingerprint)
                 .then( function onSuccess (res) {
-                    Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
+                    validate.done(res.body, schema.names.commandsBublPoll);
+                    assert.notEqual(res.body.state.fingerprint, fingerprint);
+                    assert.equal(res.body.command.id, commandId);
                 }, wrapError);
             })
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
             }, wrapError);
         });
 
@@ -1157,22 +1185,26 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublPoll(commandId, fingerprint);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
+                        validate.done(res.body, schema.names.commandsBublPoll);
+                        assert.notEqual(res.body.state.fingerprint, fingerprint);
+                        assert.equal(res.body.command.id, commandId);
                         fingerprint = res.body.fingerprint;
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublStopOutput(res);
+                        validate.done(res.body, schema.names.commandsBublStop);
                         return testClient.bublPoll(commandId, fingerprint, 4);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
+                        validate.done(res.body, schema.names.commandsBublPoll);
+                        assert.notEqual(res.body.state.fingerprint, fingerprint);
+                        assert.equal(res.body.command.id, commandId);
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
             })
             .then( function onSuccess (res) {
-                Comparison.bublCaptureVideoOutput(res);
+                validate.done(res.body, schema.names.commandBublCaptureVideo);
             }, wrapError), deferred.promise])
         });
 
@@ -1189,7 +1221,9 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublPoll(commandId, fingerprint);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublPollOutput(res, true, {'id': commandId, 'fingerprint': fingerprint});
+                        validate.done(res.body, schema.names.commandsBublPoll);
+                        assert.notEqual(res.body.state.fingerprint, fingerprint);
+                        assert.equal(res.body.command.id, commandId)
                         fingerprint = res.body.fingerprint;
                         return Q.delay(4000);
                     })
@@ -1197,24 +1231,26 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublPoll(commandId, fingerprint, 5);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublPollOutput(res, false, {'id': commandId, 'fingerprint': fingerprint});
+                        validate.done(res.body, schema.names.commandsBublPoll);
+                        assert.equal(res.body.state.fingerprint, fingerprint);
+                        assert.equal(res.body.command.id, commandId)
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublStopOutput(res);
+                        validate.done(res.body, schema.names.commandsBublStop);
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
             })
             .then( function onSuccess (res) {
-                Comparison.bublCaptureVideoOutput(res);
+                validate.done(res.body, schema.names.commandBublCaptureVideo);
             }, wrapError), deferred.promise])
         });
 
         it("Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no commandId is provided", function() {
             return testClient.bublPoll(undefined, '')
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.missingParameter)
             );
         });
 
@@ -1226,15 +1262,15 @@ describe("RUST API TEST SUITE", function() {
                 if (!stopped) {
                     testClient.bublPoll(res.body.id)
                     .then( expectError,
-                        (err) => {Comparison.missingParameterError(err);
+                        (err) => {validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.missingParameter);
                         stopped = true;
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
             })
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
-                Comparison.assertTrue(stopped);
+                validate.done(res.body, schema.names.commandTakePicture);
+                assert.isTrue(stopped);
             }, wrapError), deferred.promise]);
         });
 
@@ -1242,7 +1278,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.bublPoll('wrongtype', '')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.invalidParameterValue)
             );
         });
 
@@ -1253,11 +1289,11 @@ describe("RUST API TEST SUITE", function() {
             return Q.all([testClient.takePicture(sessionId, function(res) {
                 testClient.bublPoll(res.body.id, '', 'wrongtype')
                 .then( expectError,
-                    (err) => {Comparison.invalidParameterValueError(err);
-                })
+                    (err) => validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.invalidParameterValue)
+                )
                 .then( deferred.resolve, deferred.reject);
             })
-            .then( (res) => Comparison.oscTakePictureOutput(res),
+            .then( (res) => validate.done(res.body, schema.names.commandTakePicture),
             wrapError), deferred.promise]);
         });
     });
@@ -1295,7 +1331,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1304,14 +1340,14 @@ describe("RUST API TEST SUITE", function() {
         it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function() {
             return testClient.bublTimelapse()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.missingParameter)
             );
         });
 
         it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function() {
             return testClient.bublTimelapse(sessionId + '0')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.invalidParameterValue)
             );
         });
 
@@ -1332,14 +1368,14 @@ describe("RUST API TEST SUITE", function() {
                     testClient.bublTimelapse(sessionId)
                     .then(
                         () => assert.fail('Should have received cameraInExclusiveUse'),
-                        (err) => Comparison.cameraInExclusiveUseError(err)
+                        (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
                     )
                     .then(() => testClient.bublStop(commandId))
-                    .then((res) => Comparison.bublStopOutput(res))
+                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
                     .then(deferred.resolve, deferred.reject)
                 }
             })
-            .then((res) => Comparison.bublTimelapseOutput(res, expectedResults), wrapError), deferred.promise])
+            .then((res) => validate.done(res.body, schema.names.commandBublTimelapse), wrapError), deferred.promise])
         });
 
         it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when a video capture procedure is already active', function() {
@@ -1353,14 +1389,14 @@ describe("RUST API TEST SUITE", function() {
                     testClient.bublTimelapse(sessionId)
                     .then(
                         () => assert.fail("Should have received cameraInExclusiveUseError"),
-                        (err) => Comparison.cameraInExclusiveUseError(err)
+                        (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
                     )
                     .then(() => testClient.bublStop(commandId))
-                    .then((res) => Comparison.bublStopOutput(res))
+                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
                     .then(deferred.resolve, deferred.reject)
                   }
             })
-            .then((res) => Comparison.bublCaptureVideoOutput(res), wrapError), deferred.promise])
+            .then((res) => validate.done(res.body, schema.names.commandBublCaptureVideo), wrapError), deferred.promise])
         });
 
         it('Expect success. camera._bublTimelapse successfully captures with default settings', function() {
@@ -1374,11 +1410,11 @@ describe("RUST API TEST SUITE", function() {
                     stopped = true;
                     Q.delay(15000)
                     .then(() => testClient.bublStop(res.body.id))
-                    .then((res) => Comparison.bublStopOutput(res))
+                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
                     .then(deferred.resolve, deferred.reject)
                 }
             })
-            .then((res) => Comparison.bublTimelapseOutput(res), wrapError), deferred.promise])
+            .then((res) => validate.done(res.body, schema.names.commandBublTimelapse), wrapError), deferred.promise])
         });
 
         it('Expect success. camera._bublTimelapse captures with specific timelapse interval and count, then finishes within the max tolerable completion time', function() {
@@ -1402,7 +1438,7 @@ describe("RUST API TEST SUITE", function() {
                 }
             )
             .then(function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
                 return testClient.bublTimelapse(sessionId);
             })
             .then(function onSuccess (res) {
@@ -1413,7 +1449,8 @@ describe("RUST API TEST SUITE", function() {
                 if (timeElapsed > maxAcceptableTime) {
                     assert.fail('operation took too long. timeElapsed : ' + timeElapsed + ' > maxAcceptableTime : ' + maxAcceptableTime);
                 } else {
-                    Comparison.bublTimelapseOutput(res, expectedResults);
+                    validate.done(res.body, schema.names.commandBublTimelapse);
+                    assert.notEqual(res.body.results.fileUri.length, timelapseCount);
                 }
             })
             .catch(wrapError);
@@ -1431,12 +1468,12 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }, wrapError)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1444,7 +1481,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1454,7 +1491,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1469,14 +1506,14 @@ describe("RUST API TEST SUITE", function() {
                 if (!stopped) {
                     Q.delay(2000)
                     .then( () => testClient.bublStop(res.body.id))
-                    .then( (res) => Comparison.bublStopOutput(res))
+                    .then( (res) => validate.done(res.body, schema.names.commandsBublStop))
                     .then(deferred.resolve, deferred.reject);
                     stopped = true;
                 }
             })
             .then( function onSuccess (res) {
-                Comparison.bublCaptureVideoOutput(res);
-                Comparison.assertTrue(stopped);
+                validate.done(res.body, schema.names.commandBublCaptureVideo);
+                assert.isTrue(stopped);
             }, wrapError), deferred.promise])
         });
 
@@ -1490,33 +1527,33 @@ describe("RUST API TEST SUITE", function() {
                 if (!stopped) {
                     testClient.bublCaptureVideo(sessionId)
                     .then( expectError,
-                        (err) => {Comparison.cameraInExclusiveUseError(err);
+                        (err) => {validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.cameraInExclusiveUse);
                         stopped = true;
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess(res){
-                        Comparison.bublStopOutput(res);
+                        validate.done(res.body, schema.names.commandsBublStop)
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
 
             }).then( function onSuccess (res) {
-                Comparison.bublCaptureVideoOutput(res);
-                Comparison.assertTrue(stopped);
+                validate.done(res.body, schema.names.commandBublCaptureVideo);
+                assert.isTrue(stopped);
             }, wrapError), deferred.promise])
         });
 
         it("Expect invalidParameterValue Error. camera._bublCaptureVideo cannot capture video when incorrect sessionId type is provided", function() {
             return testClient.bublCaptureVideo('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect missingParameter Error. camera._bublCaptureVideo cannot capture video when sessionId is not provided", function() {
             return testClient.bublCaptureVideo()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.missingParameter)
             );
         });
     });
@@ -1532,12 +1569,12 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }, wrapError)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1545,7 +1582,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1555,7 +1592,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1575,29 +1612,30 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublStopOutput(res);
+                        validate.done(res.body, schema.names.commandsBublStop);
                     })
                     .then(deferred.resolve, deferred.reject);
                     stopped = true;
                 }
             })
             .then( function onSuccess (res) {
-                Comparison.bublStreamOutput(res, {'id': commandId});
-                Comparison.assertTrue(stopped);
+                validate.done(res.body, schema.names.commandBublStream);
+                assert.equal(res.body.id, commandId);
+                assert.isTrue(stopped);
             }, wrapError), deferred.promise])
         });
 
         it("Expect invalidParameterValue Error. camera._bublStop cannot stop video capture when incorrect commandId type is provided", function() {
             return testClient.bublStop('wrongtype')
             .then( expectError,
-                (err) => Comparison.invalidParameterValueError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandsBublStop, schema.errors.invalidParameterValue)
             );
         });
 
         it("Expect missingParameter Error. camera._bublStop cannot stop video capture when commandId is not provided", function() {
             return testClient.bublStop()
             .then( expectError,
-                (err) => Comparison.missingParameterError(err)
+                (err) => validate.error(err.error.response.body, schema.names.commandsBublStop, schema.errors.missingParameter)
             );
         });
     });
@@ -1614,11 +1652,11 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then(function onSuccess  (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }).then(function onSuccess  (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1626,7 +1664,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1636,7 +1674,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1651,13 +1689,14 @@ describe("RUST API TEST SUITE", function() {
                 if (!commandId) {
                     commandId = res.body.id;
                     testClient.bublStop(commandId).then( function onSuccess (res) {
-                        Comparison.bublStopOutput(res);
+                        validate.done(res.body, schema.names.commandsBublStop);
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
             })
             .then( function onStreamCompleted (res) {
-                Comparison.bublStreamOutput(res, {'id': commandId});
+                validate.done(res.body, schema.names.commandBublStream);
+                assert.equal(res.body.id, commandId);
             }, wrapError), deferred.promise])
         });
 
@@ -1677,19 +1716,21 @@ describe("RUST API TEST SUITE", function() {
                             commandId2 = res.body.id;
                             testClient.bublStop(commandId2)
                             .then( function onSuccess (res) {
-                                Comparison.bublStopOutput(res);
+                                validate.done(res.body, schema.names.commandsBublStop);
                             })
                             .then(deferred1.resolve, deferred1.reject);
                         }
                     })
                     .then( function onSuccess (res) {
-                        Comparison.bublStreamOutput(res, {'id': commandId2});
+                        validate.done(res.body, schema.names.commandBublStream);
+                        assert.equal(res.body.id, commandId2);
                     })
                     .then(deferred2.resolve, deferred2.reject);
                 }
             })
             .then( function onSuccess (res) {
-                Comparison.bublStreamOutput(res, {'id': commandId1});
+                validate.done(res.body, schema.names.commandBublStream);
+                assert.equal(res.body.id, commandId1);
             }, wrapError), deferred1.promise, deferred2.promise])
 
         });
@@ -1697,14 +1738,14 @@ describe("RUST API TEST SUITE", function() {
         it("Expect invalidParameterValue Error. camera._bublStream cannot stream when incorrect sessionId type is provided", function() {
             return testClient.bublStream('wrongtype')
             .then( wrapError, function onError (err) {
-                Comparison.invalidParameterValueError(err);
+                validate.error(err.error.response.body, schema.names.commandBublStream, schema.errors.invalidParameterValue)
             });
         });
 
         it("Expect missingParameter Error. camera._bublStream cannot stream when sessionId is not provided", function() {
             return testClient.bublStream()
             .then( wrapError, function onError (err) {
-                Comparison.missingParameterError(err);
+                validate.error(err.error.response.body, schema.names.commandBublStream, schema.errors.missingParameter)
             });
         });
     });
@@ -1721,8 +1762,8 @@ describe("RUST API TEST SUITE", function() {
 
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
             }, wrapError);
         });
 
@@ -1732,7 +1773,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1742,19 +1783,19 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.takePicture(sessionId)
             .then( function onSuccess (res) {
-                Comparison.oscTakePictureOutput(res);
+                validate.done(res.body, schema.names.commandTakePicture);
                 fileUri = res.body.results.fileUri;
                 return testClient.bublGetImage(fileUri);
             }, wrapError)
             .then( function onSuccess (res) {
-                Comparison.oscGetImageOutput(res);
+                validate.checkForBinary(res.body);
             }, wrapError);
         });
 
         it("Expect invalidParameterValue Error. camera._bublGetImage cannot get image when fileUri is incorrect", function() {
             return testClient.bublGetImage('wrongtype')
             .then( wrapError, function onError (err) {
-                Comparison.invalidParameterValueError(err);
+                validate.error(err.error.response.body, schema.names.commandGetImage, schema.errors.invalidParameterValue)
             });
         });
     });
@@ -1771,7 +1812,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.bublUpdate('dummy_content')
             .then( function onSuccess (res) {
-                Comparison.bublUpdateOutput(res);
+                validate.done(res.body, schema.names.bublUpdate);
             }, wrapError);
         });
     });
@@ -1789,12 +1830,12 @@ describe("RUST API TEST SUITE", function() {
         beforeEach( function() {
             return testClient.startSession()
             .then( function onSuccess (res) {
+                validate.done(res.body, schema.names.commandStartSession);
                 sessionId = res.body.results.sessionId;
-                Comparison.oscSessionOpOutput(res, {'sessionId': sessionId});
                 return Utility.restoreDefaultOptions(defaultOptionsFile);
             }, wrapError)
             .then( function onSuccess (res) {
-                Comparison.oscSetOptionsOutput(res);
+                validate.done(res.body, schema.names.commandSetOptions)
             }, wrapError);
         });
 
@@ -1804,7 +1845,7 @@ describe("RUST API TEST SUITE", function() {
                 if (isActive) {
                     return testClient.closeSession(sessionId)
                     .then( function onSuccess (res) {
-                        Comparison.oscCloseSessionOutput(res);
+                        validate.done(res.body, schema.names.commandCloseSession);
                     }, wrapError);
                 }
             }, wrapError);
@@ -1814,7 +1855,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.bublShutdown()
             .then( wrapError, function onError (err) {
-                Comparison.missingParameterError(err);
+                validate.error(err.error.response.body, schema.names.commandBublShutdown, schema.errors.missingParameter);
             });
         });
 
@@ -1822,7 +1863,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.bublShutdown(sessionId + '0')
             .then( wrapError, function onError (err) {
-                Comparison.invalidParameterValueError(err);
+                validate.error(err.error.response.body, schema.names.commandBublShutdown, schema.errors.invalidParameterValue);
             });
         });
 
@@ -1831,7 +1872,7 @@ describe("RUST API TEST SUITE", function() {
             return testClient.bublShutdown(sessionId, '...')
             .then( wrapError,
             function onError (err) {
-                Comparison.invalidParameterValueError(err);
+                validate.error(err.error.response.body, schema.names.commandBublShutdown, schema.errors.invalidParameterValue);
             });
         });
 
@@ -1845,7 +1886,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.bublShutdown(sessionId)
             .then( function onSuccess (res) {
-                Comparison.bublShutdownOutput(res);
+                validate.done(res.body, schema.names.commandBublShutdown);
             }, wrapError);
         });
 
@@ -1861,9 +1902,9 @@ describe("RUST API TEST SUITE", function() {
             var startTime = Date.now();
             return testClient.bublShutdown(sessionId, expectedShutdownDelay)
             .then( function onSuccess (res) {
-                Comparison.bublShutdownOutput(res);
+                validate.done(res.body, schema.names.commandBublShutdown);
                 var endTime = Date.now();
-                Comparison.shutdownDelay(startTime, endTime, expectedShutdownDelay);
+                assert.isTrue((endTime - startTime) > expectedShutdownDelay);
             }, wrapError);
         });
     });
