@@ -27,41 +27,24 @@ var Util = function(client) {
      *
     */
     this.restoreDefaultOptions = function(optionsFile) {
-        var sessionId;
         var deferred = Q.defer();
-
-        return Q.all([fs.readFile(optionsFile, "utf8", function onChanged (err, data) {
-            if (err) {
-                JSON.parse(err);
-            }
-            else {
+        fs.readFile(optionsFile, 'utf8', function(err, data) {
+            var sessionId;
+            if(err) {
+                deferred.resolve(JSON.parse(err));
+            } else {
                 testClient.getState()
-                .then(function onSuccess (res) {
+                .then( function(res) {
                     sessionId = res.body.state.sessionId;
-                    return testClient.setOptions(sessionId, JSON.parse(data))
+                    return testClient.setOptions(sessionId, JSON.parse(data));
                 })
-                .then(deferred.resolve, deferred.reject)
+                .then( function(res) {
+                    deferred.resolve(res);
+                });
             }
-        }), deferred.promise])
+        });
+        return deferred.promise;
     };
-
-    //     fs.readFile(optionsFile, 'utf8', function(err, data) {
-    //         var sessionId;
-    //         if(err) {
-    //             deferred.resolve(JSON.parse(err));
-    //         } else {
-    //             testClient.getState()
-    //             .then( function(res) {
-    //                 sessionId = res.body.state.sessionId;
-    //                 return testClient.setOptions(sessionId, JSON.parse(data));
-    //             })
-    //             .then( function(res) {
-    //                 deferred.resolve(res);
-    //             });
-    //         }
-    //     });
-    //     return deferred.promise;
-    // };
 
     /* checkActiveSession():
      * checks to see if there is an active session on the camera
@@ -79,14 +62,18 @@ var Util = function(client) {
     this.deleteAllImages = function() {
         var deferred = Q.defer();
         var totalImages;
-
-        return Q.all([testClient.listImages(1,false)
-            .then(function onSuccess (res) {
-                totalImages = res.body.results.totalEntries;
-                return testClient.listImages(res.body.results.totalEntries, false);
-            })
-            .then((res) => deleteImages(res))
-            .then(deferred.resolve({"commandStatus":"done"}), deferred.reject), deferred.promise])
+        testClient.listImages(1, false)
+        .then( function(res) {
+            totalImages = res.body.results.totalEntries;
+            return testClient.listImages(res.body.results.totalEntries, false);
+        })
+        .then( function(res) {
+            Q.all(deleteImages(res))
+            .then( function() {
+                deferred.resolve({'commandStatus':'done'});
+            });
+        });
+        return deferred.promise;
     };
 
     var deleteImages = function(res) {

@@ -69,6 +69,10 @@ let Validator = function(schema) {
             });
     };
 
+    this.bublPoll = function (data) {
+        this.validate(this.schema.bublPoll, data);
+    };
+
     // initial validation
     let draft04 = { $ref: "http://json-schema.org/draft-04/schema#" };
     this.validate(draft04, this.schema.info);

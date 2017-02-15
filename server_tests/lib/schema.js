@@ -1092,7 +1092,7 @@ let Schema = function(options_) {
                     batteryLevel: {
                         type: "number",
                         minimum: 0,
-                        maximum: 1,
+                        maximum: this.bubl ? 100 : 1,
                     },
                     storageChanged: {
                         type: "boolean",
@@ -1140,6 +1140,27 @@ let Schema = function(options_) {
             throttleTimeout: {
                 type: "number",
                 minimum: 0,
+            },
+        },
+    };
+
+    this.bublPoll = {
+        type: "object",
+        additionalProperties: false,
+        patternProperties: {
+            "^_": {},
+        },
+        required: ["fingerprint", "throttleTimeout", "command"],
+        properties: {
+            fingerprint: {
+                type: "string",
+            },
+            throttleTimeout: {
+                type: "number",
+                minimum: 0,
+            },
+            command: {
+                type: "object"
             },
         },
     };

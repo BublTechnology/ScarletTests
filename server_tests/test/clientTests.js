@@ -61,7 +61,7 @@ describe("RUST API TEST SUITE", function() {
     });
 
     // OSC STATE
-    describe.skip("Testing /osc/state endpoint", function() {
+    describe("Testing /osc/state endpoint", function() {
         var sessionId;
 
         before( function() {
@@ -481,7 +481,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 1);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.property(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -500,7 +500,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 1);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -523,7 +523,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
                 assert.property(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -546,7 +546,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
                 assert.property(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
                 return testClient.listImages(1, false, undefined, res.body.results.continuationToken);
@@ -556,7 +556,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 1);
                 assert.equal(res.body.results.totalEntries, 2);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -579,7 +579,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 2);
                 assert.equal(res.body.results.totalEntries, 2);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             })
@@ -593,7 +593,7 @@ describe("RUST API TEST SUITE", function() {
                 assert.equal(res.body.results.entries.length, 0);
                 assert.equal(res.body.results.totalEntries, 0);
                 assert.notProperty(res.body.results, 'continuationToken');
-                for(var i = 0; i < res.body.results.entries.length; i++) {
+                for(let i = 0; i < res.body.results.entries.length; i++) {
                     assert.notProperty(res.body.results.entries[i], 'thumbnail');
                 }
             }, wrapError);
@@ -831,7 +831,7 @@ describe("RUST API TEST SUITE", function() {
             return testClient.getOptions(sessionId, specifiedOptions)
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandGetOptions);
-                for(var i = 0; i < specifiedOptions.length; i++) {
+                for(let i = 0; i < specifiedOptions.length; i++) {
                     assert.property(res.body.results.options, specifiedOptions[i]);
                     }
                 }, wrapError);
@@ -861,7 +861,7 @@ describe("RUST API TEST SUITE", function() {
     });
 
     // SET OPTIONS
-    describe.only("Testing /osc/commands/execute camera.setOptions endpoint", function() {
+    describe("Testing /osc/commands/execute camera.setOptions endpoint", function() {
         var sessionId;
 
         before( function() {
@@ -1102,9 +1102,12 @@ describe("RUST API TEST SUITE", function() {
             return Q.all([testClient.takePicture(sessionId, function(res) {
                 var commandId = res.body.id;
 
-                return testClient.commandsStatus(commandId)
-                .then((res) => validate.inProgress(res.body, schema.names.commandTakePicture))
-                .then(deferred.resolve, deferred.reject)
+                try {
+                  validate.inProgress(res.body, schema.names.commandTakePicture);
+                  deferred.resolve();
+                } catch (err) {
+                  deferred.reject(err);
+                }
             })
             .then( function onSuccess (res) {
                 validate.done(res.body, schema.names.commandTakePicture);
@@ -1157,18 +1160,20 @@ describe("RUST API TEST SUITE", function() {
         it("Expect success. /osc/commands/_bublPoll returns immediately if no waitTimeout argument is provided", function() {
             this.timeout(timeoutValue);
             var fingerprint = '';
-            return testClient.takePicture(sessionId, function(res) {
+            var deferred = Q.defer();
+
+            return Q.all([testClient.takePicture(sessionId, function(res) {
                 var commandId = res.body.id;
-                return testClient.bublPoll(res.body.id, fingerprint)
+                testClient.bublPoll(res.body.id, fingerprint)
                 .then( function onSuccess (res) {
-                    validate.done(res.body, schema.names.commandsBublPoll);
-                    assert.notEqual(res.body.state.fingerprint, fingerprint);
+                    validate.bublPoll(res.body);
+                    assert.notEqual(res.body.fingerprint, fingerprint);
                     assert.equal(res.body.command.id, commandId);
-                }, wrapError);
+                })
+                .then(deferred.resolve, deferred.reject)
             })
-            .then( function onSuccess (res) {
-                validate.done(res.body, schema.names.commandTakePicture);
-            }, wrapError);
+            .then( (res) => validate.done(res.body, schema.names.commandTakePicture),
+              wrapError), deferred.promise])
         });
 
         it("Expect success. /osc/commands/_bublPoll returns once command state has changed", function() {
@@ -1185,19 +1190,19 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublPoll(commandId, fingerprint);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublPoll);
-                        assert.notEqual(res.body.state.fingerprint, fingerprint);
+                        validate.bublPoll(res.body);
+                        assert.notEqual(res.body.fingerprint, fingerprint);
                         assert.equal(res.body.command.id, commandId);
                         fingerprint = res.body.fingerprint;
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublStop);
+                        assert(Object.keys(res.body).length === 0);
                         return testClient.bublPoll(commandId, fingerprint, 4);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublPoll);
-                        assert.notEqual(res.body.state.fingerprint, fingerprint);
+                        validate.bublPoll(res.body);
+                        assert.notEqual(res.body.fingerprint, fingerprint);
                         assert.equal(res.body.command.id, commandId);
                     })
                     .then(deferred.resolve, deferred.reject);
@@ -1221,8 +1226,8 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublPoll(commandId, fingerprint);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublPoll);
-                        assert.notEqual(res.body.state.fingerprint, fingerprint);
+                        validate.bublPoll(res.body);
+                        assert.notEqual(res.body.fingerprint, fingerprint);
                         assert.equal(res.body.command.id, commandId)
                         fingerprint = res.body.fingerprint;
                         return Q.delay(4000);
@@ -1231,13 +1236,13 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublPoll(commandId, fingerprint, 5);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublPoll);
-                        assert.equal(res.body.state.fingerprint, fingerprint);
+                        validate.bublPoll(res.body);
+                        assert.equal(res.body.fingerprint, fingerprint);
                         assert.equal(res.body.command.id, commandId)
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublStop);
+                      assert(Object.keys(res.body).length === 0);
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
@@ -1371,7 +1376,7 @@ describe("RUST API TEST SUITE", function() {
                         (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
                     )
                     .then(() => testClient.bublStop(commandId))
-                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
+                    .then((res) => assert(Object.keys(res.body).length === 0))
                     .then(deferred.resolve, deferred.reject)
                 }
             })
@@ -1392,7 +1397,7 @@ describe("RUST API TEST SUITE", function() {
                         (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
                     )
                     .then(() => testClient.bublStop(commandId))
-                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
+                    .then((res) => assert(Object.keys(res.body).length === 0))
                     .then(deferred.resolve, deferred.reject)
                   }
             })
@@ -1410,7 +1415,7 @@ describe("RUST API TEST SUITE", function() {
                     stopped = true;
                     Q.delay(15000)
                     .then(() => testClient.bublStop(res.body.id))
-                    .then((res) => validate.done(res.body, schema.names.commandsBublStop))
+                    .then((res) => assert(Object.keys(res.body).length === 0))
                     .then(deferred.resolve, deferred.reject)
                 }
             })
@@ -1506,7 +1511,7 @@ describe("RUST API TEST SUITE", function() {
                 if (!stopped) {
                     Q.delay(2000)
                     .then( () => testClient.bublStop(res.body.id))
-                    .then( (res) => validate.done(res.body, schema.names.commandsBublStop))
+                    .then( (res) => assert(Object.keys(res.body).length === 0))
                     .then(deferred.resolve, deferred.reject);
                     stopped = true;
                 }
@@ -1532,7 +1537,7 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess(res){
-                        validate.done(res.body, schema.names.commandsBublStop)
+                        assert(Object.keys(res.body).length === 0)
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
@@ -1612,7 +1617,7 @@ describe("RUST API TEST SUITE", function() {
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublStop);
+                        assert(Object.keys(res.body).length === 0);
                     })
                     .then(deferred.resolve, deferred.reject);
                     stopped = true;
@@ -1689,7 +1694,7 @@ describe("RUST API TEST SUITE", function() {
                 if (!commandId) {
                     commandId = res.body.id;
                     testClient.bublStop(commandId).then( function onSuccess (res) {
-                        validate.done(res.body, schema.names.commandsBublStop);
+                        assert(Object.keys(res.body).length === 0);
                     })
                     .then(deferred.resolve, deferred.reject);
                 }
@@ -1716,7 +1721,7 @@ describe("RUST API TEST SUITE", function() {
                             commandId2 = res.body.id;
                             testClient.bublStop(commandId2)
                             .then( function onSuccess (res) {
-                                validate.done(res.body, schema.names.commandsBublStop);
+                                assert(Object.keys(res.body).length === 0);
                             })
                             .then(deferred1.resolve, deferred1.reject);
                         }
@@ -1812,7 +1817,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return testClient.bublUpdate('dummy_content')
             .then( function onSuccess (res) {
-                validate.done(res.body, schema.names.bublUpdate);
+                assert.isNull(res.body);
             }, wrapError);
         });
     });
