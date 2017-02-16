@@ -1169,9 +1169,9 @@ describe("RUST API TEST SUITE", function() {
                     testClient.bublPoll(commandId, fingerprint)
                     .then( function onSuccess (res) {
                         validate.bublPoll(res.body);
+                        validate.inProgress(res.body.command, schema.names.cameraTakePicture);
                         assert.notEqual(res.body.fingerprint, fingerprint);
                         assert.equal(res.body.command.id, commandId);
-                        commandId = res.body.command.id;
                         fingerprint = res.body.fingerprint;
                         return testClient.bublPoll(commandId, fingerprint);
                     }, wrapError)
@@ -1337,7 +1337,7 @@ describe("RUST API TEST SUITE", function() {
             return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then(function() {
                 return Utility.deleteAllImages();
-            });
+            }, wrapError);
         });
 
         after( function() {

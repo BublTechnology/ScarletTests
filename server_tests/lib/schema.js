@@ -1159,9 +1159,7 @@ let Schema = function(options_) {
                 type: "number",
                 minimum: 0,
             },
-            command: {
-                type: "object"
-            },
+            command: this.status,
         },
     };
 };
