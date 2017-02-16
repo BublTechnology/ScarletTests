@@ -1159,18 +1159,30 @@ describe("RUST API TEST SUITE", function() {
 
         it("Expect success. /osc/commands/_bublPoll returns immediately if no waitTimeout argument is provided", function() {
             this.timeout(timeoutValue);
-            var fingerprint = '';
             var deferred = Q.defer();
+            var commandId = '';
+            var fingerprint = '';
 
             return Q.all([testClient.takePicture(sessionId, function(res) {
-                var commandId = res.body.id;
-                testClient.bublPoll(res.body.id, fingerprint)
-                .then( function onSuccess (res) {
-                    validate.bublPoll(res.body);
-                    assert.notEqual(res.body.fingerprint, fingerprint);
-                    assert.equal(res.body.command.id, commandId);
-                })
-                .then(deferred.resolve, deferred.reject)
+                if (commandId === '') {
+                    commandId = res.body.id;
+                    testClient.bublPoll(commandId, fingerprint)
+                    .then( function onSuccess (res) {
+                        validate.bublPoll(res.body);
+                        assert.notEqual(res.body.fingerprint, fingerprint);
+                        assert.equal(res.body.command.id, commandId);
+                        commandId = res.body.command.id;
+                        fingerprint = res.body.fingerprint;
+                        return testClient.bublPoll(commandId, fingerprint);
+                    }, wrapError)
+                    .then( function onSuccess (res) {
+                        validate.bublPoll(res.body);
+                        assert.equal(res.body.fingerprint, fingerprint);
+                        assert.equal(res.body.command.id, commandId);
+                    }, wrapError)
+                    .then(deferred.resolve, deferred.reject)
+                }
+
             })
             .then( (res) => validate.done(res.body, schema.names.commandTakePicture),
               wrapError), deferred.promise])
@@ -1324,9 +1336,7 @@ describe("RUST API TEST SUITE", function() {
             this.timeout(timeoutValue);
             return Utility.restoreDefaultOptions(defaultOptionsFile)
             .then(function() {
-                return Utility.deleteAllImages()
-                .then(function() {
-                });
+                return Utility.deleteAllImages();
             });
         });
 
