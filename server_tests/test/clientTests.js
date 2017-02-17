@@ -4,6 +4,7 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>.
 // This file may not be copied, modified, or distributed
 // except according to those terms.
+/* global describe, it, before, beforeEach, after, afterEach */
 
 'use strict'
 

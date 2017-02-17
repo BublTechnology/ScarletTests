@@ -50,13 +50,13 @@ let Schema = function (options_) {
     commandBublLogs: 'camera._bublLogs'
   }
 
-    this.errors = {
-      unknownCommand: 'unknownCommand',
-      cameraInExclusiveUse: 'cameraInExclusiveUse',
-      missingParameter: 'missingParameter',
-      invalidParameterName: 'invalidParameterName',
-      invalidParameterValue: 'invalidParameterValue'
-    }
+  this.errors = {
+    unknownCommand: 'unknownCommand',
+    cameraInExclusiveUse: 'cameraInExclusiveUse',
+    missingParameter: 'missingParameter',
+    invalidParameterName: 'invalidParameterName',
+    invalidParameterValue: 'invalidParameterValue'
+  }
 
   this.info = {
     type: 'object',
