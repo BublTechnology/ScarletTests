@@ -9,4 +9,4 @@ dependencies:
 
 test:
     override:
-        - standard
+        - cd server_tests && npm run lint
