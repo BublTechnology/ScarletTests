@@ -1,0 +1,39 @@
+{
+  "captureMode": "image",
+  "exposureProgram": 2,
+  "whiteBalance": "auto",
+  "fileFormat": {
+    "height": 4896,
+    "type": "jpeg",
+    "width": 4896
+  },
+  "exposureDelay": 4,
+  "sleepDelay": 5,
+  "offDelay": 600,
+  "gpsInfo": {
+    "lat": 0,
+    "lng": 0
+  },
+  "hdr": false,
+  "exposureBracket": {
+    "autoMode": true
+  },
+  "imageStabilization": "off",
+  "_bublVideoFileFormat": {
+    "height": 2448,
+    "type": "mp4",
+    "width": 2448
+  },
+  "_bublCalibration": "",
+  "_bublTimelapse": {
+    "interval": 5
+  },
+  "_bublCount": {
+    "count": [
+      0,
+      0
+    ],
+    "hdr": 0,
+    "timelapse": 0
+  }
+}

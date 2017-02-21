@@ -22,7 +22,6 @@ Q.longStackSupport = true;
 describe('RUST API TEST SUITE', function () {
   var testClient = new OscClient(process.env.SCARLET_TEST_HOST, process.env.SCARLET_TEST_PORT);
   var Utility = new Util(testClient);
-  var defaultOptionsFile = './defaults/mock.json';
   var camModels = {
     BUBLCAM1_0: 'bubl1',
     BUBLCAM1_2: 'bubl2',
@@ -31,8 +30,11 @@ describe('RUST API TEST SUITE', function () {
   };
   var testModel = process.env.SCARLET_TEST_MODEL || camModels.BUBLMOCK;
   var isBublcam = testModel === camModels.BUBLCAM1_0 || testModel === camModels.BUBLCAM1_2 || testModel === camModels.BUBLMOCK;
+  var isBubl1 = testModel === camModels.BUBLCAM1_0;
+  var isBubl2 = testModel === camModels.BUBLCAM1_2;
   var isMock = testModel === camModels.BUBLMOCK;
   var testViaWifi = process.env.SCARLET_TEST_WIFI === '1';
+  var defaultOptionsFile = isBubl1 || isMock ? './defaults/mock.json' : './defaults/bubl2.json';
   var timeoutValue = 30000;
   var schema = new Schema({
     bubl: isBublcam,
@@ -43,6 +45,8 @@ describe('RUST API TEST SUITE', function () {
     if (!(err instanceof Error)) {
       if (err.error && err.error.response) {
         err = err.error.response.text;
+      } else if (err.error) {
+        err = JSON.stringify(err.error);
       } else {
         err = 'Code execution should not have reached here';
       }
@@ -169,7 +173,7 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError);
     });
 
-    it('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed with waitTimeout set to 5', function () {
+    it.skip('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed with waitTimeout set to 5', function () {
       this.timeout(timeoutValue);
       return testClient.getState()
         .then(function onSuccess(res) {
@@ -1024,27 +1028,25 @@ describe('RUST API TEST SUITE', function () {
     });
 
     it('Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value raw for image', function () {
-      return testClient.setOptions(sessionId, {
-        fileFormat: {
-          type: 'raw',
-          width: 3840,
-          height: 3840
-        }
-      })
-        .then((res) => validate.done(res.body, schema.names.commandSetOptions),
-          wrapError);
+      if (isBubl1) {
+        return testClient.setOptions(sessionId, {fileFormat: {type: 'raw', width: 3840, height: 3840}})
+          .then((res) => validate.done(res.body, schema.names.commandSetOptions),
+            wrapError);
+      } else if (isBubl2) {
+        return this.skip();
+      }
     });
 
     it('Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value jpeg for image', function () {
-      return testClient.setOptions(sessionId, {
-        fileFormat: {
-          type: 'jpeg',
-          width: 3840,
-          height: 3840
-        }
-      })
-        .then((res) => validate.done(res.body, schema.names.commandSetOptions),
-          wrapError);
+      if (isBubl1) {
+        return testClient.setOptions(sessionId, {fileFormat: {type: 'jpeg', width: 3840, height: 3840}})
+          .then((res) => validate.done(res.body, schema.names.commandSetOptions),
+            wrapError);
+      } else if (isBubl2) {
+        return testClient.setOptions(sessionId, {fileFormat: {type: 'jpeg', width: 4896, height: 4896}})
+          .then((res) => validate.done(res.body, schema.names.commandSetOptions),
+            wrapError);
+      }
     });
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when fileFormat option is set to unsupported value', function () {
@@ -1056,28 +1058,26 @@ describe('RUST API TEST SUITE', function () {
       );
     });
 
-    it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920', function () {
-      return testClient.setOptions(sessionId, {
-        _bublVideoFileFormat: {
-          type: 'mp4',
-          width: 1920,
-          height: 1920
-        }
-      })
-        .then((res) => validate.done(res.body, schema.names.commandSetOptions),
-          wrapError);
+    it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value', function () {
+      if (isBubl1) {
+        return testClient.setOptions(sessionId, {_bublVideoFileFormat: {type: 'mp4', width: 1920, height: 1920}})
+          .then((res) => validate.done(res.body, schema.names.commandSetOptions),
+            wrapError);
+      } else if (isBubl2) {
+        return testClient.setOptions(sessionId, {_bublVideoFileFormat: {type: 'mp4', width: 2448, height: 2448}})
+          .then((res) => validate.done(res.body, schema.names.commandSetOptions),
+            wrapError);
+      }
     });
 
-    it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920', function () {
-      return testClient.setOptions(sessionId, {
-        _bublVideoFileFormat: {
-          type: 'mp4',
-          width: 1920,
-          height: 1920
-        }
-      })
-        .then((res) => validate.done(res.body, schema.names.commandSetOptions),
-          wrapError);
+    it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value (SD)', function () {
+      if (isBubl1) {
+        return testClient.setOptions(sessionId, {_bublVideoFileFormat: {type: 'mp4', width: 1440, height: 1440}})
+          .then((res) => validate.done(res.body, schema.names.commandSetOptions),
+            wrapError);
+      } else {
+        return this.skip();
+      }
     });
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when _bublVideoFileFormat option is set to unsupported value', function () {
@@ -1562,6 +1562,7 @@ describe('RUST API TEST SUITE', function () {
       if (!isBublcam) {
         return this.skip();
       }
+
       return testClient.startSession()
         .then(function onSuccess(res) {
           validate.done(res.body, schema.names.commandStartSession);

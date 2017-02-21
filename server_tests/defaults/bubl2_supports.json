@@ -1,0 +1,124 @@
+{
+  "captureMode": "image",
+  "captureModeSupport": [
+    "image",
+    "_bublVideo"
+  ],
+  "exposureProgram": 2,
+  "exposureProgramSupport": [
+    2
+  ],
+  "iso": 0,
+  "isoSupport": [],
+  "shutterSpeed": 0,
+  "shutterSpeedSupport": [],
+  "aperture": 0,
+  "apertureSupport": [],
+  "whiteBalance": "auto",
+  "whiteBalanceSupport": [
+    "auto"
+  ],
+  "exposureCompensation": 0,
+  "exposureCompensationSupport": [],
+  "fileFormat": {
+    "height": 4896,
+    "type": "jpeg",
+    "width": 4896
+  },
+  "fileFormatSupport": [
+    {
+      "height": 4896,
+      "type": "jpeg",
+      "width": 4896
+    },
+    {
+      "height": 4896,
+      "type": "raw",
+      "width": 4896
+    }
+  ],
+  "exposureDelay": 4,
+  "exposureDelaySupport": [
+    4
+  ],
+  "sleepDelay": 5,
+  "sleepDelaySupport": [
+    1,
+    5,
+    10,
+    30,
+    60,
+    300,
+    600,
+    1200,
+    2400,
+    65535
+  ],
+  "offDelay": 600,
+  "offDelaySupport": [
+    1,
+    5,
+    10,
+    30,
+    60,
+    300,
+    600,
+    1200,
+    2400,
+    65535
+  ],
+  "totalSpace": 1073741824,
+  "remainingSpace": 1073741824,
+  "remainingPictures": 125,
+  "gpsInfo": {
+    "lat": 0,
+    "lng": 0
+  },
+  "dateTimeZone": "2015:07:08 15:54:44-04:00",
+  "hdr": false,
+  "hdrSupport": true,
+  "exposureBracket": {
+    "autoMode": true
+  },
+  "exposureBracketSupport": [
+    {
+        "autoMode": true
+    }
+  ],
+  "gyro": false,
+  "gyroSupport": false,
+  "gps": false,
+  "gpsSupport": false,
+  "imageStabilization": "off",
+  "imageStabilizationSupport": [ "off" ],
+  "wifiPassword": "********",
+  "_bublVideoFileFormat": {
+    "height": 1920,
+    "type": "mp4",
+    "width": 1920
+  },
+  "_bublVideoFileFormatSupport": [
+    {
+      "height": 1920,
+      "type": "mp4",
+      "width": 1920
+    },
+    {
+      "height": 1440,
+      "type": "mp4",
+      "width": 1440
+    }
+  ],
+  "_bublCalibration": "",
+  "_bublTimelapse": {
+    "interval": 5
+  },
+  "_bublCount": {
+    "count": [
+      0,
+      0
+    ],
+    "hdr": 0,
+    "timelapse": 0
+  }
+}
