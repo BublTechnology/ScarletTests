@@ -1313,14 +1313,20 @@ describe("RUST API TEST SUITE", function() {
 
         it("Expect invalidParameterValue Error. /osc/commands/_bublPoll cannot get updates when waitTimeout is invalid", function() {
             this.timeout(timeoutValue);
+            var commandId = ''
             var deferred = Q.defer();
 
             return Q.all([testClient.takePicture(sessionId, function(res) {
-                testClient.bublPoll(res.body.id, '', 'wrongtype')
-                .then( expectError,
-                    (err) => validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.invalidParameterValue)
-                )
-                .then( deferred.resolve, deferred.reject);
+              if (commandId === '') {
+                  commandId = res.body.id
+                  testClient.bublPoll(res.body.id, '', 'wrongtype')
+                    .then(function onSuccess (res) {
+                      deferred.reject(expectError(res))
+                    }, function onError (err) {
+                      deferred.resolve(validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.invalidParameterValue))
+                    })
+                    .catch(wrapError)
+            }
             })
             .then( (res) => validate.done(res.body, schema.names.commandTakePicture),
             wrapError), deferred.promise]);
@@ -1556,10 +1562,10 @@ describe("RUST API TEST SUITE", function() {
             return Q.all([testClient.bublCaptureVideo(sessionId, function(res) {
                 var commandId = res.body.id;
                 if (!stopped) {
+                    stopped = true
                     testClient.bublCaptureVideo(sessionId)
                     .then( expectError,
                         (err) => {validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.cameraInExclusiveUse);
-                        stopped = true;
                         return testClient.bublStop(commandId);
                     })
                     .then( function onSuccess(res){
