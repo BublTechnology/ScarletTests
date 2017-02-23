@@ -5,7 +5,6 @@ dependencies:
     post:
         - cd server_tests && npm install
         - cd client_ui && npm install && npm install bower && `npm bin`/bower install && `npm bin`/gulp
-        - npm install -g standard
 
 test:
     override:
