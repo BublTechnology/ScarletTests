@@ -435,14 +435,14 @@ describe('RUST API TEST SUITE', function () {
       return testClient.takePicture('wrongtype')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandTakePicture, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect missingParameter Error. camera.takePicture cannot take picture when sessionId is not provided', function () {
       return testClient.takePicture()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandTakePicture, schema.errors.missingParameter)
-      )
+        )
     })
   })
 
@@ -608,28 +608,28 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listImages()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided', function () {
       return testClient.listImages(1, true)
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided and includeThumb defaults to true', function () {
       return testClient.listImages(1, undefined)
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect invalidParameterValue Error. camera.listImages cannot list images when false token is given', function () {
       return testClient.listImages('wrongtype')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandListImages, schema.errors.invalidParameterValue)
-      )
+        )
     })
   })
 
@@ -742,14 +742,14 @@ describe('RUST API TEST SUITE', function () {
       return testClient.getImage()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandGetImage, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect invalidParameterValue Error. camera.getImage cannot get image when fileUri is incorrect', function () {
       return testClient.getImage('wrongtype')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandGetImage, schema.errors.invalidParameterValue)
-      )
+        )
     })
   })
 
@@ -804,7 +804,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.getMetadata()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandGetMetadata, schema.errors.missingParameter)
-      )
+        )
     })
   })
 
@@ -851,14 +851,14 @@ describe('RUST API TEST SUITE', function () {
       return testClient.getOptions(sessionId)
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandGetOptions, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect missingParameter Error. camera.getOptions cannot get options when sessionId is not provided', function () {
       return testClient.getOptions(undefined, specifiedOptions)
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandGetOptions, schema.errors.missingParameter)
-      )
+        )
     })
 
     // RE-ADD ONCE EXTRA FIELD CHECKING HAS BEEN IMPLEMENTED
@@ -866,7 +866,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.getOptions(sessionId, ['wrongtype'])
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandGetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
   })
 
@@ -982,7 +982,7 @@ describe('RUST API TEST SUITE', function () {
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect success. camera.setOptions successfully sets options when exposureProgram option is set to supported value', function () {
@@ -999,7 +999,7 @@ describe('RUST API TEST SUITE', function () {
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect success. camera.setOptions successfully sets options when whiteBalance option is set to supported value', function () {
@@ -1016,7 +1016,7 @@ describe('RUST API TEST SUITE', function () {
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value raw for image', function () {
@@ -1049,7 +1049,7 @@ describe('RUST API TEST SUITE', function () {
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920', function () {
@@ -1082,7 +1082,7 @@ describe('RUST API TEST SUITE', function () {
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect success. camera.setOptions successfully sets options when exposureDelay option is set to supported value', function () {
@@ -1099,7 +1099,7 @@ describe('RUST API TEST SUITE', function () {
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value', function () {
@@ -1147,7 +1147,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.setOptions(sessionId, undefined)
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.missingParameter)
-      )
+        )
     })
   })
 
@@ -1348,7 +1348,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublPoll(undefined, '')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect missingParameter Error. /osc/commands/_bublPoll cannot get updates when no fingerprint is provided', function () {
@@ -1377,7 +1377,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublPoll('wrongtype', '')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect invalidParameterValue Error. /osc/commands/_bublPoll cannot get updates when waitTimeout is invalid', function () {
@@ -1444,14 +1444,14 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublTimelapse()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.missingParameter)
-      )
+        )
     })
 
     it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function () {
       return testClient.bublTimelapse(sessionId + '0')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect cameraInExclusiveUse Error. camera._bublTimelapse cannot be run when another timelapse capture procedure is already active', function () {
@@ -1467,7 +1467,7 @@ describe('RUST API TEST SUITE', function () {
             .then(
               () => assert.fail('Should have received cameraInExclusiveUse'),
               (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
-          )
+            )
             .then(() => testClient.bublStop(commandId))
             .then((res) => assert(Object.keys(res.body).length === 0))
             .then(deferred.resolve, deferred.reject)
@@ -1488,7 +1488,7 @@ describe('RUST API TEST SUITE', function () {
             .then(
               () => assert.fail('Should have received cameraInExclusiveUseError'),
               (err) => validate.error(err.error.response.body, schema.names.commandBublTimelapse, schema.errors.cameraInExclusiveUse)
-          )
+            )
             .then(() => testClient.bublStop(commandId))
             .then((res) => assert(Object.keys(res.body).length === 0))
             .then(deferred.resolve, deferred.reject)
@@ -1631,7 +1631,8 @@ describe('RUST API TEST SUITE', function () {
             })
             .then(deferred.resolve, deferred.reject)
         }
-      }).then(function onSuccess (res) {
+      })
+      .then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandBublCaptureVideo)
         assert.isTrue(stopped)
       }, wrapError), deferred.promise])
@@ -1641,14 +1642,14 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublCaptureVideo('wrongtype')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect missingParameter Error. camera._bublCaptureVideo cannot capture video when sessionId is not provided', function () {
       return testClient.bublCaptureVideo()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandBublCaptureVideo, schema.errors.missingParameter)
-      )
+        )
     })
   })
 
@@ -1725,14 +1726,14 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublStop('wrongtype')
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandsBublStop, schema.errors.invalidParameterValue)
-      )
+        )
     })
 
     it('Expect missingParameter Error. camera._bublStop cannot stop video capture when commandId is not provided', function () {
       return testClient.bublStop()
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandsBublStop, schema.errors.missingParameter)
-      )
+        )
     })
   })
 
