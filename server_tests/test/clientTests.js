@@ -4,6 +4,7 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>.
 // This file may not be copied, modified, or distributed
 // except according to those terms.
+// jscs:disable disallowDanglingUnderscores
 /* global describe, it, before, beforeEach, after, afterEach */
 
 'use strict';
@@ -45,13 +46,16 @@ describe('RUST API TEST SUITE', function () {
       } else {
         err = 'Code execution should not have reached here';
       }
-      throw new Error(err)
+      throw new Error(err);
     } else {
-      throw err
+      throw err;
     }
   }
   function expectError(res) {
-    assert.fail('Should not resolve, expecting an error.');
+    if (res.body) {
+      res = res.body;
+    }
+    assert.fail('Should not resolve, expecting an error, got ' + JSON.stringify(res));
   }
 
   // OSC INFO
@@ -418,7 +422,7 @@ describe('RUST API TEST SUITE', function () {
     it('Expect success. camera.takePicture successfully takes an HDR picture', function () {
       this.timeout(timeoutValue * 2);
       return testClient.setOptions(sessionId, {
-        'hdr': true
+        hdr: true
       })
         .then(function onSuccess(res) {
           validate.done(res.body, schema.names.commandSetOptions);
@@ -894,7 +898,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when sleepDelay option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'sleepDelay': 5
+        sleepDelay: 5
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -902,7 +906,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when sleepDelay option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'sleepDelay': -1
+        sleepDelay: -1
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -911,7 +915,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when offDelay option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'offDelay': 5
+        offDelay: 5
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -919,7 +923,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when offDelay option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'offDelay': -1
+        offDelay: -1
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -928,7 +932,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when imageStabilization option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'imageStabilization': 'off'
+        imageStabilization: 'off'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -936,7 +940,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when imageStabilization option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'imageStabilization': 'UNSUPPORTED'
+        imageStabilization: 'UNSUPPORTED'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -945,7 +949,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when hdr option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'hdr': true
+        hdr: true
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -953,7 +957,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when hdr option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'hdr': 'UNSUPPORTED'
+        hdr: 'UNSUPPORTED'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -962,7 +966,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value _bublVideo', function () {
       return testClient.setOptions(sessionId, {
-        'captureMode': '_bublVideo'
+        captureMode: '_bublVideo'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -970,7 +974,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when captureMode option is set to supported value Image', function () {
       return testClient.setOptions(sessionId, {
-        'captureMode': 'image'
+        captureMode: 'image'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -978,7 +982,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when captureMode option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'captureMode': 'UNSUPPORTED'
+        captureMode: 'UNSUPPORTED'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -987,7 +991,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when exposureProgram option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'exposureProgram': 2
+        exposureProgram: 2
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -995,7 +999,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureProgram option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'exposureProgram': -1
+        exposureProgram: -1
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -1004,7 +1008,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when whiteBalance option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'whiteBalance': 'auto'
+        whiteBalance: 'auto'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -1012,7 +1016,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when whiteBalance option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'whiteBalance': 'UNSUPPORTED'
+        whiteBalance: 'UNSUPPORTED'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -1021,10 +1025,10 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value raw for image', function () {
       return testClient.setOptions(sessionId, {
-        'fileFormat': {
-          'type': 'raw',
-          'width': 3840,
-          'height': 3840
+        fileFormat: {
+          type: 'raw',
+          width: 3840,
+          height: 3840
         }
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
@@ -1033,10 +1037,10 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when fileFormat option is set to supported value jpeg for image', function () {
       return testClient.setOptions(sessionId, {
-        'fileFormat': {
-          'type': 'jpeg',
-          'width': 3840,
-          'height': 3840
+        fileFormat: {
+          type: 'jpeg',
+          width: 3840,
+          height: 3840
         }
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
@@ -1045,7 +1049,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when fileFormat option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'fileFormat': 'UNSUPPORTED'
+        fileFormat: 'UNSUPPORTED'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -1054,10 +1058,10 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920', function () {
       return testClient.setOptions(sessionId, {
-        '_bublVideoFileFormat': {
-          'type': 'mp4',
-          'width': 1920,
-          'height': 1920
+        _bublVideoFileFormat: {
+          type: 'mp4',
+          width: 1920,
+          height: 1920
         }
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
@@ -1066,10 +1070,10 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when _bublVideoFileFormat option is set to supported value 1920x1920', function () {
       return testClient.setOptions(sessionId, {
-        '_bublVideoFileFormat': {
-          'type': 'mp4',
-          'width': 1920,
-          'height': 1920
+        _bublVideoFileFormat: {
+          type: 'mp4',
+          width: 1920,
+          height: 1920
         }
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
@@ -1078,7 +1082,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when _bublVideoFileFormat option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        '_bublVideoFileFormat': 'UNSUPPORTED'
+        _bublVideoFileFormat: 'UNSUPPORTED'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -1087,7 +1091,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when exposureDelay option is set to supported value', function () {
       return testClient.setOptions(sessionId, {
-        'exposureDelay': 4
+        exposureDelay: 4
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -1095,7 +1099,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when exposureDelay option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'exposureDelay': -1
+        exposureDelay: -1
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -1108,7 +1112,7 @@ describe('RUST API TEST SUITE', function () {
       }
 
       return testClient.setOptions(sessionId, {
-        'dateTimeZone': '2015:07:23 14:27:39-04:00'
+        dateTimeZone: '2015:07:23 14:27:39-04:00'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -1116,7 +1120,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect success. camera.setOptions successfully sets options when dateTimeZone option is set to supported value and bubl timezone', function () {
       return testClient.setOptions(sessionId, {
-        'dateTimeZone': '2015:07:23 14:27:39-04:00|America/Toronto'
+        dateTimeZone: '2015:07:23 14:27:39-04:00|America/Toronto'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -1128,7 +1132,7 @@ describe('RUST API TEST SUITE', function () {
       }
 
       return testClient.setOptions(sessionId, {
-        'wifiPassword': '12345678'
+        wifiPassword: '12345678'
       })
         .then((res) => validate.done(res.body, schema.names.commandSetOptions),
           wrapError);
@@ -1136,7 +1140,7 @@ describe('RUST API TEST SUITE', function () {
 
     it('Expect invalidParameterValue Error. camera.setOptions cannot set options when wifiPassword option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, {
-        'wifiPassword': '1234'
+        wifiPassword: '1234'
       })
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandSetOptions, schema.errors.invalidParameterValue)
@@ -1184,7 +1188,7 @@ describe('RUST API TEST SUITE', function () {
         try {
           validate.inProgress(res.body, schema.names.commandTakePicture);
           deferred.resolve();
-        } catch ( err ) {
+        } catch (err) {
           deferred.reject(err);
         }
       })
@@ -1524,9 +1528,9 @@ describe('RUST API TEST SUITE', function () {
       return testClient.setOptions(
         sessionId,
         {
-          '_bublTimelapse': {
-            'interval': timelapseInterval,
-            'count': timelapseCount
+          _bublTimelapse: {
+            interval: timelapseInterval,
+            count: timelapseCount
           }
         }
       )
@@ -1752,8 +1756,8 @@ describe('RUST API TEST SUITE', function () {
           sessionId = res.body.results.sessionId;
           return Utility.restoreDefaultOptions(defaultOptionsFile);
         }).then(function onSuccess(res) {
-        validate.done(res.body, schema.names.commandSetOptions);
-      }, wrapError);
+          validate.done(res.body, schema.names.commandSetOptions);
+        }, wrapError);
     });
 
     afterEach(function () {

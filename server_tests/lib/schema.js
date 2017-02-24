@@ -4,19 +4,20 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>.
 // This file may not be copied, modified, or distributed
 // except according to those terms.
+// jscs:disable disallowDanglingUnderscores
 
-'use strict'
+'use strict';
 
 let Schema = function (options_) {
-  let options = options_ || {}
-  this.apiLevel = options.apiLevel || 1
-  this.bubl = options.bubl || false
+  let options = options_ || {};
+  this.apiLevel = options.apiLevel || 1;
+  this.bubl = options.bubl || false;
 
   this.states = {
     done: 'done',
     inProgress: 'inProgress',
     error: 'error'
-  }
+  };
 
   this.names = {
     info: 'camera.info',
@@ -48,7 +49,7 @@ let Schema = function (options_) {
     commandBublStream: 'camera._bublStream',
     commandBublShutdown: 'camera._bublShutdown',
     commandBublLogs: 'camera._bublLogs'
-  }
+  };
 
   this.errors = {
     unknownCommand: 'unknownCommand',
@@ -56,7 +57,7 @@ let Schema = function (options_) {
     missingParameter: 'missingParameter',
     invalidParameterName: 'invalidParameterName',
     invalidParameterValue: 'invalidParameterValue'
-  }
+  };
 
   this.info = {
     type: 'object',
@@ -153,7 +154,7 @@ let Schema = function (options_) {
         }
       }
     }
-  }
+  };
 
   this._commandResults1 = {
     [this.names.commandStartSession]: {
@@ -293,10 +294,10 @@ let Schema = function (options_) {
         '^_': {}
       },
       properties: {
-        'exif': {
+        exif: {
           type: 'object'
         },
-        'xmp': {
+        xmp: {
           type: 'object'
         }
       }
@@ -639,7 +640,7 @@ let Schema = function (options_) {
         }
       }
     }
-  }
+  };
 
   this._commandResults2 = {
     [this.names.commandTakePicture]: {
@@ -802,12 +803,12 @@ let Schema = function (options_) {
         '^_': {}
       }
     }
-  }
+  };
 
   let inProgressCaptureStatus = {
     type: 'string',
     enum: ['exposing', 'capturing', 'saving']
-  }
+  };
 
   let inProgressCaptureMultiple = {
     required: ['_bublCaptureStatus', '_bublCaptureCount', '_bublCaptureUris'],
@@ -826,14 +827,14 @@ let Schema = function (options_) {
         }
       }
     }
-  }
+  };
 
   let inProgressCapture = {
     required: ['_bublCaptureStatus'],
     properties: {
       _bublCaptureStatus: inProgressCaptureStatus
     }
-  }
+  };
 
   this._commandInProgress1 = {
     [this.names.commandBublStream]: {
@@ -855,7 +856,7 @@ let Schema = function (options_) {
     [this.names.commandTakePicture]: inProgressCapture,
     [this.names.commandBublTimelapse]: inProgressCaptureMultiple,
     [this.names.commandBublCaptureVideo]: inProgressCapture
-  }
+  };
 
   this._commandInProgress2 = {
     [this.names.commandBublStream]: this._commandInProgress1[this.names.commandBublStream],
@@ -863,7 +864,7 @@ let Schema = function (options_) {
     [this.names.commandStartCapture]: inProgressCaptureMultiple,
     [this.names.commandBublTimelapse]: inProgressCaptureMultiple,
     [this.names.commandBublCaptureVideo]: inProgressCapture
-  }
+  };
 
   this.status = {
     type: 'object',
@@ -1023,48 +1024,52 @@ let Schema = function (options_) {
         ]
       }
     ]
-  }
+  };
 
-  let commandResults = this.apiLevel === 1 ? this._commandResults1 : this._commandResults2
+  let commandResults = this.apiLevel === 1 ? this._commandResults1 : this._commandResults2;
   for (let name in commandResults) {
-    let results = commandResults[name]
+    if (commandResults.hasOwnProperty(name)) {
+      let results = commandResults[name];
 
-    this.status.allOf[0].oneOf.push(
-      {
-        required: (results.properties && Object.keys(results.properties).length > 0) ? ['results'] : undefined,
-        properties: {
-          state: {
-            enum: [this.states.done]
-          },
-          name: {
-            enum: [name]
-          },
-          results: results
+      this.status.allOf[0].oneOf.push(
+        {
+          required: (results.properties && Object.keys(results.properties).length > 0) ? ['results'] : undefined,
+          properties: {
+            state: {
+              enum: [this.states.done]
+            },
+            name: {
+              enum: [name]
+            },
+            results: results
+          }
         }
-      }
-        )
-    this.status.allOf[0].oneOf[0].not.properties.name.enum.push(name)
+          );
+      this.status.allOf[0].oneOf[0].not.properties.name.enum.push(name);
+    }
   }
 
-  let commandInProgress = this.apiLevel === 1 ? this._commandInProgress1 : this._commandInProgress2
+  let commandInProgress = this.apiLevel === 1 ? this._commandInProgress1 : this._commandInProgress2;
   for (let name in commandInProgress) {
-    let progress = commandInProgress[name]
+    if (commandInProgress.hasOwnProperty(name)) {
+      let progress = commandInProgress[name];
 
-    this.status.allOf[0].oneOf.push(
-      {
-        required: ['progress'],
-        properties: {
-          state: {
-            enum: [this.states.inProgress]
-          },
-          name: {
-            enum: [name]
-          },
-          progress: progress
+      this.status.allOf[0].oneOf.push(
+        {
+          required: ['progress'],
+          properties: {
+            state: {
+              enum: [this.states.inProgress]
+            },
+            name: {
+              enum: [name]
+            },
+            progress: progress
+          }
         }
-      }
-        )
-    this.status.allOf[0].oneOf[1].not.properties.name.enum.push(name)
+          );
+      this.status.allOf[0].oneOf[1].not.properties.name.enum.push(name);
+    }
   }
 
   this.state = {
@@ -1124,7 +1129,7 @@ let Schema = function (options_) {
         }
       }
     }
-  }
+  };
 
   this.checkForUpdates = {
     type: 'object',
@@ -1142,7 +1147,7 @@ let Schema = function (options_) {
         minimum: 0
       }
     }
-  }
+  };
 
   this.bublPoll = {
     type: 'object',
@@ -1161,7 +1166,7 @@ let Schema = function (options_) {
       },
       command: this.status
     }
-  }
-}
+  };
+};
 
-module.exports = Schema
+module.exports = Schema;
