@@ -14,7 +14,7 @@
     "lat": 0,
     "lng": 0
   },
-  "hdr": false,
+  "hdr": "off",
   "exposureBracket": {
     "autoMode": true
   },

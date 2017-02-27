@@ -28,6 +28,13 @@ describe('RUST API TEST SUITE', function () {
     GENERIC: 'osc',
     BUBLMOCK: 'bublmock'
   }
+  var oscApiLevels = {
+    APILEVEL1: 1,
+    APILEVEL2: 2
+  }
+  var camApi = process.env.SCARLET_TEST_OSCAPI || oscApiLevels.APILEVEL1
+  var isOSC1 = camApi === oscApiLevels.APILEVEL1
+  var isOSC2 = camApi === oscApiLevels.APILEVEl2
   var testModel = process.env.SCARLET_TEST_MODEL || camModels.BUBLMOCK
   var isBublcam = testModel === camModels.BUBLCAM1_0 ||
     testModel === camModels.BUBLCAM1_2 ||
@@ -213,7 +220,13 @@ describe('RUST API TEST SUITE', function () {
 
   // START SESSION
   describe('Testing /osc/commands/execute camera.startSession endpoint', function () {
-    var sessionId
+    before(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      var sessionId;
+    })
 
     afterEach(function () {
       return Utility.checkActiveSession()
@@ -297,7 +310,13 @@ describe('RUST API TEST SUITE', function () {
 
   // UPDATE SESSION
   describe('Testing /osc/commands/execute camera.updateSession endpoint', function () {
-    var sessionId
+    before(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      var sessionId
+    })
 
     beforeEach(function () {
       return testClient.startSession()
@@ -373,7 +392,13 @@ describe('RUST API TEST SUITE', function () {
 
   // CLOSE SESSION
   describe('Testing /osc/commands/execute camera.closeSession endpoint', function () {
-    var sessionId
+    before(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      var sessionId
+    })
 
     beforeEach(function () {
       return testClient.startSession()
@@ -794,8 +819,14 @@ describe('RUST API TEST SUITE', function () {
 
   // GET IMAGE
   describe('Testing /osc/commands/execute camera.getImage endpoint', function () {
-    var sessionId
-    var fileUri
+    before(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      var sessionId
+      var fileUri
+    })
 
     before(function () {
       return testClient.startSession()
@@ -864,8 +895,14 @@ describe('RUST API TEST SUITE', function () {
 
   // GET METADATA
   describe('Testing /osc/commands/execute camera.getMetadata endpoint', function () {
-    var sessionId
-    var fileUri
+    before(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      var sessionId
+      var fileUri
+    })
 
     before(function () {
       this.timeout(timeoutValue)
@@ -929,11 +966,16 @@ describe('RUST API TEST SUITE', function () {
 
   // GET OPTIONS
   describe('Testing /osc/commands/execute camera.getOptions endpoint', function () {
-    var sessionId
+    if (isOSC1) {
+      var sessionId;
+    }
+
     var specifiedOptions = ['captureMode', 'exposureProgram', 'iso', 'shutterSpeed', 'aperture',
       'whiteBalance', 'exposureCompensation', 'fileFormat', 'exposureDelay',
       'sleepDelay', 'offDelay', 'hdr', 'exposureBracket', 'gyro', 'gps',
-      'imageStabilization', '_bublVideoFileFormat']
+      'imageStabilization', '_bublVideoFileFormat'].concat(isOSC2 ? ['previewFormat',
+      'captureInterval', 'captureNumber', 'remainingVideoSeconds', 'pollingDelay',
+      'delayProcessing', 'clientVersion'] : []);
 
     before(function () {
       return testClient.startSession()
@@ -999,6 +1041,18 @@ describe('RUST API TEST SUITE', function () {
             err.error.response.body,
             schema.names.commandGetOptions,
             schema.errors.invalidParameterValue
+          )
+      )
+    })
+
+    // Doesn't work properly since no OSC1 doesn't report invalidParameterName
+    it.skip('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
+      return testClient.getOptions(['captureInterval'])
+        .then(expectError,
+          (err) => validate.error(
+            err.error.response.body,
+            schema.names.commandGetOptions,
+            schema.errors.invalidParameterName
           )
       )
     })
