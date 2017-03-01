@@ -173,18 +173,26 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError);
     });
 
-    it.skip('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed with waitTimeout set to 5', function () {
+    it('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has not changed with waitTimeout set to 5', function () {
+      var state;
+
       this.timeout(timeoutValue);
       return testClient.getState()
         .then(function onSuccess(res) {
           validate.state(res.body);
           assert.equal(res.body.state.sessionId, sessionId);
           oldFingerprint = res.body.fingerprint;
-          return testClient.checkForUpdates(oldFingerprint, 5);
+          state = res.body.state;
+          return testClient.checkForUpdates(oldFingerprint, 2);
         })
         .then(function onSuccess(res) {
           validate.checkForUpdates(res.body);
-          assert.equal(res.body.stateFingerprint, oldFingerprint);
+          return testClient.getState();
+        })
+        .then(function onSuccess(res) {
+          validate.state(res.body);
+          assert.equal(res.body.state.sessionId, sessionId);
+          assert.deepEqual(res.body.state, state);
         })
         .catch(wrapError);
     });
@@ -378,7 +386,7 @@ describe('RUST API TEST SUITE', function () {
         }, wrapError)
         .then(expectError,
           (err) => validate.error(err.error.response.body, schema.names.commandCloseSession, schema.errors.invalidParameterValue)
-      );
+        );
     });
   });
 
@@ -411,7 +419,7 @@ describe('RUST API TEST SUITE', function () {
         .then(function (isActive) {
           if (isActive) {
             return testClient.closeSession(sessionId)
-              .then((res) => validate.done(res.body, schema.names.commandCloseSession));
+              .then((res) => validate.done(res.body, schema.names.commandCloseSession))
           }
         })
         .catch(wrapError);
