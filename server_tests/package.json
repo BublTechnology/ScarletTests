@@ -18,12 +18,12 @@
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec",
     "test-bubl": "SCARLET_TEST_HOST=192.168.0.100 SCARLET_TEST_PORT=80 SCARLET_TEST_WIFI=1 SCARLET_TEST_MODEL=bubl1 ./node_modules/.bin/mocha --reporter spec",
-    "lint-jscs": "./node_modules/.bin/jscs -c Standards/js/.jscsrc ./test ./lib",
-    "lint-jshint": "./node_modules/.bin/jshint -c Standards/js/.jshintrc --reporter=node_modules/jshint-stylish ./test ./lib",
-    "lint": "npm run lint-jscs && npm run lint-jshint",
-    "lint-fix": "./node_modules/.bin/jscs -c Standards/js/.jscsrc ./test ./lib --fix"
+    "lint": "$(npm bin)/eslint ./test ./lib",
+    "lint-fix": "$(npm bin)/eslint ./test ./lib --fix"
   },
   "devDependencies": {
+    "@bubltechnology/eslint-config-bubl": "^2.0.0",
+    "eslint": "^3.16.1",
     "jscs": "^3.0.7",
     "jshint": "^2.9.4",
     "jshint-stylish": "^2.0.0",
