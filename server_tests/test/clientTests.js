@@ -552,9 +552,13 @@ describe('RUST API TEST SUITE', function () {
 
   // LIST IMAGES
   describe('Testing /osc/commands/execute camera.listImage endpoint', function () {
-    var sessionId
-
     before(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      var sessionId;
+
       return testClient.startSession()
         .then(function onSuccess (res) {
           validate.done(res.body, schema.names.commandStartSession)
@@ -892,6 +896,97 @@ describe('RUST API TEST SUITE', function () {
       )
     })
   })
+
+  // LIST FILES (OSC2.0)
+  describe('Testing /osc/commands/execute camera.listFiles endpoint', function () {
+    if (!isOSC2) {
+      return this.skip()
+    }
+
+    before(function () {
+      // delete exisiting files on SD card, if any
+      // take a bunch of photos and videos
+    })
+
+    after(function () {
+      // delete all files on SD card
+    })
+
+    it('Lists all file entries if no fileType is specified', function () {
+      // not too clear on the OSC doc. Need to double-check
+    })
+
+    it('Successfully lists entries when fileType is supported', function () {
+
+      // image
+
+      // video
+
+      // all
+
+    })
+
+    it('Returns correct totalEntries for the specified fileType', function () {
+
+    })
+
+    it('Returns maximum hardware capability when requested parameters not supported' , function () {
+      // thumbnail size
+
+    })
+
+    it('Lists entries starting from position 0 if startPosition not specified', function () {
+
+    })
+
+    it('Lists file entries starting from startPosition', function () {
+
+    })
+
+    it('Returns empty array if startPosition is bigger than the position of the last entry', function () {
+
+    })
+
+    it('Lists desired number of entries when entryCount is specified', function () {
+
+    })
+
+    it('Lists actual number of files remaining if the entryCount is bigger than the files remaining', function () {
+
+    })
+
+    it('Exclude thumbnails from list entries when maxThumbSize set to null', function () {
+
+    })
+
+    it('Throw missingParameter error if entryCount not specified', function () {
+
+    })
+
+    it('Throw missingParameter error if maxThumbSize not specified', function () {
+
+    })
+
+    it('Throw invalidParameterName error if whiteBalance is a parameter', function () {
+
+    })
+
+    it('Throw invalidParameterValue error if entryCount is negative', function () {
+
+    })
+
+    it('Throw invalidParameterValue error if entryCount is the wrong type', function () {
+
+    })
+
+    it('Throw invalidParameterValue error if maxThumbSize is negative', function () {
+
+    })
+
+    it('Throw invalidParameter Value Error if maxThumbSize is the wrong type', function () {
+
+    })
+  }
 
   // GET METADATA
   describe('Testing /osc/commands/execute camera.getMetadata endpoint', function () {
