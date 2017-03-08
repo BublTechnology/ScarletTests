@@ -902,89 +902,151 @@ describe('RUST API TEST SUITE', function () {
     if (!isOSC2) {
       return this.skip()
     }
+    var expectedImageCount
+    var expectedVideoCount
+    var totalEntryCount
 
     before(function () {
       // delete exisiting files on SD card, if any
+      return Utility.deleteAllImages() //should have a new utility deleteAll() or something
       // take a bunch of photos and videos
+      .then(function onSuccess () {
+        for (let i = 0; i < 3; i++) {
+        testClient.takepicture()
+        expectedImageCount++
+        totalEntryCount+=2
+        }
+      }).then(validate.done(res.body, schema.names.commandTakePicture))
+      .then(testClient.bublCaptureVideo())
+      .then(function onSuccess () {
+        expectedVideoCount++
+        totalEntryCount+=2
+        validate.done(res.body, schema.names.commandBublCaptureVideo)
+      })
     })
 
     after(function () {
       // delete all files on SD card
+      return Utility.restoreDefaultOptions(defaultOptionsFile)
+      .then(Utility.deleteAllImages)
+    })
+  // testClient.listFiles(fileType, entryCount, maxThumbSize, startPosition(opstion))    //
+
+    it('Successfully lists correct entries when fileType is supported', function () {
+      return testClient.listFiles('image', expectedImageCount, 1024)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results.totalEntries, expectedImageCount)
+        return testClient.listFiles('video', expectedVideoCount, 1024)
+      }).then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results.totalEntries, expectedVideoCount)
+        return testClient.listFiles('all', totalEntryCount, 1024)
+      }).then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results.totalEntries, totalEntryCount)
+      })
     })
 
-    it('Lists all file entries if no fileType is specified', function () {
-      // not too clear on the OSC doc. Need to double-check
-    })
+    it('Returns base on maximum hardware capability when requested parameters exceeds maximum' , function () {
+      var maxResults
 
-    it('Successfully lists entries when fileType is supported', function () {
-
-      // image
-
-      // video
-
-      // all
-
-    })
-
-    it('Returns correct totalEntries for the specified fileType', function () {
-
-    })
-
-    it('Returns maximum hardware capability when requested parameters not supported' , function () {
-      // thumbnail size
-
-    })
-
-    it('Lists entries starting from position 0 if startPosition not specified', function () {
-
+      return testClient.listFiles('all', totalEntryCount + 10, 1024 * 2)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        maxResults = res.body.results
+        return testClient.listFiles('all', totalEntryCount, 1024)
+      }).then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results, maxResults)
+      })
     })
 
     it('Lists file entries starting from startPosition', function () {
+      var shortList
 
+      return testClient.listFiles('all', totalEntryCount, 1024, 2)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        shortList = res.body.results.entries
+        return testClient.listFiles('all', totalEntryCount, 1024)
+      }).then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results.entries.slice(0, 1), shortList)
+      })
     })
 
     it('Returns empty array if startPosition is bigger than the position of the last entry', function () {
-
+      return testClient.listFiles('all', totalEntryCount, 1024, totalEntryCount)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert(res.body.results.entries.length === 0)
+        assert.equal(res.body.results.totalEntries, totalEntryCount)
+      })
     })
 
-    it('Lists desired number of entries when entryCount is specified', function () {
-
+    it('Lists 2 entries when entryCount is 2', function () {
+      return testClient.listFiles('all', 2, 1024)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert(res.body.results.entries.length === 2)
+        assert.equal(res.body.results.totalEntries, totalEntryCount)
+      })
     })
 
-    it('Lists actual number of files remaining if the entryCount is bigger than the files remaining', function () {
-
+    it('Lists actual number of files remaining if requested entryCount is bigger than the files remaining', function () {
+      return testClient.listFiles('all', totalEntryCount + 10, 1024)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results.entries.length, totalEntryCount)
+        assert.equal(res.body.results.totalEntries, totalEntryCount)
+      })
     })
 
     it('Exclude thumbnails from list entries when maxThumbSize set to null', function () {
 
     })
 
+    it('Throw missingParameter error if fileType not specified', function () {
+      return testClient.listFiles(, totalEntryCount, 1024)
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter)
+    })
+
     it('Throw missingParameter error if entryCount not specified', function () {
-
+      return testClient.listFiles('all', , 1024)
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter)
     })
 
-    it('Throw missingParameter error if maxThumbSize not specified', function () {
-
-    })
-
-    it('Throw invalidParameterName error if whiteBalance is a parameter', function () {
-
+    it('Throw invalidParameterName error if fileType is "thumbnail"', function () {
+      return testClient.listFiles('thumbnail', totalEntryCount, 1024)
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterName)
     })
 
     it('Throw invalidParameterValue error if entryCount is negative', function () {
-
+      return testClient.listFiles('all', -10, 1024)
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
     })
 
     it('Throw invalidParameterValue error if entryCount is the wrong type', function () {
-
+      return testClient.listFiles('all', 'wrongtype', 1024)
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
     })
 
     it('Throw invalidParameterValue error if maxThumbSize is negative', function () {
-
+      return testClient.listFiles('all', totalEntryCount, -1024)
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
     })
 
-    it('Throw invalidParameter Value Error if maxThumbSize is the wrong type', function () {
-
+    it('Throw invalidParameterValue Error if maxThumbSize is the wrong type', function () {
+      return testClient.listFiles('all', totalEntryCount, 'wrongtype')
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
     })
   }
 
