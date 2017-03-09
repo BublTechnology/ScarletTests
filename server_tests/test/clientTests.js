@@ -1004,7 +1004,13 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Exclude thumbnails from list entries when maxThumbSize set to null', function () {
-
+      return testClient.listFiles.('all', totalEntryCount, null)
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert.equal(res.body.results.entries.length, totalEntryCount)
+        assert.equal(res.body.results.totalEntries, totalEntryCount)
+        assert.notProperty(res.body.results.entries, 'thumbnails')
+      })
     })
 
     it('Throw missingParameter error if fileType not specified', function () {
@@ -1047,6 +1053,16 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('all', totalEntryCount, 'wrongtype')
       .then(expectError,
         (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
+    })
+
+    it('Return empty array if no files on the SD card', function () {
+      return Utility.deleteAllImages
+      .then((res) => testClient.listFiles('all', totalEntryCount, 1024))
+      .then(function onSuccess (res) {
+        validate.done(res.body, schema.names.commandListFiles)
+        assert(Object.keys(res.body.results.entries).length ===0)
+        assert.equal(res.body.results.totalEntries, 0)
+      })
     })
   }
 
