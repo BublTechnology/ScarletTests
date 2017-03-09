@@ -912,12 +912,12 @@ describe('RUST API TEST SUITE', function () {
       // take a bunch of photos and videos
       .then(function onSuccess () {
         for (let i = 0; i < 3; i++) {
-        testClient.takepicture()
+        return testClient.takepicture
         expectedImageCount++
         totalEntryCount+=2
         }
       }).then(validate.done(res.body, schema.names.commandTakePicture))
-      .then(testClient.bublCaptureVideo())
+      .then(testClient.bublCaptureVideo
       .then(function onSuccess () {
         expectedVideoCount++
         totalEntryCount+=2
@@ -1596,6 +1596,44 @@ describe('RUST API TEST SUITE', function () {
         )
       )
     })
+  })
+
+  // OSC 2.0 START CAPTURE
+  describe('Testing /osc/commands/execute camera.startCapture endpoint', function () {
+    if (!isOSC2) {
+      return this.skip()
+    }
+
+    it('')
+
+  })
+
+  // OSC 2.0 STOP CAPTURE
+  describe('Testing /osc/commands/execute camera.stopCapture endpoint', function () {
+    if (!isOSC2) {
+      return this.skip()
+    }
+  })
+
+  // OSC 2.0 GET LIVE PREVEIW
+  describe('Testing /osc/commands/execute camera.getLivePreview endpoint' function () {
+    if (!isOSC2) {
+      return this.skip()
+    }
+  })
+
+  // OSC 2.0 PROCESS PICTURE
+  describe('Testing /osc/commands/execute camera.processPicture endpoint', function () {
+    if (!isOSC2) {
+      return this.skip()
+    }
+  })
+
+  // OSC 2.0 reset
+  describe('Testing /osc/commands/execute camera.reset endpoint', function () {
+    if (!isOSC2) {
+      return this.skip()
+    }
   })
 
   // BUBL POLL
