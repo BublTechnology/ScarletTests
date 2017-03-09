@@ -1620,7 +1620,17 @@ describe('RUST API TEST SUITE', function () {
       return this.skip()
     }
 
-    it('')
+    before(function () {
+      return Utility.restoreDefaultOptions(defaultOptionsFile)
+    })
+
+    afterEach(function () {
+      return Utility.restoreDefaultOptions(defaultOptionsFile)
+    })
+
+    it('', function () {
+      return testClient.setOptions({captureMode : 'video'})
+    })
 
   })
 
