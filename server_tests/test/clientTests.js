@@ -914,13 +914,13 @@ describe('RUST API TEST SUITE', function () {
         for (let i = 0; i < 3; i++) {
         return testClient.takepicture
         expectedImageCount++
-        totalEntryCount+=2
+        totalEntryCount++
         }
       }).then(validate.done(res.body, schema.names.commandTakePicture))
       .then(testClient.bublCaptureVideo
       .then(function onSuccess () {
         expectedVideoCount++
-        totalEntryCount+=2
+        totalEntryCount++
         validate.done(res.body, schema.names.commandBublCaptureVideo)
       })
     })
