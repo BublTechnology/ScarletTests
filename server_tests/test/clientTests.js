@@ -1625,13 +1625,39 @@ describe('RUST API TEST SUITE', function () {
     })
 
     afterEach(function () {
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
+      return testClient.stopCapture
+      .then((res) => validate.done(res.body, schema.names.commandStopCapture))
+      .then(() => Utility.restoreDefaultOptions(defaultOptionsFile))
+      .catch(wrapError)
     })
 
-    it('', function () {
+    it('Successfully startCpature a video', function () {
       return testClient.setOptions({captureMode : 'video'})
     })
 
+    it('Succesfully startCapture interval images', function () {
+
+    })
+
+    it('Open-ended video capture if not explicitly stopped by a stopCapture command', function () {
+
+    })
+
+    it('Throw disabledCommand error if startCapture in captureModes other than video or interval', function () {
+
+    })
+
+    it('Throw disabledCommand error if attempt to start a video capture during an active open-ended capture', function () {
+
+    })
+
+    it('Throw disabledCommand error if attempt to start an interval capture during an active open-ended capture', function () {
+
+    })
+
+    it('Throw invalidParameterName error if an unsupported parameter is entered', function () {
+
+    })
   })
 
   // OSC 2.0 STOP CAPTURE
@@ -1639,20 +1665,37 @@ describe('RUST API TEST SUITE', function () {
     if (!isOSC2) {
       return this.skip()
     }
-  })
 
-  // OSC 2.0 GET LIVE PREVEIW
-  describe('Testing /osc/commands/execute camera.getLivePreview endpoint' function () {
-    if (!isOSC2) {
-      return this.skip()
-    }
-  })
+    before(function () {
+      return Utility.restoreDefaultOptions(defaultOptionsFile)
+    })
 
-  // OSC 2.0 PROCESS PICTURE
-  describe('Testing /osc/commands/execute camera.processPicture endpoint', function () {
-    if (!isOSC2) {
-      return this.skip()
-    }
+    afterEach(function () {
+      return testClient.stopCapture
+      .then((res) => validate.done(res.body, schema.names.commandStopCapture))
+      .then(() => Utility.restoreDefaultOptions(defaultOptionsFile))
+      .catch(wrapError)
+    })
+
+    it('Successfully stopCapture a video', function () {
+
+    })
+
+    it('Successfully stopCapture an open-ended interval image capture', function () {
+
+    })
+
+    it('Successfully stopCapture a non-open-ended interval capture before the set-interval is reached', function () {
+
+    })
+
+    it('Throw disabledCommand Error if there is not active capture to be stopped', function () {
+
+    })
+
+    it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
+
+    })
   })
 
   // OSC 2.0 reset
@@ -1661,6 +1704,14 @@ describe('RUST API TEST SUITE', function () {
       return this.skip()
     }
   })
+
+    it('Successfully reset all options back to default values', function () {
+
+    })
+
+    it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
+      
+    })
 
   // BUBL POLL
   describe('Testing /osc/commands/_bublPoll endpoint', function () {
