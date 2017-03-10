@@ -899,14 +899,14 @@ describe('RUST API TEST SUITE', function () {
 
   // LIST FILES (OSC2.0)
   describe('Testing /osc/commands/execute camera.listFiles endpoint', function () {
-    if (!isOSC2) {
-      return this.skip()
-    }
     var expectedImageCount
     var expectedVideoCount
     var totalEntryCount
 
     before(function () {
+      if (!isOSC2) {
+        return this.skip()
+      }
       // delete exisiting files on SD card, if any
       return Utility.deleteAllImages() //should have a new utility deleteAll() or something
       // take a bunch of photos and videos
@@ -914,17 +914,14 @@ describe('RUST API TEST SUITE', function () {
         return testClient.takePicture()
         expectedImageCount++
         totalEntryCount++
-        }
       }).then(function onSuccess () {
         return testClient.takePicture()
         expectedImageCount++
         totalEntryCount++
-        }
       }).then(function onSuccess () {
         return testClient.takePicture()
         expectedImageCount++
         totalEntryCount++
-        }
       }).then(function onSuccess () {
         validate.done(res.body, schema.names.commandTakePicture)
         return testClient.setOptions({captureMode: 'video'})
@@ -1022,7 +1019,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Exclude thumbnails from list entries when maxThumbSize set to null', function () {
-      return testClient.listFiles.('all', totalEntryCount, null)
+      return testClient.listFiles('all', totalEntryCount, null)
       .then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandListFiles)
         assert.equal(res.body.results.entries.length, totalEntryCount)
@@ -1032,45 +1029,45 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Throw missingParameter error if fileType not specified', function () {
-      return testClient.listFiles(, totalEntryCount, 1024)
+      return testClient.listFiles(undefined, totalEntryCount, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter))
     })
 
     it('Throw missingParameter error if entryCount not specified', function () {
-      return testClient.listFiles('all', , 1024)
+      return testClient.listFiles('all', undefined, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter))
     })
 
     it('Throw invalidParameterName error if fileType is "thumbnail"', function () {
       return testClient.listFiles('thumbnail', totalEntryCount, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterName)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterName))
     })
 
     it('Throw invalidParameterValue error if entryCount is negative', function () {
       return testClient.listFiles('all', -10, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
     })
 
     it('Throw invalidParameterValue error if entryCount is the wrong type', function () {
       return testClient.listFiles('all', 'wrongtype', 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
     })
 
     it('Throw invalidParameterValue error if maxThumbSize is negative', function () {
       return testClient.listFiles('all', totalEntryCount, -1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
     })
 
     it('Throw invalidParameterValue Error if maxThumbSize is the wrong type', function () {
       return testClient.listFiles('all', totalEntryCount, 'wrongtype')
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue)
+        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
     })
 
     it('Return empty array if no files on the SD card', function () {
@@ -1082,7 +1079,7 @@ describe('RUST API TEST SUITE', function () {
         assert.equal(res.body.results.totalEntries, 0)
       }).catch(wrapError)
     })
-  }
+  })
 
   // GET METADATA
   describe('Testing /osc/commands/execute camera.getMetadata endpoint', function () {
@@ -1238,7 +1235,11 @@ describe('RUST API TEST SUITE', function () {
 
     // Doesn't work properly since no OSC1 doesn't report invalidParameterName
     it.skip('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
-      return testClient.getOptions(['captureInterval'])
+      if (!isOSC2) {
+        return this.skip()
+      }
+
+      return testClient.getOptions(sessionId, ['captureInterval'])
         .then(expectError,
           (err) => validate.error(
             err.error.response.body,
@@ -1634,11 +1635,10 @@ describe('RUST API TEST SUITE', function () {
 
   // OSC 2.0 START CAPTURE
   describe('Testing /osc/commands/execute camera.startCapture endpoint', function () {
-    if (!isOSC2) {
-      return this.skip()
-    }
-
     before(function () {
+      if (!isOSC2) {
+        return this.skip()
+      }
       return Utility.restoreDefaultOptions(defaultOptionsFile)
     })
 
@@ -1717,12 +1717,13 @@ describe('RUST API TEST SUITE', function () {
         return testClient.setoptions({
           captureMode: 'interval',
           captureInterval: 3
-        }
+        })
       }).then((res) => {
         validate.done(res.body, schema.names.commandSetOptions)
         return testClient.startCapture()
       }).then(expectError,
         (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand))
+    })
 
     it('Throw invalidParameterName error if an unsupported parameter is entered', function () {
       this.timeout(timeoutValue)
@@ -1739,16 +1740,15 @@ describe('RUST API TEST SUITE', function () {
 
   // OSC 2.0 STOP CAPTURE
   describe('Testing /osc/commands/execute camera.stopCapture endpoint', function () {
-    if (!isOSC2) {
-      return this.skip()
-    }
-
     before(function () {
+      if (!isOSC2) {
+        return this.skip()
+      }
       return Utility.restoreDefaultOptions(defaultOptionsFile)
     })
 
     afterEach(function () {
-      return Utility.restoreDefaultOptions(defaultOptionsFile))
+      return Utility.restoreDefaultOptions(defaultOptionsFile)
       .catch(wrapError)
     })
 
@@ -1816,10 +1816,11 @@ describe('RUST API TEST SUITE', function () {
 
   // OSC 2.0 reset
   describe('Testing /osc/commands/execute camera.reset endpoint', function () {
-    if (!isOSC2) {
-      return this.skip()
-    }
-  })
+    before(function () {
+      if (!isOSC2) {
+        return this.skip()
+      }
+    })
 
     it('Successfully reset all options back to default values', function () {
       return testClient.reset()
@@ -1831,6 +1832,7 @@ describe('RUST API TEST SUITE', function () {
       .then(expectError,
       (err) => validate.error(err.error.response.body, schema.names.commandReset, schema.errors.invalidParameterName))
     })
+  })
 
   // BUBL POLL
   describe('Testing /osc/commands/_bublPoll endpoint', function () {
