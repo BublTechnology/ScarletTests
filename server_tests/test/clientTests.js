@@ -941,8 +941,7 @@ describe('RUST API TEST SUITE', function () {
       }).then(function onSuccess () {
         validate.done(res.body, schema.names.commandStopCapture)
         assert(Object.keys(res.body).length === 0)
-      })
-
+      }).catch(wrapError)
     })
 
     after(function () {
@@ -964,7 +963,7 @@ describe('RUST API TEST SUITE', function () {
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandListFiles)
         assert.equal(res.body.results.totalEntries, totalEntryCount)
-      })
+      }).catch(wrapError)
     })
 
     it('Returns base on maximum hardware capability when requested parameters exceeds maximum' , function () {
@@ -978,7 +977,7 @@ describe('RUST API TEST SUITE', function () {
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandListFiles)
         assert.equal(res.body.results, maxResults)
-      })
+      }).catch(wrapError)
     })
 
     it('Lists file entries starting from startPosition', function () {
@@ -992,7 +991,7 @@ describe('RUST API TEST SUITE', function () {
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandListFiles)
         assert.equal(res.body.results.entries.slice(0, 1), shortList)
-      })
+      }).catch(wrapError)
     })
 
     it('Returns empty array if startPosition is bigger than the position of the last entry', function () {
@@ -1001,7 +1000,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandListFiles)
         assert(res.body.results.entries.length === 0)
         assert.equal(res.body.results.totalEntries, totalEntryCount)
-      })
+      }).catch(wrapError)
     })
 
     it('Lists 2 entries when entryCount is 2', function () {
@@ -1010,7 +1009,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandListFiles)
         assert(res.body.results.entries.length === 2)
         assert.equal(res.body.results.totalEntries, totalEntryCount)
-      })
+      }).catch(wrapError)
     })
 
     it('Lists actual number of files remaining if requested entryCount is bigger than the files remaining', function () {
@@ -1019,7 +1018,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandListFiles)
         assert.equal(res.body.results.entries.length, totalEntryCount)
         assert.equal(res.body.results.totalEntries, totalEntryCount)
-      })
+      }).catch(wrapError)
     })
 
     it('Exclude thumbnails from list entries when maxThumbSize set to null', function () {
@@ -1029,7 +1028,7 @@ describe('RUST API TEST SUITE', function () {
         assert.equal(res.body.results.entries.length, totalEntryCount)
         assert.equal(res.body.results.totalEntries, totalEntryCount)
         assert.notProperty(res.body.results.entries, 'thumbnails')
-      })
+      }).catch(wrapError)
     })
 
     it('Throw missingParameter error if fileType not specified', function () {
@@ -1081,7 +1080,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandListFiles)
         assert(Object.keys(res.body.results.entries).length ===0)
         assert.equal(res.body.results.totalEntries, 0)
-      })
+      }).catch(wrapError)
     })
   }
 
@@ -1644,38 +1643,97 @@ describe('RUST API TEST SUITE', function () {
     })
 
     afterEach(function () {
-      return testClient.stopCapture
+      return testClient.stopCapture()
       .then((res) => validate.done(res.body, schema.names.commandStopCapture))
       .then(() => Utility.restoreDefaultOptions(defaultOptionsFile))
       .catch(wrapError)
     })
 
     it('Successfully startCpature a video', function () {
+      this.timeout(timeoutValue)
+
       return testClient.setOptions({captureMode : 'video'})
+        .then((res) => {
+          validate.done(res.body, schema.names.commandSetOptions)
+          return testClient.startCapture()
+        }).then((res) => {
+          validate.done(res.body, schema.names.commandStartCapture)
+        }).catch(wrapError)
     })
 
     it('Succesfully startCapture interval images', function () {
+      this.timeout(timeoutValue)
 
-    })
-
-    it('Open-ended video capture if not explicitly stopped by a stopCapture command', function () {
-
+      return testClient.setOptions({
+        captureMode: "interval",
+        captureInterval: 3,
+        captureNumber: 3
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandStartCapture)
+      }).catch(wrapError)
     })
 
     it('Throw disabledCommand error if startCapture in captureModes other than video or interval', function () {
+      this.timeout(timeoutValue)
 
+      return testClient.setOptions({
+        captureMode: 'image'
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then(expectError,
+      (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand))
     })
 
     it('Throw disabledCommand error if attempt to start a video capture during an active open-ended capture', function () {
+      this.timeout(timeoutValue)
 
+      return testClient.setOptions({
+        captureMode: 'video'
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandStartCapture)
+        return testClient.startCapture()
+      }).then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand)
+      )
     })
 
     it('Throw disabledCommand error if attempt to start an interval capture during an active open-ended capture', function () {
+      this.timeout(timeoutValue)
 
-    })
+      return testClient.setoptions({
+        captureMode: 'video'
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandStartCapture)
+        return testClient.setoptions({
+          captureMode: 'interval',
+          captureInterval: 3
+        }
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand))
 
     it('Throw invalidParameterName error if an unsupported parameter is entered', function () {
+      this.timeout(timeoutValue)
 
+      return tesClient.setOptions({
+        captureMode: 'video'
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture('unsupported')
+      }).then(expectError,
+      (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.invalidParameterName))
     })
   })
 
@@ -1690,30 +1748,69 @@ describe('RUST API TEST SUITE', function () {
     })
 
     afterEach(function () {
-      return testClient.stopCapture
-      .then((res) => validate.done(res.body, schema.names.commandStopCapture))
-      .then(() => Utility.restoreDefaultOptions(defaultOptionsFile))
+      return Utility.restoreDefaultOptions(defaultOptionsFile))
       .catch(wrapError)
     })
 
     it('Successfully stopCapture a video', function () {
-
+      return testClient.setOptions({
+        captureMode: 'video'
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandStartCapture)
+        return testClient.stopCapture()
+      }).then((res) => {
+        validae.done(res.body, schema.names.commandStopCapture)
+        assert(Object.keys(res.body).length === 0)
+      }).catch(wrapError)
     })
 
     it('Successfully stopCapture an open-ended interval image capture', function () {
-
+      return testClient.setOptions({
+        captureMode: 'interval',
+        captureInterval: 5,
+        captureNumber: 0
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandStartCapture)
+        return testClient.stopCapture()
+      }).then((res) => {
+        validae.done(res.body, schema.names.commandStopCapture)
+        assert(Object.keys(res.body).length === 0)
+      }).catch(wrapError)
     })
 
     it('Successfully stopCapture a non-open-ended interval capture before the set-interval is reached', function () {
-
+      return testClient.setOptions({
+        captureMode: 'interval',
+        captureInterval: 5,
+        captureNumber: 30
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      }).then((res) => {
+        validate.done(res.body, schema.names.commandStartCapture)
+        return testClient.stopCapture()
+      }).then((res) => {
+        validae.done(res.body, schema.names.commandStopCapture)
+        assert(Object.keys(res.body).length === 0)
+      }).catch(wrapError)
     })
 
     it('Throw disabledCommand Error if there is not active capture to be stopped', function () {
-
+      return testClient.stopCapture()
+      .then(expectError,
+      (err) => validate.error(err.error.response.body, schema.names.commandStopCapture, schema.errors.disabledCommand))
     })
 
     it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
-
+      return testClient.stopCapture('unsupported')
+      .then(expectError,
+        (err) => validate.error(err.error.response.body, schema.names.commandStopCapture, schema.errors.invalidParameterName))
     })
   })
 
@@ -1725,11 +1822,14 @@ describe('RUST API TEST SUITE', function () {
   })
 
     it('Successfully reset all options back to default values', function () {
-
+      return testClient.reset()
+      .then((res) => validate.done(res.body, schema.names.commandReset))
     })
 
     it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
-
+      return testClient.reset(defaultOptionsFile)
+      .then(expectError,
+      (err) => validate.error(err.error.response.body, schema.names.commandReset, schema.errors.invalidParameterName))
     })
 
   // BUBL POLL
