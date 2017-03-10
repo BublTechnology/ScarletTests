@@ -911,24 +911,43 @@ describe('RUST API TEST SUITE', function () {
       return Utility.deleteAllImages() //should have a new utility deleteAll() or something
       // take a bunch of photos and videos
       .then(function onSuccess () {
-        for (let i = 0; i < 3; i++) {
-        return testClient.takepicture
+        return testClient.takePicture()
         expectedImageCount++
         totalEntryCount++
         }
-      }).then(validate.done(res.body, schema.names.commandTakePicture))
-      .then(testClient.bublCaptureVideo
+      }).then(function onSuccess () {
+        return testClient.takePicture()
+        expectedImageCount++
+        totalEntryCount++
+        }
+      }).then(function onSuccess () {
+        return testClient.takePicture()
+        expectedImageCount++
+        totalEntryCount++
+        }
+      }).then(function onSuccess () {
+        validate.done(res.body, schema.names.commandTakePicture)
+        return testClient.setOptions({captureMode: 'video'})
+      })
       .then(function onSuccess () {
+        validate.done(res.body, schema.names.commandSetOptions)
+        return testClient.startCapture()
+      })
+      .then(function onSuccess () {
+        validate.done(res.body, schema.names.commandStartCapture)
         expectedVideoCount++
         totalEntryCount++
-        validate.done(res.body, schema.names.commandBublCaptureVideo)
+        return testClient.stopCapture()
+      }).then(function onSuccess () {
+        validate.done(res.body, schema.names.commandStopCapture)
+        assert(Object.keys(res.body).length === 0)
       })
+
     })
 
     after(function () {
       // delete all files on SD card
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-      .then(Utility.deleteAllImages)
+      return Utility.deleteAllImages()
     })
   // testClient.listFiles(fileType, entryCount, maxThumbSize, startPosition(opstion))    //
 
@@ -1710,7 +1729,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
-      
+
     })
 
   // BUBL POLL
