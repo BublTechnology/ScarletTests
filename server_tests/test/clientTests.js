@@ -32,6 +32,11 @@ describe('RUST API TEST SUITE', function () {
     APILEVEL1: 1,
     APILEVEL2: 2
   }
+  var scarletVersions = {
+    SCARLET1: 1,
+    SCARLET2: 2
+  }
+  var serverVersion = process.env.SCARLET_TEST_SCARLET_VERSION || scarletVersions.SCARLET1
   var camApi = process.env.SCARLET_TEST_OSCAPI || oscApiLevels.APILEVEL1
   var isOSC1 = camApi === oscApiLevels.APILEVEL1
   var isOSC2 = camApi === oscApiLevels.APILEVEl2
@@ -551,7 +556,7 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // LIST IMAGES
-  describe.only('Testing /osc/commands/execute camera.listImage endpoint', function () {
+  describe('Testing /osc/commands/execute camera.listImage endpoint', function () {
     var sessionId
 
     before(function () {
@@ -1249,7 +1254,13 @@ describe('RUST API TEST SUITE', function () {
     })
 
     // RE-ADD ONCE EXTRA FIELD CHECKING HAS BEEN IMPLEMENTED
-    it.skip('throws invalidParameterValue when options is set to unsupported value', function () {
+    // Also, for this test needs to report different error based on OSC version
+    // OSC1: invalidParameterValue OSC2: invalidParameterName
+    it('throws invalidParameterValue when options is set to unsupported value', function () {
+      if (isBublcam && serverVersion < 2) {
+          return this.skip()
+      }
+
       return testClient.getOptions(sessionId, ['wrongtype'])
         .then(
           expectError,
@@ -1262,7 +1273,11 @@ describe('RUST API TEST SUITE', function () {
     })
 
     // Doesn't work properly since no OSC1 doesn't report invalidParameterName
-    it.skip('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
+    it('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
+      if (isBublcam && serverVersion < 2) {
+          return this.skip()
+      }
+
       if (!isOSC1) {
         return this.skip()
       }
@@ -1598,6 +1613,22 @@ describe('RUST API TEST SUITE', function () {
             err.error.response.body,
             schema.names.commandSetOptions,
             schema.errors.missingParameter
+          )
+        )
+    })
+
+    // Does not work properly with current BublScarlet OSC 1.0
+    it.skip('throw invalidParameterName when setting to an OSC2.0-specific option on an OSC1.0 camera', function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
+      return testClient.setoptions(sessionId, { captureInterval: 5 })
+        .then(expectError,
+          (err) => validate.error(
+            err.error.response.body,
+            schema.names.commandSetOptions,
+            schema.errors.invalidParameterName
           )
         )
     })
