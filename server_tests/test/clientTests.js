@@ -220,12 +220,12 @@ describe('RUST API TEST SUITE', function () {
 
   // START SESSION
   describe('Testing /osc/commands/execute camera.startSession endpoint', function () {
+    var sessionId
+
     before(function () {
       if (!isOSC1) {
         return this.skip()
       }
-
-      var sessionId;
     })
 
     afterEach(function () {
@@ -310,12 +310,12 @@ describe('RUST API TEST SUITE', function () {
 
   // UPDATE SESSION
   describe('Testing /osc/commands/execute camera.updateSession endpoint', function () {
+    var sessionId
+
     before(function () {
       if (!isOSC1) {
         return this.skip()
       }
-
-      var sessionId
     })
 
     beforeEach(function () {
@@ -392,12 +392,12 @@ describe('RUST API TEST SUITE', function () {
 
   // CLOSE SESSION
   describe('Testing /osc/commands/execute camera.closeSession endpoint', function () {
+    var sessionId
+
     before(function () {
       if (!isOSC1) {
         return this.skip()
       }
-
-      var sessionId
     })
 
     beforeEach(function () {
@@ -552,12 +552,12 @@ describe('RUST API TEST SUITE', function () {
 
   // LIST IMAGES
   describe('Testing /osc/commands/execute camera.listImage endpoint', function () {
+    var sessionId
+
     before(function () {
       if (!isOSC1) {
         return this.skip()
       }
-
-      var sessionId;
 
       return testClient.startSession()
         .then(function onSuccess (res) {
@@ -823,13 +823,13 @@ describe('RUST API TEST SUITE', function () {
 
   // GET IMAGE
   describe('Testing /osc/commands/execute camera.getImage endpoint', function () {
+    var sessionId
+    var fileUri
+
     before(function () {
       if (!isOSC1) {
         return this.skip()
       }
-
-      var sessionId
-      var fileUri
     })
 
     before(function () {
@@ -908,34 +908,34 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
       // delete exisiting files on SD card, if any
-      return Utility.deleteAllImages() //should have a new utility deleteAll() or something
+      return Utility.deleteAllImages() // should have a new utility deleteAll() or something
       // take a bunch of photos and videos
       .then(function onSuccess () {
-        return testClient.takePicture()
         expectedImageCount++
         totalEntryCount++
-      }).then(function onSuccess () {
         return testClient.takePicture()
+      }).then(function onSuccess () {
         expectedImageCount++
         totalEntryCount++
-      }).then(function onSuccess () {
         return testClient.takePicture()
+      }).then(function onSuccess () {
         expectedImageCount++
         totalEntryCount++
-      }).then(function onSuccess () {
+        return testClient.takePicture()
+      }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandTakePicture)
         return testClient.setOptions({captureMode: 'video'})
       })
-      .then(function onSuccess () {
+      .then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandSetOptions)
         return testClient.startCapture()
       })
-      .then(function onSuccess () {
+      .then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandStartCapture)
         expectedVideoCount++
         totalEntryCount++
         return testClient.stopCapture()
-      }).then(function onSuccess () {
+      }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandStopCapture)
         assert(Object.keys(res.body).length === 0)
       }).catch(wrapError)
@@ -963,7 +963,7 @@ describe('RUST API TEST SUITE', function () {
       }).catch(wrapError)
     })
 
-    it('Returns base on maximum hardware capability when requested parameters exceeds maximum' , function () {
+    it('Returns base on maximum hardware capability when requested parameters exceeds maximum', function () {
       var maxResults
 
       return testClient.listFiles('all', totalEntryCount + 10, 1024 * 2)
@@ -1031,43 +1031,71 @@ describe('RUST API TEST SUITE', function () {
     it('Throw missingParameter error if fileType not specified', function () {
       return testClient.listFiles(undefined, totalEntryCount, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.missingParameter)
+      )
     })
 
     it('Throw missingParameter error if entryCount not specified', function () {
       return testClient.listFiles('all', undefined, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.missingParameter))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.missingParameter)
+      )
     })
 
     it('Throw invalidParameterName error if fileType is "thumbnail"', function () {
       return testClient.listFiles('thumbnail', totalEntryCount, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterName))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.invalidParameterName)
+      )
     })
 
     it('Throw invalidParameterValue error if entryCount is negative', function () {
       return testClient.listFiles('all', -10, 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.invalidParameterValue)
+      )
     })
 
     it('Throw invalidParameterValue error if entryCount is the wrong type', function () {
       return testClient.listFiles('all', 'wrongtype', 1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.invalidParameterValue)
+      )
     })
 
     it('Throw invalidParameterValue error if maxThumbSize is negative', function () {
       return testClient.listFiles('all', totalEntryCount, -1024)
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.invalidParameterValue)
+      )
     })
 
     it('Throw invalidParameterValue Error if maxThumbSize is the wrong type', function () {
       return testClient.listFiles('all', totalEntryCount, 'wrongtype')
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandListFiles, schema.errors.invalidParameterValue))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandListFiles,
+          schema.errors.invalidParameterValue)
+      )
     })
 
     it('Return empty array if no files on the SD card', function () {
@@ -1075,7 +1103,7 @@ describe('RUST API TEST SUITE', function () {
       .then((res) => testClient.listFiles('all', totalEntryCount, 1024))
       .then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandListFiles)
-        assert(Object.keys(res.body.results.entries).length ===0)
+        assert(Object.keys(res.body.results.entries).length === 0)
         assert.equal(res.body.results.totalEntries, 0)
       }).catch(wrapError)
     })
@@ -1083,13 +1111,13 @@ describe('RUST API TEST SUITE', function () {
 
   // GET METADATA
   describe('Testing /osc/commands/execute camera.getMetadata endpoint', function () {
+    var sessionId
+    var fileUri
+
     before(function () {
       if (!isOSC1) {
         return this.skip()
       }
-
-      var sessionId
-      var fileUri
     })
 
     before(function () {
@@ -1155,15 +1183,15 @@ describe('RUST API TEST SUITE', function () {
   // GET OPTIONS
   describe('Testing /osc/commands/execute camera.getOptions endpoint', function () {
     if (isOSC1) {
-      var sessionId;
+      var sessionId
     }
 
     var specifiedOptions = ['captureMode', 'exposureProgram', 'iso', 'shutterSpeed', 'aperture',
       'whiteBalance', 'exposureCompensation', 'fileFormat', 'exposureDelay',
       'sleepDelay', 'offDelay', 'hdr', 'exposureBracket', 'gyro', 'gps',
       'imageStabilization', '_bublVideoFileFormat'].concat(isOSC2 ? ['previewFormat',
-      'captureInterval', 'captureNumber', 'remainingVideoSeconds', 'pollingDelay',
-      'delayProcessing', 'clientVersion'] : []);
+        'captureInterval', 'captureNumber', 'remainingVideoSeconds', 'pollingDelay',
+        'delayProcessing', 'clientVersion'] : [])
 
     before(function () {
       return testClient.startSession()
@@ -1262,9 +1290,13 @@ describe('RUST API TEST SUITE', function () {
     var rawFileFormat = { fileFormat: { type: 'raw', width: 3840, height: 3840 } }
     var bublVideoFileFormat
     if (isBubl1 || isMock) {
-      bublVideoFileFormat = { _bublVideoFileFormat: { type: 'mp4', width: 1920, height: 1920 } }
+      bublVideoFileFormat = {
+        _bublVideoFileFormat: { type: 'mp4', width: 1920, height: 1920 }
+      }
     } else if (isBubl2) {
-      bublVideoFileFormat = { _bublVideoFileFormat: { type: 'mp4', width: 2448, height: 2448 } }
+      bublVideoFileFormat = {
+        _bublVideoFileFormat: { type: 'mp4', width: 2448, height: 2448 }
+      }
     }
 
     before(function () {
@@ -1477,7 +1509,8 @@ describe('RUST API TEST SUITE', function () {
 
     it('successfully sets options when _bublVideoFileFormat option is set to supported value (SD)', function () {
       if (isBubl1 || isMock) {
-        return testClient.setOptions(sessionId, { _bublVideoFileFormat: { type: 'mp4', width: 1440, height: 1440 } })
+        return testClient.setOptions(sessionId,
+          { _bublVideoFileFormat: { type: 'mp4', width: 1440, height: 1440 } })
           .then((res) => validate.done(res.body, schema.names.commandSetOptions),
             wrapError)
       } else {
@@ -1490,7 +1523,8 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
 
-      return testClient.setOptions(sessionId, { _bublVideoFileFormat: 'UNSUPPORTED' })
+      return testClient.setOptions(sessionId,
+        { _bublVideoFileFormat: 'UNSUPPORTED' })
         .then(
           expectError,
           (err) => validate.error(
@@ -1617,7 +1651,10 @@ describe('RUST API TEST SUITE', function () {
     it('throws missingParameter when command ID is not provided', function () {
       return testClient.commandsStatus().then(
         expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandsStatus, schema.errors.missingParameter)
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandsStatus,
+          schema.errors.missingParameter)
       )
     })
 
@@ -1652,7 +1689,7 @@ describe('RUST API TEST SUITE', function () {
     it('Successfully startCpature a video', function () {
       this.timeout(timeoutValue)
 
-      return testClient.setOptions({captureMode : 'video'})
+      return testClient.setOptions({captureMode: 'video'})
         .then((res) => {
           validate.done(res.body, schema.names.commandSetOptions)
           return testClient.startCapture()
@@ -1665,7 +1702,7 @@ describe('RUST API TEST SUITE', function () {
       this.timeout(timeoutValue)
 
       return testClient.setOptions({
-        captureMode: "interval",
+        captureMode: 'interval',
         captureInterval: 3,
         captureNumber: 3
       }).then((res) => {
@@ -1685,7 +1722,11 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandSetOptions)
         return testClient.startCapture()
       }).then(expectError,
-      (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand))
+      (err) => validate.error(
+        err.error.response.body,
+        schema.names.commandStartCapture,
+        schema.errors.disabledCommand)
+      )
     })
 
     it('Throw disabledCommand error if attempt to start a video capture during an active open-ended capture', function () {
@@ -1700,7 +1741,10 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandStartCapture)
         return testClient.startCapture()
       }).then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand)
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandStartCapture,
+          schema.errors.disabledCommand)
       )
     })
 
@@ -1722,19 +1766,27 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandSetOptions)
         return testClient.startCapture()
       }).then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.disabledCommand))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandStartCapture,
+          schema.errors.disabledCommand)
+        )
     })
 
     it('Throw invalidParameterName error if an unsupported parameter is entered', function () {
       this.timeout(timeoutValue)
 
-      return tesClient.setOptions({
+      return testClient.setOptions({
         captureMode: 'video'
       }).then((res) => {
         validate.done(res.body, schema.names.commandSetOptions)
         return testClient.startCapture('unsupported')
       }).then(expectError,
-      (err) => validate.error(err.error.response.body, schema.names.commandStartCapture, schema.errors.invalidParameterName))
+      (err) => validate.error(
+        err.error.response.body,
+        schema.names.commandStartCapture,
+        schema.errors.invalidParameterName)
+      )
     })
   })
 
@@ -1762,7 +1814,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandStartCapture)
         return testClient.stopCapture()
       }).then((res) => {
-        validae.done(res.body, schema.names.commandStopCapture)
+        validate.done(res.body, schema.names.commandStopCapture)
         assert(Object.keys(res.body).length === 0)
       }).catch(wrapError)
     })
@@ -1779,7 +1831,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandStartCapture)
         return testClient.stopCapture()
       }).then((res) => {
-        validae.done(res.body, schema.names.commandStopCapture)
+        validate.done(res.body, schema.names.commandStopCapture)
         assert(Object.keys(res.body).length === 0)
       }).catch(wrapError)
     })
@@ -1796,7 +1848,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandStartCapture)
         return testClient.stopCapture()
       }).then((res) => {
-        validae.done(res.body, schema.names.commandStopCapture)
+        validate.done(res.body, schema.names.commandStopCapture)
         assert(Object.keys(res.body).length === 0)
       }).catch(wrapError)
     })
@@ -1804,13 +1856,21 @@ describe('RUST API TEST SUITE', function () {
     it('Throw disabledCommand Error if there is not active capture to be stopped', function () {
       return testClient.stopCapture()
       .then(expectError,
-      (err) => validate.error(err.error.response.body, schema.names.commandStopCapture, schema.errors.disabledCommand))
+      (err) => validate.error(
+        err.error.response.body,
+        schema.names.commandStopCapture,
+        schema.errors.disabledCommand)
+      )
     })
 
     it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
       return testClient.stopCapture('unsupported')
       .then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandStopCapture, schema.errors.invalidParameterName))
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandStopCapture,
+          schema.errors.invalidParameterName)
+      )
     })
   })
 
@@ -1830,7 +1890,11 @@ describe('RUST API TEST SUITE', function () {
     it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
       return testClient.reset(defaultOptionsFile)
       .then(expectError,
-      (err) => validate.error(err.error.response.body, schema.names.commandReset, schema.errors.invalidParameterName))
+      (err) => validate.error(
+        err.error.response.body,
+        schema.names.commandReset,
+        schema.errors.invalidParameterName)
+      )
     })
   })
 
@@ -1998,7 +2062,10 @@ describe('RUST API TEST SUITE', function () {
             testClient.bublPoll(res.body.id)
             .then(expectError,
               (err) => {
-                validate.error(err.error.response.body, schema.names.commandsBublPoll, schema.errors.missingParameter)
+                validate.error(
+                  err.error.response.body,
+                  schema.names.commandsBublPoll,
+                  schema.errors.missingParameter)
                 stopped = true
               })
             .then(deferred.resolve, deferred.reject)
@@ -2437,7 +2504,10 @@ describe('RUST API TEST SUITE', function () {
 
     it('throws missingParameter when commandId is not provided', function () {
       return testClient.bublStop().then(expectError,
-        (err) => validate.error(err.error.response.body, schema.names.commandsBublStop, schema.errors.missingParameter)
+        (err) => validate.error(
+          err.error.response.body,
+          schema.names.commandsBublStop,
+          schema.errors.missingParameter)
       )
     })
   })
@@ -2546,14 +2616,20 @@ describe('RUST API TEST SUITE', function () {
     it('throws invalidParameterValue when incorrect sessionId type is provided', function () {
       return testClient.bublStream('wrongtype')
         .then(expectError, function onError (err) {
-          validate.error(err.error.response.body, schema.names.commandBublStream, schema.errors.invalidParameterValue)
+          validate.error(
+            err.error.response.body,
+            schema.names.commandBublStream,
+            schema.errors.invalidParameterValue)
         })
     })
 
     it('Expect missingParameter Error. camera._bublStream cannot stream when sessionId is not provided', function () {
       return testClient.bublStream()
         .then(expectError, function onError (err) {
-          validate.error(err.error.response.body, schema.names.commandBublStream, schema.errors.missingParameter)
+          validate.error(
+            err.error.response.body,
+            schema.names.commandBublStream,
+            schema.errors.missingParameter)
         })
     })
   })
@@ -2605,7 +2681,10 @@ describe('RUST API TEST SUITE', function () {
     it('throws invalidParameterValue when fileUri is incorrect', function () {
       return testClient.bublGetImage('wrongtype')
         .then(expectError, function onError (err) {
-          validate.error(err.error.response.body, schema.names.commandGetImage, schema.errors.invalidParameterValue)
+          validate.error(
+            err.error.response.body,
+            schema.names.commandGetImage,
+            schema.errors.invalidParameterValue)
         })
     })
   })
@@ -2667,7 +2746,10 @@ describe('RUST API TEST SUITE', function () {
       this.timeout(timeoutValue)
       return testClient.bublShutdown()
         .then(expectError, function onError (err) {
-          validate.error(err.error.response.body, schema.names.commandBublShutdown, schema.errors.missingParameter)
+          validate.error(
+            err.error.response.body,
+            schema.names.commandBublShutdown,
+            schema.errors.missingParameter)
         })
     })
 
@@ -2675,7 +2757,10 @@ describe('RUST API TEST SUITE', function () {
       this.timeout(timeoutValue)
       return testClient.bublShutdown(sessionId + '0')
         .then(expectError, function onError (err) {
-          validate.error(err.error.response.body, schema.names.commandBublShutdown, schema.errors.invalidParameterValue)
+          validate.error(
+            err.error.response.body,
+            schema.names.commandBublShutdown,
+            schema.errors.invalidParameterValue)
         })
     })
 
@@ -2683,7 +2768,10 @@ describe('RUST API TEST SUITE', function () {
       this.timeout(timeoutValue)
       return testClient.bublShutdown(sessionId, '...')
         .then(expectError, function onError (err) {
-          validate.error(err.error.response.body, schema.names.commandBublShutdown, schema.errors.invalidParameterValue)
+          validate.error(
+            err.error.response.body,
+            schema.names.commandBublShutdown,
+            schema.errors.invalidParameterValue)
         })
     })
 
