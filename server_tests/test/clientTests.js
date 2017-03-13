@@ -551,7 +551,7 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // LIST IMAGES
-  describe('Testing /osc/commands/execute camera.listImage endpoint', function () {
+  describe.only('Testing /osc/commands/execute camera.listImage endpoint', function () {
     var sessionId
 
     before(function () {
@@ -1263,7 +1263,7 @@ describe('RUST API TEST SUITE', function () {
 
     // Doesn't work properly since no OSC1 doesn't report invalidParameterName
     it.skip('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
-      if (!isOSC2) {
+      if (!isOSC1) {
         return this.skip()
       }
 
