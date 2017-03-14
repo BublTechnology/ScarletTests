@@ -30,16 +30,14 @@ var Util = function (client) {
     fs.readFile(optionsFile, 'utf8', function (err, data) {
       var sessionId
       if (err) {
-        deferred.resolve(JSON.parse(err))
+        deferred.reject(JSON.parse(err))
       } else {
         testClient.getState()
           .then(function (res) {
             sessionId = res.body.state.sessionId
             return testClient.setOptions(sessionId, JSON.parse(data))
           })
-          .then(function (res) {
-            deferred.resolve(res)
-          })
+          .then(deferred.resolve, deferred.reject)
       }
     })
     return deferred.promise
