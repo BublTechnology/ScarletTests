@@ -52,7 +52,7 @@ describe('RUST API TEST SUITE', function () {
   var timeoutValue = 30000
   var schema = new Schema({
     bubl: isBublcam,
-    apiLevel: 1
+    apiLevel: camApi
   })
   var validate = new Validator(schema)
   function wrapError (err) {
@@ -663,6 +663,10 @@ describe('RUST API TEST SUITE', function () {
     })
 
     after(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
       return Utility.checkActiveSession()
         .then(function (isActive) {
           if (isActive) {
@@ -1022,9 +1026,7 @@ describe('RUST API TEST SUITE', function () {
       if (!isOSC1) {
         return this.skip()
       }
-    })
 
-    before(function () {
       return testClient.startSession()
         .then(function onSuccess (res) {
           validate.done(res.body, schema.names.commandStartSession)
@@ -1033,16 +1035,19 @@ describe('RUST API TEST SUITE', function () {
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
+
     })
 
     it('Expect success. camera.getImage successfully gets image when provided with a valid fileUri', function () {
@@ -1091,6 +1096,7 @@ describe('RUST API TEST SUITE', function () {
 
   // LIST FILES (OSC2.0)
   describe('Testing /osc/commands/execute camera.listFiles endpoint', function () {
+    var sessionId
     var expectedImageCount
     var expectedVideoCount
     var totalEntryCount
@@ -1100,25 +1106,26 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
       // delete exisiting files on SD card, if any
-      return Utility.deleteAllImages() // should have a new utility deleteAll() or something
-      // take a bunch of photos and videos
+      return testClient.delete(["all"])
       .then(function onSuccess () {
-        return testClient.takePicture()
+        validate.done(res.body, schema.names.commandDelete)
+        assert.equal(res.body.results.fileUrls.length, 0)
+        return testClient.takePicture(sessionId)
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandTakePicture)
         expectedImageCount++
         totalEntryCount++
-        return testClient.takePicture()
+        return testClient.takePicture(sessionId)
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandTakePicture)
         expectedImageCount++
         totalEntryCount++
-        return testClient.takePicture()
+        return testClient.takePicture(sessionId)
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandTakePicture)
         expectedImageCount++
         totalEntryCount++
-        return testClient.setOptions({ captureMode: 'video' })
+        return testClient.setOptions(sessionId, { captureMode: 'video' })
       })
       .then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandSetOptions)
@@ -1128,6 +1135,7 @@ describe('RUST API TEST SUITE', function () {
         validate.done(res.body, schema.names.commandStartCapture)
         expectedVideoCount++
         totalEntryCount++
+        Q.delay(5000)
         return testClient.stopCapture()
       }).then(function onSuccess (res) {
         validate.done(res.body, schema.names.commandStopCapture)
@@ -1137,7 +1145,11 @@ describe('RUST API TEST SUITE', function () {
 
     after(function () {
       // delete all files on SD card
-      return Utility.deleteAllImages()
+      return testClient.delete(["all"])
+      .then(function onSuccess () {
+        validate.done(res.body, schema.names.commandDelete)
+        assert.equal(res.body.results.fileUrls.length, 0)
+      })
     })
   // testClient.listFiles(fileType, entryCount, maxThumbSize, startPosition(opstion))    //
 
@@ -1312,9 +1324,7 @@ describe('RUST API TEST SUITE', function () {
       if (!isOSC1) {
         return this.skip()
       }
-    })
 
-    before(function () {
       this.timeout(timeoutValue)
       return testClient.startSession()
         .then(function onSuccess (res) {
@@ -1330,6 +1340,10 @@ describe('RUST API TEST SUITE', function () {
     })
 
     after(function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
+
       return Utility.checkActiveSession()
         .then(function (isActive) {
           if (isActive) {
@@ -1388,24 +1402,28 @@ describe('RUST API TEST SUITE', function () {
         'delayProcessing', 'clientVersion'] : [])
 
     before(function () {
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-        }, wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+          }, wrapError)
+      }
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
     it('gets correct options when gettable options are set to supported values', function () {
@@ -1431,6 +1449,9 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('throws missingParameter when sessionId is not provided', function () {
+      if (!isOSC1) {
+        return this.skip()
+      }
       return testClient.getOptions(undefined, specifiedOptions)
         .then(
           expectError,
@@ -1504,21 +1525,29 @@ describe('RUST API TEST SUITE', function () {
     }
 
     before(function () {
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-        }, wrapError)
+      if (!isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+          }, wrapError)
+      }
     })
 
     after(function () {
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-          return testClient.closeSession(sessionId)
-        })
-        .then((res) => validate.done(res.body, schema.names.commandCloseSession))
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.restoreDefaultOptions(defaultOptionsFile)
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+            return testClient.closeSession(sessionId)
+          })
+          .then((res) => validate.done(res.body, schema.names.commandCloseSession))
+          .catch(wrapError)
+      } else {
+        return testClient.reset()
+          .then(res.body, schema.names.commandReset)
+      }
+
     })
 
     it(' successfully sets options when sleepDelay option is set to supported value', function () {
@@ -1828,24 +1857,28 @@ describe('RUST API TEST SUITE', function () {
     var sessionId
 
     before(function () {
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-        }, wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+          }, wrapError)
+      }
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
     it('successfully grabs command status after take picture has been called', function () {
@@ -1896,13 +1929,17 @@ describe('RUST API TEST SUITE', function () {
       if (!isOSC2) {
         return this.skip()
       }
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
+      return testClient.reset()
+        .then((res) => validate.done(res.body, schema.names.commandReset))
+        .catch(wrapError)
     })
 
     afterEach(function () {
       return testClient.stopCapture()
-      .then((res) => validate.done(res.body, schema.names.commandStopCapture))
-      .then(() => Utility.restoreDefaultOptions(defaultOptionsFile))
+      .then((res) => {
+        validate.done(res.body, schema.names.commandStopCapture)
+        return testClient.reset()
+      }).then((res) => validate.done(res.body, schema.names.commandReset))
       .catch(wrapError)
     })
 
@@ -2016,12 +2053,15 @@ describe('RUST API TEST SUITE', function () {
       if (!isOSC2) {
         return this.skip()
       }
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
+      return testClient.reset()
+        .then((res) => validate.done(res.body, schema.names.commandReset))
+        .catch(wrapError)
     })
 
     afterEach(function () {
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-      .catch(wrapError)
+      return testClient.reset()
+        .then((res) => validate.done(res.body, schema.names.commandReset))
+        .catch(wrapError)
     })
 
     it('Successfully stopCapture a video', function () {
@@ -2159,6 +2199,7 @@ describe('RUST API TEST SUITE', function () {
             commandId = initRes.body.id
             testClient.bublPoll(commandId, fingerprint)
               .then(function onSuccess (res) {
+                console.log(res.body)
                 validate.bublPoll(res.body)
                 validate.inProgress(res.body.command, schema.names.cameraTakePicture)
                 assert.notEqual(res.body.fingerprint, fingerprint)
@@ -2179,7 +2220,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('Expect success. /osc/commands/_bublPoll returns once command state has changed', function () {
+    it.only('Expect success. /osc/commands/_bublPoll returns once command state has changed', function () {
       this.timeout(timeoutValue)
       var fingerprint = ''
       var commandId = ''
@@ -2194,6 +2235,8 @@ describe('RUST API TEST SUITE', function () {
               return testClient.bublPoll(commandId, fingerprint)
             })
             .then(function onSuccess (res) {
+              console.log("Code just got to first layer")
+              console.log(res.body)
               validate.bublPoll(res.body)
               assert.notEqual(res.body.fingerprint, fingerprint)
               assert.equal(res.body.command.id, commandId)
@@ -2205,6 +2248,8 @@ describe('RUST API TEST SUITE', function () {
               return testClient.bublPoll(commandId, fingerprint, 4)
             })
             .then(function onSuccess (res) {
+              console.log("Code gets to second layer")
+              console.log(res.body)
               validate.bublPoll(res.body)
               assert.notEqual(res.body.fingerprint, fingerprint)
               assert.equal(res.body.command.id, commandId)
@@ -2348,33 +2393,43 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
 
-      this.timeout(timeoutValue)
-      return testClient.startSession()
-        .then(function (res) {
-          sessionId = res.body.results.sessionId
-        })
+      if (isOSC1) {
+        this.timeout(timeoutValue)
+        return testClient.startSession()
+          .then(function (res) {
+            sessionId = res.body.results.sessionId
+          })
+      }
     })
 
     beforeEach(function () {
       this.timeout(timeoutValue)
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-        .then(function () {
-          return Utility.deleteAllImages()
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.restoreDefaultOptions(defaultOptionsFile)
+          .then(function () {
+            return Utility.deleteAllImages()
+          })
+          .catch(wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+      }
+
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
     it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function () {
@@ -2525,38 +2580,54 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
 
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-          return Utility.restoreDefaultOptions(defaultOptionsFile)
-        })
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+          })
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          })
+          .catch(wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+          .catch(wrapError)
+      }
     })
 
     afterEach(function () {
       this.timeout(timeoutValue)
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        }, wrapError)
+      if (isOSC1) {
+        return Utility.restoreDefaultOptions(defaultOptionsFile)
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          })
+          .catch(wrapError)
+      } else {
+        return testClient.reset()
+         .then((res) => validate.done(res.body, schema.names.commandReset))
+         .catch(wrapError)
+      }
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
+
 
     it('Expect success.  camera._bublCaptureVideo successfully captures a video', function () {
       this.timeout(timeoutValue)
@@ -2648,37 +2719,51 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
 
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-          return Utility.restoreDefaultOptions(defaultOptionsFile)
-        })
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+          })
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          })
+          .catch(wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+      }
+
     })
 
     afterEach(function () {
       this.timeout(timeoutValue)
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        }, wrapError)
+      if (isOSC1) {
+        return Utility.restoreDefaultOptions(defaultOptionsFile)
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          }, wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+      }
+
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
     it('Expect success.  camera._bublStop successfully stops a video capture', function () {
@@ -2740,36 +2825,47 @@ describe('RUST API TEST SUITE', function () {
       if (!isBublcam) {
         return this.skip()
       }
-
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-          return Utility.restoreDefaultOptions(defaultOptionsFile)
-        }).then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        }, wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+          }).then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          }, wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+      }
     })
 
     afterEach(function () {
       this.timeout(timeoutValue)
-      return Utility.restoreDefaultOptions(defaultOptionsFile)
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        }, wrapError)
+      if (isOSC1) {
+        return Utility.restoreDefaultOptions(defaultOptionsFile)
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          }, wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+      }
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
     it('Expect success.  camera._bublStream successfully streams', function () {
@@ -2860,7 +2956,7 @@ describe('RUST API TEST SUITE', function () {
     var fileUri
 
     before(function () {
-      if (!isBublcam) {
+      if (!isBublcam || !isOSC1) {
         return this.skip()
       }
 
@@ -2937,29 +3033,36 @@ describe('RUST API TEST SUITE', function () {
     var sessionId
 
     beforeEach(function () {
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-          return Utility.restoreDefaultOptions(defaultOptionsFile)
-        })
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+            return Utility.restoreDefaultOptions(defaultOptionsFile)
+          })
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandSetOptions)
+          })
+          .catch(wrapError)
+      } else {
+        return testClient.reset()
+          .then((res) => validate.done(res.body, schema.names.commandReset))
+      }
     })
 
     afterEach(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
     it('throws missingParameter unless the active session\'s sessionId is provided', function () {
