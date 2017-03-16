@@ -50,7 +50,7 @@ describe('RUST API TEST SUITE', function () {
   var testViaWifi = process.env.SCARLET_TEST_WIFI === '1'
   var defaultOptionsFile = isBubl1 || isMock ? './defaults/mock.json' : './defaults/bubl2.json'
   var timeoutValue = 30000
-  var schema = new Schema({
+  var schema = schema = new Schema({
     bubl: isBublcam,
     apiLevel: camApi
   })
@@ -81,29 +81,33 @@ describe('RUST API TEST SUITE', function () {
 
     return testClient.startSession()
     .then(function onSuccess (res) {
-      validate.done(res.body, schema.names.commandStartSession)
+      console.log("res of startSession " + JSON.stringify(res.body))
+      console.log("StartedSession")
       sessionId = res.body.results.sessionId
-      switch (camApi) {
-        case oscApiLevels.APILEVEL1:
+      console.log(sessionId)
+        if (isOSC1) {
+          console.log("I shall close session")
           return testClient.closeSession(sessionId)
-          .then((res) => validate.done(res.body, schema.names.commandCloseSession))
-          break
-        case oscApiLevels.APILEVEL2:
+            .then((res) => validate.done(res.body, schema.names.commandCloseSession))
+        } else {
+          console.log("I shall switch to osc2")
+
           return testClient.setOptions(sessionId, { clientVersion: 2 })
-          .then(function onSuccess (res) {
-            validate.done(res.body, schema.names.commandSetOptions)
+            .then(function onSuccess (res) {
+              validate.done(res.body, schema.names.commandSetOptions) // Need to be verified against level 2 schema
           })
-          break
-      }
-    }).catch(function (err) {
-      if (err.error.response.body === "unknownCommand") {
+        }
+    }, function (err) {
+      if (err.error.response.body.code === "unknownCommand") {
         resolve("Already in OSC 2.0")
-      } else {wrapError}
-    })
+      } else {
+        throw err
+      }
+    }).catch(wrapError)
   })
 
   // OSC INFO
-  describe('Testing /osc/info endpoint', function () {
+  describe.skip('Testing /osc/info endpoint', function () {
     it('Expect success. /osc/info returns correct info', function () {
       return testClient.getInfo()
         .then((res) => validate.info(res.body), wrapError)
@@ -2167,27 +2171,31 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
 
-      return testClient.startSession()
-        .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandStartSession)
-          sessionId = res.body.results.sessionId
-        }, wrapError)
+      if (isOSC1) {
+        return testClient.startSession()
+          .then(function onSuccess (res) {
+            validate.done(res.body, schema.names.commandStartSession)
+            sessionId = res.body.results.sessionId
+          }, wrapError)
+      }
     })
 
     after(function () {
-      return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
-            return testClient.closeSession(sessionId)
-              .then(function onSuccess (res) {
-                validate.done(res.body, schema.names.commandCloseSession)
-              })
-          }
-        })
-        .catch(wrapError)
+      if (isOSC1) {
+        return Utility.checkActiveSession()
+          .then(function (isActive) {
+            if (isActive) {
+              return testClient.closeSession(sessionId)
+                .then(function onSuccess (res) {
+                  validate.done(res.body, schema.names.commandCloseSession)
+                })
+            }
+          })
+          .catch(wrapError)
+      }
     })
 
-    it('returns immediately if no waitTimeout argument is provided', function () {
+    it.only('returns immediately if no waitTimeout argument is provided', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var commandId = ''
