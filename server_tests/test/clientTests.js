@@ -81,24 +81,25 @@ describe('RUST API TEST SUITE', function () {
 
     return testClient.startSession()
     .then(function onSuccess (res) {
-      console.log("res of startSession " + JSON.stringify(res.body))
+      console.log(camApi)
+      console.log("res of startSession " + JSON.stringify(res))
       console.log("StartedSession")
-      sessionId = res.body.results.sessionId
+      sessionId = res.results.sessionId
       console.log(sessionId)
         if (isOSC1) {
           console.log("I shall close session")
           return testClient.closeSession(sessionId)
-            .then((res) => validate.done(res.body, schema.names.commandCloseSession))
+            .then((res) => validate.done(res, schema.names.commandCloseSession))
         } else {
           console.log("I shall switch to osc2")
 
           return testClient.setOptions(sessionId, { clientVersion: 2 })
             .then(function onSuccess (res) {
-              validate.done(res.body, schema.names.commandSetOptions) // Need to be verified against level 2 schema
+              validate.done(res, schema.names.commandSetOptions) // Need to be verified against level 2 schema
           })
         }
     }, function (err) {
-      if (err.error.response.body.code === "unknownCommand") {
+      if (err.code === "unknownCommand") {
         resolve("Already in OSC 2.0")
       } else {
         throw err
@@ -107,7 +108,7 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // OSC INFO
-  describe.skip('Testing /osc/info endpoint', function () {
+  describe.only('Testing /osc/info endpoint', function () {
     it('Expect success. /osc/info returns correct info', function () {
       return testClient.getInfo()
         .then((res) => validate.info(res.body), wrapError)
@@ -544,25 +545,26 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // TAKE PICTURE
-  describe('Testing /osc/commands/execute camera.takePicture endpoint', function () {
+  describe.only('Testing /osc/commands/execute camera.takePicture endpoint', function () {
     var sessionId
 
     before(function () {
       if (isOSC1) {
         return testClient.startSession()
           .then(function onSuccess (res) {
-            validate.done(res.body, schema.names.commandStartSession)
-            sessionId = res.body.results.sessionId
+            console.log(res)
+            validate.done(res, schema.names.commandStartSession)
+            sessionId = res.results.sessionId
             return Utility.restoreDefaultOptions(defaultOptionsFile)
           })
           .then(function onSuccess (res) {
-            validate.done(res.body, schema.names.commandSetOptions)
+            validate.done(res, schema.names.commandSetOptions)
           })
           .catch(wrapError)
       } else {
           return testClient.reset()
           .then(function onSuccess (res) {
-            validate.done(res.body, schema.names.commandReset)
+            validate.done(res, schema.names.commandReset)
           })
           .catch(wrapError)
       }
@@ -572,12 +574,12 @@ describe('RUST API TEST SUITE', function () {
       if (isOSC1) {
         return Utility.restoreDefaultOptions(defaultOptionsFile)
           .then(function onSuccess (res) {
-            validate.done(res.body, schema.names.commandSetOptions)
+            validate.done(res, schema.names.commandSetOptions)
           }, wrapError)
       } else {
         return testClient.reset()
         .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandReset)
+          validate.done(res, schema.names.commandReset)
         })
         .catch(wrapError)
       }
@@ -591,7 +593,7 @@ describe('RUST API TEST SUITE', function () {
           .then(function (isActive) {
             if (isActive) {
               return testClient.closeSession(sessionId)
-                .then((res) => validate.done(res.body, schema.names.commandCloseSession))
+                .then((res) => validate.done(res, schema.names.commandCloseSession))
             }
           })
           .catch(wrapError)
@@ -610,7 +612,7 @@ describe('RUST API TEST SUITE', function () {
         hdr: true
       })
         .then(function onSuccess (res) {
-          validate.done(res.body, schema.names.commandSetOptions)
+          validate.done(res, schema.names.commandSetOptions)
           return testClient.takePicture(sessionId)
         })
         .then(function onSuccess (res) {
@@ -625,7 +627,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err.error.response.body,
+            err,
             schema.names.commandTakePicture,
             schema.errors.invalidParameterValue
           )
@@ -637,7 +639,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err.error.response.body,
+            err,
             schema.names.commandTakePicture,
             schema.errors.missingParameter
           )
@@ -2195,7 +2197,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it.only('returns immediately if no waitTimeout argument is provided', function () {
+    it('returns immediately if no waitTimeout argument is provided', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var commandId = ''
@@ -2228,7 +2230,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it.only('Expect success. /osc/commands/_bublPoll returns once command state has changed', function () {
+    it('Expect success. /osc/commands/_bublPoll returns once command state has changed', function () {
       this.timeout(timeoutValue)
       var fingerprint = ''
       var commandId = ''
