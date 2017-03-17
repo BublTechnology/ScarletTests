@@ -34,7 +34,7 @@ var Util = function (client) {
       } else {
         testClient.getState()
           .then(function (res) {
-            sessionId = res.body.state.sessionId
+            sessionId = res.state.sessionId
             return testClient.setOptions(sessionId, JSON.parse(data))
           })
           .then(deferred.resolve, deferred.reject)
@@ -49,7 +49,7 @@ var Util = function (client) {
   this.checkActiveSession = function () {
     return testClient.getState()
       .then(function (res) {
-        return res.body.state.sessionId !== ''
+        return res.state.sessionId !== ''
       })
   }
 
@@ -61,7 +61,7 @@ var Util = function (client) {
     var totalImages
     testClient.listImages(1, false)
       .then(function (res) {
-        totalImages = res.body.results.totalEntries
+        totalImages = res.results.totalEntries
         return testClient.listImages(totalImages, false)
       })
       .then(function (res) {
@@ -77,8 +77,8 @@ var Util = function (client) {
 
   var deleteImages = function (res) {
     var calls = []
-    for (var i = 0; i < res.body.results.entries.length; i++) {
-      calls.push((testClient.delete(res.body.results.entries[i].uri)))
+    for (var i = 0; i < res.results.entries.length; i++) {
+      calls.push((testClient.delete(res.results.entries[i].uri)))
     }
     return calls
   }
