@@ -1522,7 +1522,7 @@ describe('RUST API TEST SUITE', function () {
     }
 
     before(function () {
-      if (!isOSC1) {
+      if (isOSC1) {
         return testClient.startSession()
           .then(function onSuccess (res) {
             validate.done(res, schema.names.commandStartSession)
@@ -2896,11 +2896,11 @@ describe('RUST API TEST SUITE', function () {
       return Q.all([
         testClient.bublStream(sessionId, function onStatusUpdate1 (commandRes1) {
           if (!commandId1) {
-            commandId1 = commandRes1.body.id
+            commandId1 = commandRes1.id
           // Starting this stream, stops the first one
             testClient.bublStream(sessionId, function onStatusUpdate2 (commandRes2) {
               if (!commandId2) {
-                commandId2 = commandRes2.body.id
+                commandId2 = commandRes2.id
                 testClient.bublStop(commandId2)
                 .then(function onSuccess (res) {
                   assert(Object.keys(res).length === 0)
