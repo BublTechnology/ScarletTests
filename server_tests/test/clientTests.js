@@ -84,17 +84,15 @@ describe('RUST API TEST SUITE', function () {
             .then((res) => validate.done(res, schema.names.commandCloseSession))
       } else {
         return testClient.setOptions(sessionId, { clientVersion: 2 })
-            .then(function onSuccess (res) {
-              validate.done(res, schema.names.commandSetOptions) // Need to be verified against level 2 schema
-            })
+            .then((res) => validate.done(res, schema.names.commandSetOptions)) // Need to be verified against level 2 schema
       }
-    }, function (err) {
-      if (err.code === "unknownCommand") {
-        resolve("Already in OSC 2.0")
+    }, function onError (err) {
+      if (err.error.code === "unknownCommand") {
+        Promise.resolve("Already in OSC 2.0")
       } else {
         throw err
       }
-    }).catch(wrapError)
+    })
   })
 
   // OSC INFO
@@ -530,6 +528,7 @@ describe('RUST API TEST SUITE', function () {
 
     before(function () {
       if (isOSC1) {
+        console.log("I'm in the wrong place!")
         return testClient.startSession()
           .then(function onSuccess (res) {
             validate.done(res, schema.names.commandStartSession)
@@ -541,9 +540,13 @@ describe('RUST API TEST SUITE', function () {
           })
           .catch(wrapError)
       } else {
+        //console.log("Im osc2 should be here")
         return testClient.reset()
           .then(function onSuccess (res) {
+            //console.log("reset successful")
             validate.done(res, schema.names.commandReset)
+          }, function onError (err) {
+            //console.log("reset failed! error is ", err)
           })
           .catch(wrapError)
       }
@@ -584,6 +587,7 @@ describe('RUST API TEST SUITE', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then((res) => {
+          console.log(res)
           validate.done(res, schema.names.commandTakePicture)
         }, function onError (err) {
           wrapError(err)
@@ -2131,7 +2135,7 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // OSC 2.0 reset
-  describe('Testing /osc/commands/execute camera.reset endpoint', function () {
+  describe.only('Testing /osc/commands/execute camera.reset endpoint', function () {
     before(function () {
       if (!isOSC2) {
         return this.skip()
