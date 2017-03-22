@@ -56,7 +56,8 @@ let Schema = function (options_) {
     cameraInExclusiveUse: 'cameraInExclusiveUse',
     missingParameter: 'missingParameter',
     invalidParameterName: 'invalidParameterName',
-    invalidParameterValue: 'invalidParameterValue'
+    invalidParameterValue: 'invalidParameterValue',
+    disabledCommand: 'disabledCommand'
   }
 
   this.info = {
@@ -914,7 +915,9 @@ let Schema = function (options_) {
               this.errors.missingParameter,
               this.errors.invalidParameterName,
               this.errors.invalidParameterValue
-            ].concat(this.apiLevel === 2 ? [this.errors.unknownCommand] : [])
+            ].concat(this.apiLevel === 2 ? [
+              this.errors.unknownCommand,
+              this.errors.disabledCommand] : [])
           },
           message: {
             type: 'string'
