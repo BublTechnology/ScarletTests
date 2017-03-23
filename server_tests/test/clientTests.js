@@ -598,7 +598,11 @@ describe('RUST API TEST SUITE', function () {
         })
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandTakePicture)
-          assert.equal(res.results._bublFileUris.length, 3)
+          if (isOSC1) {
+            assert.equal(res.results._bublFileUris.length, 3)
+          } else {
+            assert.equal(res.results._bublFileUrls.length, 3)
+          }
         })
         .catch(wrapError)
     })
@@ -912,6 +916,7 @@ describe('RUST API TEST SUITE', function () {
         .then(function onSuccess (res) {
           return testClient.setOptions(sessionId, { captureMode: 'video' })
         }).then(function onSuccess (res) {
+          validate.done(res, schema.names.commandSetOptions)
           return Q.all([testClient.startCapture(function onStatusChange (res) {
             if (!captureStart) {
               captureStart = true
@@ -922,10 +927,14 @@ describe('RUST API TEST SUITE', function () {
             }
           }), deferred.promise])
         }).then(function onSuccess () {
-          return testClient.delete(['all'])
+          return testClient.delete2(['all'])
         }).then(function onSuccess (res) {
           validate.done(res, schema.names.commandDelete)
           assert.equal(res.results.fileUrls.length, 0)
+          return testClient.listFiles('all', 1000, null)
+        }).then(function onSuccess (res) {
+          validate.done(res, schema.names.commandListFiles)
+          assert.equal(res.results.totalEntries, 0)
         }).catch(wrapError)
     })
 
@@ -942,6 +951,7 @@ describe('RUST API TEST SUITE', function () {
         .then(function onSuccess (res) {
           return testClient.setOptions(sessionId, { captureMode: 'video' })
         }).then(function onSuccess (res) {
+          validate.done(res, schema.names.commandSetOptions)
           return Q.all([testClient.startCapture(function onStatusChange (res) {
             if (!captureStart) {
               captureStart = true
@@ -951,12 +961,17 @@ describe('RUST API TEST SUITE', function () {
               .then(deferred.resolve, deferred.reject)
             }
           }), deferred.promise])
-        }).then(function onSuccess () {
-          return testClient.delete(['image'])
+        }).then(function onSuccess (res) {
+          return testClient.delete2(['image'])
         }).then(function onSuccess (res) {
           validate.done(res, schema.names.commandDelete)
           assert.equal(res.results.fileUrls.length, 0)
-          assert.match(res.results.fileUrls[0], /mp4$/i)
+          return testClient.listFiles('all', 1000, null)
+        }).then(function onSuccess (res) {
+          validate.done(res, schema.names.commandListFiles)
+          res.results.entries.forEach(function isMP4 (file) {
+            assert.match(file.fileUrl, /mp4$/i)
+          })
         }).catch(wrapError)
     })
 
@@ -973,6 +988,7 @@ describe('RUST API TEST SUITE', function () {
         .then(function onSuccess (res) {
           return testClient.setOptions(sessionId, { captureMode: 'video' })
         }).then(function onSuccess (res) {
+          validate.done(res, schema.names.commandSetOptions)
           return Q.all([testClient.startCapture(function onStatusChange (res) {
             if (!captureStart) {
               captureStart = true
@@ -982,17 +998,23 @@ describe('RUST API TEST SUITE', function () {
               .then(deferred.resolve, deferred.reject)
             }
           }), deferred.promise])
-        }).then(function onSuccess () {
-          return testClient.delete(['video'])
+        }).then(function onSuccess (res) {
+          return testClient.delete2(['video'])
         }).then(function onSuccess (res) {
           validate.done(res, schema.names.commandDelete)
           assert.equal(res.results.fileUrls.length, 0)
-          assert.match(res.results.fileUrls[0], /jpg$/i)
+          return testClient.listFiles('all', 1000, null)
+        }).then(function onSuccess (res) {
+          validate.done(res, schema.names.commandListFiles)
+          res.results.entries.forEach(function isMP4 (file) {
+            assert.match(file.fileUrl, /jpg$/i)
+          })
         }).catch(wrapError)
     })
 
     it('throws invalidParameterValue/Name when incorrect fileUri/fileUrls type is provided', function () {
-      return testClient.delete('wrongtype')
+      if (isOSC1) {
+        return testClient.delete('wrongtype')
         .then(
           expectError,
           (err) => validate.error(
@@ -1000,17 +1022,42 @@ describe('RUST API TEST SUITE', function () {
             schema.names.commandDelete,
             isOSC1 ? schema.errors.invalidParameterValue : schema.errors.invalidParameterName
           )
-      )
-    })
-
-    it('Expect missingParameter Error. camera.delete cannot delete file when fileUri/fileUrls are not provided', function () {
-      return testClient.delete()
-        .then(expectError,
+        )
+      } else {
+        return testClient.delete2('wrongtype')
+        .then(
+          expectError,
           (err) => validate.error(
             err,
             schema.names.commandDelete,
-            schema.errors.missingParameter)
-      )
+            isOSC1 ? schema.errors.invalidParameterValue : schema.errors.invalidParameterName
+          )
+        )
+      }
+    })
+
+    it('Expect missingParameter Error. camera.delete cannot delete file when fileUri/fileUrls are not provided', function () {
+      if (isOSC1) {
+        return testClient.delete()
+        .then(
+          expectError,
+          (err) => validate.error(
+            err,
+            schema.names.commandDelete,
+            schema.erros.missingParameter
+          )
+        )
+      } else {
+        return testClient.delete2()
+        .then(
+          expectError,
+          (err) => validate.error(
+            err,
+            schema.names.commandDelete,
+            schema.erros.missingParameter
+          )
+        )
+      }
     })
   })
 
@@ -1097,13 +1144,15 @@ describe('RUST API TEST SUITE', function () {
     var expectedImageCount
     var expectedVideoCount
     var totalEntryCount
+    var deferred = Q.defer()
+    var startCapture = false
 
     before(function () {
       if (!isOSC2) {
         return this.skip()
       }
       // delete exisiting files on SD card, if any
-      return testClient.delete(["all"])
+      return testClient.delete2(["all"])
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandDelete)
         assert.equal(res.results.fileUrls.length, 0)
@@ -1126,17 +1175,16 @@ describe('RUST API TEST SUITE', function () {
       })
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandSetOptions)
-        return testClient.startCapture()
-      })
-      .then(function onSuccess (res) {
-        validate.done(res, schema.names.commandStartCapture)
-        expectedVideoCount++
-        totalEntryCount++
-        Q.delay(5000)
-        return testClient.stopCapture()
-      }).then(function onSuccess (res) {
-        validate.done(res, schema.names.commandStopCapture)
-        assert(Object.keys(res).length === 0)
+        return Q.all([testClient.startCapture(function onStatusChange (res) {
+          if (!startCapture) {
+            startCapture = true
+            Q.delay(5000)
+            .then(() => testClient.stopCapture())
+            .catch(wrapError)
+            .then(deferred.resolve, deferred.reject)
+          }
+        }).then(validate.done(res, schema.names.commandStartCapture), wrapError),
+          deferred.promise])
       }).catch(wrapError)
     })
 
@@ -1145,7 +1193,7 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
       // delete all files on SD card
-      return testClient.delete(["all"])
+      return testClient.delete2(["all"])
       .then(function onSuccess () {
         validate.done(res, schema.names.commandDelete)
         assert.equal(res.results.fileUrls.length, 0)
@@ -1984,14 +2032,14 @@ describe('RUST API TEST SUITE', function () {
       var deferred = Q.defer()
       var captureStart = false
 
-      return testClient.setOptions(undefined, {
-        captureMode: 'image'
-      }).then((res) => {
+      return testClient.setOptions(undefined, { captureMode: 'image' })
+      .then((res) => {
         validate.done(res, schema.names.commandSetOptions)
         return Q.all([testClient.startCapture(function onStatusChange () {
           if (!captureStart) {
             captureStart = true
-            Q.delay(1000)
+            Q.delay(5000)
+            .then(() => testClient.stopCapture())
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
@@ -2009,24 +2057,27 @@ describe('RUST API TEST SUITE', function () {
       var deferred = Q.defer()
       var captureStart = false
 
-      return testClient.setOptions(undefined, {
-        captureMode: 'video'
-      }).then((res) => {
+      return testClient.setOptions(undefined, { captureMode: 'video' })
+      .then((res) => {
         validate.done(res, schema.names.commandSetOptions)
-        return Q.all([testClient.startCapture(function onStatusChange () {
+        return Q.all([testClient.startCapture(function onStatusChange (res) {
           if (!captureStart) {
             captureStart = true
             return testClient.startCapture()
+            .then(expectError, function faileSecondCapture (err) {
+              validate.error(
+                err,
+                schema.names.commandStartCapture,
+                schema.errors.disabledCommand
+              )
+              return testClient.stopCapture()
+            })
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
-        }), deferred.promise])
-      }).then(expectError,
-        (err) => validate.error(
-          err,
-          schema.names.commandStartCapture,
-          schema.errors.disabledCommand)
-      )
+        }).then((res) => validate.done(res, schema.names.commandStartCapture),
+          wrapError), deferred.promise])
+      })
     })
 
     it('Throw disabledCommand error if attempt to start an interval capture during an active open-ended capture', function () {
@@ -2034,9 +2085,8 @@ describe('RUST API TEST SUITE', function () {
       var deferred = Q.defer()
       var captureStart = false
 
-      return testClient.setOptions(undefined, {
-        captureMode: 'video'
-      }).then((res) => {
+      return testClient.setOptions(undefined, { captureMode: 'video' })
+      .then((res) => {
         validate.done(res, schema.names.commandSetOptions)
         return Q.all([testClient.startCapture(function onStatusChange () {
           if (!captureStart) {
@@ -2046,40 +2096,61 @@ describe('RUST API TEST SUITE', function () {
               captureInterval: 3,
               captureNumber: 3
             }).then(() => testClient.startCapture())
+            .then(expectError, function faileSecondCapture (err) {
+              validate.error(
+                err,
+                schema.names.commandStartCapture,
+                schema.errors.disabledCommand
+              )
+              return testClient.stopCapture()
+            })
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
-        }), deferred.promise])
-      }).then(expectError,
-        (err) => validate.error(
-          err,
-          schema.names.commandStartCapture,
-          schema.errors.disabledCommand)
-      )
+        }).then((res) => validate.done(res, schema.names.commandStartCapture)),
+          deferred.promise])
+      })
     })
 
     it('Throw invalidParameterName error if an unsupported parameter is entered', function () {
-      this.timeout(timeoutValue)
-      var deferred = Q.defer()
-      var captureStart = false
+      // this.timeout(timeoutValue)
+      // var deferred = Q.defer()
+      // var captureStart = false
+      //
+      // return testClient.setOptions(undefined, {
+      //   captureMode: 'video'
+      // }).then((res) => {
+      //   validate.done(res, schema.names.commandSetOptions)
+      //   return Q.all([testClient.startCapture('unsupported', function onStatusChange () {
+      //     if (!captureStart) {
+      //       captureStart = true
+      //       Q.delay(1000)
+      //       .then(() => testClient.stopCapture())
+      //       .catch(wrapError)
+      //       .then(deferred.resolve, deferred.reject)
+      //     }
+      //   }), deferred.promise])
+      // }).then(expectError,
+      //   (err) => validate.error(
+      //     err,
+      //     schema.names.commandStartCapture,
+      //     schema.errors.disabledCommand)
+      // )
 
-      return testClient.setOptions(undefined, {
-        captureMode: 'video'
-      }).then((res) => {
+      this.timeout(timeoutValue)
+      var sessionId
+
+      return testClient.setOptions(undefined, { captureMode: 'video' })
+      .then((res) => {
         validate.done(res, schema.names.commandSetOptions)
-        return Q.all([testClient.startCapture('unsupported', function onStatusChange () {
-          if (!captureStart) {
-            captureStart = true
-            Q.delay(1000)
-            .catch(wrapError)
-            .then(deferred.resolve, deferred.reject)
-          }
-        }), deferred.promise])
-      }).then(expectError,
+        return testClient.startCapture()
+      })
+      .then(expectError,
         (err) => validate.error(
           err,
           schema.names.commandStartCapture,
-          schema.errors.disabledCommand)
+          schema.errors.invalidParameterName
+        )
       )
     })
   })
@@ -2102,52 +2173,69 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Successfully stopCapture a video', function () {
-      return testClient.setOptions({
+      this.timeout(timeoutValue)
+      var deferred = Q.defer()
+      var startCapture = false
+
+      return testClient.setOptions(undefined, {
         captureMode: 'video'
-      }).then((res) => {
-        validate.done(res, schema.names.commandSetOptions)
-        return testClient.startCapture()
-      }).then((res) => {
-        validate.done(res, schema.names.commandStartCapture)
-        return testClient.stopCapture()
-      }).then((res) => {
-        validate.done(res, schema.names.commandStopCapture)
-        assert(Object.keys(res).length === 0)
-      }).catch(wrapError)
+      }).then(() => Q.all([testClient.startCapture(function onStatusChange () {
+        if (!startCapture) {
+          startCapture = true
+          Q.delay(5000)
+          .then(() => testClient.stopCapture())
+          .then((res) => validate.done(res, schema.names.commandStopCapture))
+          .catch(wrapError)
+          .then(deferred.resolve, deferred.reject)
+        }
+      }).then((res) => validate.done(res, schema.names.commandStartCapture), wrapError),
+        deferred.promise]))
     })
 
     it('Successfully stopCapture an open-ended interval image capture', function () {
-      return testClient.setOptions({
+      this.timeout(timeoutValue)
+      var deferred = Q.defer()
+      var startCapture = false
+
+      return testClient.setOptions(undefined, {
         captureMode: 'interval',
         captureInterval: 5,
         captureNumber: 0
-      }).then((res) => {
-        validate.done(res, schema.names.commandSetOptions)
-        return testClient.startCapture()
-      }).then((res) => {
-        validate.done(res, schema.names.commandStartCapture)
-        return testClient.stopCapture()
-      }).then((res) => {
-        validate.done(res, schema.names.commandStopCapture)
-        assert(Object.keys(res).length === 0)
-      }).catch(wrapError)
+      }).then(() => Q.all([testClient.startCapture(function onStatusChange () {
+        if (!startCapture) {
+          startCapture = true
+          Q.delay(5000)
+          .then(() => testClient.stopCapture())
+          .then((res) => {
+            validate.done(res, schema.names.commandStopCapture)
+          }).catch(wrapError)
+          .then(deferred.resolve, deferred.reject)
+        }
+      }).then((res) => validate.done(res, schema.names.commandStartCapture), wrapError),
+        deferred.promise]))
     })
 
     it('Successfully stopCapture a non-open-ended interval capture before the set-interval is reached', function () {
-      return testClient.setOptions({
+      this.timeout(timeoutValue)
+      var deferred = Q.defer()
+      var startCapture = false
+
+      return testClient.setOptions(undefined, {
         captureMode: 'interval',
         captureInterval: 5,
-        captureNumber: 30
-      }).then((res) => {
-        validate.done(res, schema.names.commandSetOptions)
-        return testClient.startCapture()
-      }).then((res) => {
-        validate.done(res, schema.names.commandStartCapture)
-        return testClient.stopCapture()
-      }).then((res) => {
-        validate.done(res, schema.names.commandStopCapture)
-        assert(Object.keys(res).length === 0)
-      }).catch(wrapError)
+        captureNumber: 3
+      }).then(() => Q.all([testClient.startCapture(function onStatusChange () {
+        if (!startCapture) {
+          startCapture = true
+          Q.delay(5000)
+          .then(() => testClient.stopCapture())
+          .then((res) => {
+            validate.done(res, schema.names.commandStopCapture)
+          }).catch(wrapError)
+          .then(deferred.resolve, deferred.reject)
+        }
+      }).then((res) => validate.done(res, schema.names.commandStartCapture), wrapError),
+        deferred.promise]))
     })
 
     it('Throw disabledCommand Error if there is not active capture to be stopped', function () {
@@ -3094,6 +3182,12 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('throws missingParameter unless the active session\'s sessionId is provided', function () {
+      if (!isOSC1) {
+        // FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
+        return testClient.closeSession(sessionId)
+          .then(() => this.skip(), wrapError)
+      }
+
       this.timeout(timeoutValue)
       return testClient.bublShutdown()
         .then(expectError, function onError (err) {
