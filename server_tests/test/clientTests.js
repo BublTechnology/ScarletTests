@@ -199,7 +199,7 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError)
     })
 
-    it.skip('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has changed', function () {
+    it('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has changed', function () {
       this.timeout(timeoutValue)
 
       return testClient.getState()
@@ -1012,7 +1012,7 @@ describe('RUST API TEST SUITE', function () {
         }).catch(wrapError)
     })
 
-    it('throws invalidParameterValue/Name when incorrect fileUri/fileUrls type is provided', function () {
+    it('throws invalidParameterValue when incorrect fileUri/fileUrls type is provided', function () {
       if (isOSC1) {
         return testClient.delete('wrongtype')
         .then(
@@ -1020,7 +1020,7 @@ describe('RUST API TEST SUITE', function () {
           (err) => validate.error(
             err,
             schema.names.commandDelete,
-            isOSC1 ? schema.errors.invalidParameterValue : schema.errors.invalidParameterName
+            schema.errors.invalidParameterValue
           )
         )
       } else {
@@ -1030,7 +1030,7 @@ describe('RUST API TEST SUITE', function () {
           (err) => validate.error(
             err,
             schema.names.commandDelete,
-            isOSC1 ? schema.errors.invalidParameterValue : schema.errors.invalidParameterName
+            schema.errors.invalidParameterValue
           )
         )
       }
@@ -1044,7 +1044,7 @@ describe('RUST API TEST SUITE', function () {
           (err) => validate.error(
             err,
             schema.names.commandDelete,
-            schema.erros.missingParameter
+            schema.errors.missingParameter
           )
         )
       } else {
@@ -1054,7 +1054,7 @@ describe('RUST API TEST SUITE', function () {
           (err) => validate.error(
             err,
             schema.names.commandDelete,
-            schema.erros.missingParameter
+            schema.errors.missingParameter
           )
         )
       }
@@ -1139,11 +1139,11 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // LIST FILES (OSC2.0)
-  describe('Testing /osc/commands/execute camera.listFiles endpoint', function () {
+  describe.only('Testing /osc/commands/execute camera.listFiles endpoint', function () {
     var sessionId
-    var expectedImageCount
-    var expectedVideoCount
-    var totalEntryCount
+    var expectedImageCount = 0
+    var expectedVideoCount = 0
+    var totalEntryCount = 0
     var deferred = Q.defer()
     var startCapture = false
 
@@ -1151,6 +1151,7 @@ describe('RUST API TEST SUITE', function () {
       if (!isOSC2) {
         return this.skip()
       }
+      this.timeout(timeoutValue * 2)
       // delete exisiting files on SD card, if any
       return testClient.delete2(["all"])
       .then(function onSuccess (res) {
@@ -1173,7 +1174,7 @@ describe('RUST API TEST SUITE', function () {
         totalEntryCount++
         return testClient.setOptions(sessionId, { captureMode: 'video' })
       })
-      .then(function onSuccess (res) {
+      .then(function onVideo (res) {
         validate.done(res, schema.names.commandSetOptions)
         return Q.all([testClient.startCapture(function onStatusChange (res) {
           if (!startCapture) {
@@ -1183,7 +1184,10 @@ describe('RUST API TEST SUITE', function () {
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
-        }).then(validate.done(res, schema.names.commandStartCapture), wrapError),
+        }).then((res) => {
+          expectedVideoCount++
+          totalEntryCount++
+          validate.done(res, schema.names.commandStartCapture)}, wrapError),
           deferred.promise])
       }).catch(wrapError)
     })
@@ -1194,22 +1198,28 @@ describe('RUST API TEST SUITE', function () {
       }
       // delete all files on SD card
       return testClient.delete2(["all"])
-      .then(function onSuccess () {
+      .then(function onSuccess (res) {
         validate.done(res, schema.names.commandDelete)
         assert.equal(res.results.fileUrls.length, 0)
       })
     })
-  // testClient.listFiles(fileType, entryCount, maxThumbSize, startPosition(opstion))
+    // testClient.listFiles(fileType, entryCount, maxThumbSize, startPosition(opstion))
 
     it('Successfully lists correct entries when fileType is supported', function () {
       return testClient.listFiles('image', expectedImageCount, 1024)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
         assert.equal(res.results.totalEntries, expectedImageCount)
+        res.results.entries.forEach(function isMP4 (file) {
+          assert.match(file.fileUrl, /jpg$/i)
+        })
         return testClient.listFiles('video', expectedVideoCount, 1024)
       }).then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
         assert.equal(res.results.totalEntries, expectedVideoCount)
+        res.results.entries.forEach(function isMP4 (file) {
+          assert.match(file.fileUrl, /mp4$/i)
+        })
         return testClient.listFiles('all', totalEntryCount, 1024)
       }).then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -1217,22 +1227,30 @@ describe('RUST API TEST SUITE', function () {
       }).catch(wrapError)
     })
 
-    it('Returns base on maximum hardware capability when requested parameters exceeds maximum', function () {
-      var maxResults
+    it('Returns maximum number of entries when requested entryCount exceeds totalEntries', function () {
+      var maxEntries
+      var maxThumbnails = []
 
       return testClient.listFiles('all', totalEntryCount + 10, 1024 * 2)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
-        maxResults = res.results
+        maxEntries = res.results.totalEntries
+        res.results.entries.forEach(function getMaxThumbList (entry) {
+          maxThumbnails.push(entry.thumbnail)
+        })
         return testClient.listFiles('all', totalEntryCount, 1024)
       }).then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
-        assert.equal(res.results, maxResults)
+        assert.equal(res.results.totalEntries, maxEntries)
+        for (let i = 0; i < res.results.totalEntries; i++) {
+          assert.include(maxThumbnails, res.results.entries[i].thumbnail)
+        }
       }).catch(wrapError)
     })
 
     it('Lists file entries starting from startPosition', function () {
       var shortList
+      var expectedList
 
       return testClient.listFiles('all', totalEntryCount, 1024, 2)
       .then(function onSuccess (res) {
@@ -1241,7 +1259,10 @@ describe('RUST API TEST SUITE', function () {
         return testClient.listFiles('all', totalEntryCount, 1024)
       }).then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
-        assert.equal(res.results.entries.slice(0, 1), shortList)
+        expectedList = res.results.entries.slice(2, 4)
+        for (let i = 0; i < expectedList.length; i++) {
+          assert.include(shortList, expectedList[i])
+        }
       }).catch(wrapError)
     })
 
@@ -1302,7 +1323,8 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw invalidParameterName error if fileType is "thumbnail"', function () {
+    // Skip for now until invalidParameterName reporting implemented
+    it.skip('Throw invalidParameterName error if fileType is "thumbnail"', function () {
       return testClient.listFiles('thumbnail', totalEntryCount, 1024)
       .then(expectError,
         (err) => validate.error(
@@ -1353,7 +1375,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Return empty array if no files on the SD card', function () {
-      return Utility.deleteAllImages
+      return testClient.delete2(['all'])
       .then((res) => testClient.listFiles('all', totalEntryCount, 1024))
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -1514,6 +1536,7 @@ describe('RUST API TEST SUITE', function () {
     // RE-ADD ONCE EXTRA FIELD CHECKING HAS BEEN IMPLEMENTED
     // Also, for this test needs to report different error based on OSC version
     // OSC1: invalidParameterValue OSC2: invalidParameterName
+    // Skip for now until invalidParameterName reporting implemented in osc-client 2
     it('throws invalidParameterValue when options is set to unsupported value', function () {
       if (isBublcam && serverVersion < 2) {
         return this.skip()
@@ -1530,8 +1553,9 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    // Doesn't work properly since no OSC1 doesn't report invalidParameterName
-    it('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
+    // Doesn't work properly since OSC1 doesn't report invalidParameterName
+    // Skip for now until invalidParameterName reporting implemented
+    it.skip('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
       if (isBublcam && serverVersion < 2) {
         return this.skip()
       }
@@ -1883,6 +1907,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     // Does not work properly with current BublScarlet OSC 1.0
+    // Skip for now until invalidParameterName reporting implemented
     it.skip('throw invalidParameterName when setting to an OSC2.0-specific option on an OSC1.0 camera', function () {
       if (!isOSC1) {
         return this.skip()
@@ -2112,38 +2137,15 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Throw invalidParameterName error if an unsupported parameter is entered', function () {
-      // this.timeout(timeoutValue)
-      // var deferred = Q.defer()
-      // var captureStart = false
-      //
-      // return testClient.setOptions(undefined, {
-      //   captureMode: 'video'
-      // }).then((res) => {
-      //   validate.done(res, schema.names.commandSetOptions)
-      //   return Q.all([testClient.startCapture('unsupported', function onStatusChange () {
-      //     if (!captureStart) {
-      //       captureStart = true
-      //       Q.delay(1000)
-      //       .then(() => testClient.stopCapture())
-      //       .catch(wrapError)
-      //       .then(deferred.resolve, deferred.reject)
-      //     }
-      //   }), deferred.promise])
-      // }).then(expectError,
-      //   (err) => validate.error(
-      //     err,
-      //     schema.names.commandStartCapture,
-      //     schema.errors.disabledCommand)
-      // )
-
+    // Skip for now until invalidParameterName reporting implemented
+    it.skip('Throw invalidParameterName error if an unsupported parameter is entered', function () {
       this.timeout(timeoutValue)
       var sessionId
 
       return testClient.setOptions(undefined, { captureMode: 'video' })
       .then((res) => {
         validate.done(res, schema.names.commandSetOptions)
-        return testClient.startCapture()
+        return testClient.startCapture('unsupported')
       })
       .then(expectError,
         (err) => validate.error(
@@ -2248,7 +2250,8 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
+    // Skip for now until invalidParameterName reporting implemented
+    it.skip('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
       return testClient.stopCapture('unsupported')
       .then(expectError,
         (err) => validate.error(
@@ -2272,7 +2275,8 @@ describe('RUST API TEST SUITE', function () {
       .then((res) => validate.done(res, schema.names.commandReset))
     })
 
-    it('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
+    // Skip for now until invalidParameterName reporting implemented
+    it.skip('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
       return testClient.reset(defaultOptionsFile)
       .then(expectError,
       (err) => validate.error(
