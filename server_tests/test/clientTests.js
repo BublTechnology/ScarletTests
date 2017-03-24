@@ -1139,7 +1139,7 @@ describe('RUST API TEST SUITE', function () {
   })
 
   // LIST FILES (OSC2.0)
-  describe.only('Testing /osc/commands/execute camera.listFiles endpoint', function () {
+  describe('Testing /osc/commands/execute camera.listFiles endpoint', function () {
     var sessionId
     var expectedImageCount = 0
     var expectedVideoCount = 0
@@ -2358,38 +2358,77 @@ describe('RUST API TEST SUITE', function () {
       var commandId = ''
       var deferred = Q.defer()
 
-      return Q.all([
-        testClient.bublCaptureVideo(sessionId, function (initRes) {
-          if (commandId === '') {
-            commandId = initRes.id
-            Q.delay(8000)
-            .then(function () {
-              return testClient.bublPoll(commandId, fingerprint)
+      if (isOSC1) {
+        return Q.all([
+          testClient.bublCaptureVideo(sessionId, function (initRes) {
+            if (commandId === '') {
+              commandId = initRes.id
+              Q.delay(8000)
+              .then(function () {
+                return testClient.bublPoll(commandId, fingerprint)
+              })
+              .then(function onSuccess (res) {
+                validate.bublPoll(res)
+                assert.notEqual(res.fingerprint, fingerprint)
+                assert.equal(res.command.id, commandId)
+                fingerprint = res.fingerprint
+                return testClient.bublStop(commandId)
+              })
+              .then(function onSuccess (res) {
+                assert(Object.keys(res).length === 0)
+                return testClient.bublPoll(commandId, fingerprint, 4)
+              })
+              .then(function onSuccess (res) {
+                validate.bublPoll(res)
+                assert.notEqual(res.fingerprint, fingerprint)
+                assert.equal(res.command.id, commandId)
+              })
+              .then(deferred.resolve, deferred.reject)
+            }
+          })
+          .then(function onSuccess (res) {
+            validate.done(res, schema.names.commandBublCaptureVideo)
+          }, wrapError),
+          deferred.promise
+        ])
+      } else {
+        return testClient.setOptions(sessionId, { captureMode: 'video' })
+        .then(function onVideo (res) {
+          validate.done(res, schema.names.commandSetOptions)
+          return Q.all([
+            testClient.startCapture(function onStatusChange (initRes) {
+              if (commandId === '') {
+                commandId = initRes.id
+                Q.delay(8000)
+                .then(function () {
+                  return testClient.bublPoll(commandId, fingerprint)
+                })
+                .then(function onSuccess (res) {
+                  validate.bublPoll(res)
+                  assert.notEqual(res.fingerprint, fingerprint)
+                  assert.equal(res.command.id, commandId)
+                  fingerprint = res.fingerprint
+                  return testClient.bublStop(commandId)
+                })
+                .then(function onSuccess (res) {
+                  assert(Object.keys(res).length === 0)
+                  return testClient.bublPoll(commandId, fingerprint, 4)
+                })
+                .then(function onSuccess (res) {
+                  validate.bublPoll(res)
+                  assert.notEqual(res.fingerprint, fingerprint)
+                  assert.equal(res.command.id, commandId)
+                })
+                .then(deferred.resolve, deferred.reject)
+              }
             })
             .then(function onSuccess (res) {
-              validate.bublPoll(res)
-              assert.notEqual(res.fingerprint, fingerprint)
-              assert.equal(res.command.id, commandId)
-              fingerprint = res.fingerprint
-              return testClient.bublStop(commandId)
-            })
-            .then(function onSuccess (res) {
-              assert(Object.keys(res).length === 0)
-              return testClient.bublPoll(commandId, fingerprint, 4)
-            })
-            .then(function onSuccess (res) {
-              validate.bublPoll(res)
-              assert.notEqual(res.fingerprint, fingerprint)
-              assert.equal(res.command.id, commandId)
-            })
-            .then(deferred.resolve, deferred.reject)
-          }
+              validate.done(res, schema.names.commandStartCapture)
+            }, wrapError),
+            deferred.promise
+          ])
         })
-        .then(function onSuccess (res) {
-          validate.done(res, schema.names.commandBublCaptureVideo)
-        }, wrapError),
-        deferred.promise
-      ])
+      }
     })
 
     it('successfully gets updates when state has not changed with waitTimeout set to 5', function () {
@@ -2397,41 +2436,83 @@ describe('RUST API TEST SUITE', function () {
       var fingerprint = ''
       var commandId = ''
       var deferred = Q.defer()
-      return Q.all([
-        testClient.bublCaptureVideo(sessionId, function (initRes) {
-          if (commandId === '') {
-            commandId = initRes.id
-            Q.delay(8000)
-            .then(function () {
-              return testClient.bublPoll(commandId, fingerprint)
+
+      if (isOSC1) {
+        return Q.all([
+          testClient.bublCaptureVideo(sessionId, function (initRes) {
+            if (commandId === '') {
+              commandId = initRes.id
+              Q.delay(8000)
+              .then(function () {
+                return testClient.bublPoll(commandId, fingerprint)
+              })
+              .then(function onSuccess (res) {
+                validate.bublPoll(res)
+                assert.notEqual(res.fingerprint, fingerprint)
+                assert.equal(res.command.id, commandId)
+                fingerprint = res.fingerprint
+                return Q.delay(4000)
+              })
+              .then(function () {
+                return testClient.bublPoll(commandId, fingerprint, 5)
+              })
+              .then(function onSuccess (res) {
+                validate.bublPoll(res)
+                assert.equal(res.fingerprint, fingerprint)
+                assert.equal(res.command.id, commandId)
+                return testClient.bublStop(commandId)
+              })
+              .then(function onSuccess (res) {
+                assert(Object.keys(res).length === 0)
+              })
+              .then(deferred.resolve, deferred.reject)
+            }
+          })
+          .then(function onSuccess (res) {
+            validate.done(res, schema.names.commandBublCaptureVideo)
+          }, wrapError),
+          deferred.promise
+        ])
+      } else {
+        return testClient.setOptions(sessionId, { captureMode: 'video' })
+        .then(function onVideo () {
+          return Q.all([
+            testClient.startCapture(function (initRes) {
+              if (commandId === '') {
+                commandId = initRes.id
+                Q.delay(8000)
+                .then(function () {
+                  return testClient.bublPoll(commandId, fingerprint)
+                })
+                .then(function onSuccess (res) {
+                  validate.bublPoll(res)
+                  assert.notEqual(res.fingerprint, fingerprint)
+                  assert.equal(res.command.id, commandId)
+                  fingerprint = res.fingerprint
+                  return Q.delay(4000)
+                })
+                .then(function () {
+                  return testClient.bublPoll(commandId, fingerprint, 5)
+                })
+                .then(function onSuccess (res) {
+                  validate.bublPoll(res)
+                  assert.equal(res.fingerprint, fingerprint)
+                  assert.equal(res.command.id, commandId)
+                  return testClient.stopCapture()
+                })
+                .then(function onSuccess (res) {
+                  validate.done(res, schema.names.commandStopCapture)
+                })
+                .then(deferred.resolve, deferred.reject)
+              }
             })
             .then(function onSuccess (res) {
-              validate.bublPoll(res)
-              assert.notEqual(res.fingerprint, fingerprint)
-              assert.equal(res.command.id, commandId)
-              fingerprint = res.fingerprint
-              return Q.delay(4000)
-            })
-            .then(function () {
-              return testClient.bublPoll(commandId, fingerprint, 5)
-            })
-            .then(function onSuccess (res) {
-              validate.bublPoll(res)
-              assert.equal(res.fingerprint, fingerprint)
-              assert.equal(res.command.id, commandId)
-              return testClient.bublStop(commandId)
-            })
-            .then(function onSuccess (res) {
-              assert(Object.keys(res).length === 0)
-            })
-            .then(deferred.resolve, deferred.reject)
-          }
+              validate.done(res, schema.names.commandStartCapture)
+            }, wrapError),
+            deferred.promise
+          ])
         })
-        .then(function onSuccess (res) {
-          validate.done(res, schema.names.commandBublCaptureVideo)
-        }, wrapError),
-        deferred.promise
-      ])
+      }
     })
 
     it('throws missingParameter when no commandId is provided', function () {
@@ -3060,6 +3141,11 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Expect missingParameter Error. camera._bublStream cannot stream when sessionId is not provided', function () {
+      // Only OSC1 _bublStream needs sessionId
+      if (!isOSC1) {
+        return this.skip()
+      }
+
       return testClient.bublStream()
         .then(expectError, function onError (err) {
           validate.error(
@@ -3088,6 +3174,10 @@ describe('RUST API TEST SUITE', function () {
     })
 
     after(function () {
+      if (!isBublcam || !isOSC1) {
+        return this.skip()
+      }
+
       return Utility.checkActiveSession()
         .then(function (isActive) {
           if (isActive) {
@@ -3186,10 +3276,9 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('throws missingParameter unless the active session\'s sessionId is provided', function () {
+      // Only OSC1 _bublShutdown needs sessionId
       if (!isOSC1) {
-        // FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
-        return testClient.closeSession(sessionId)
-          .then(() => this.skip(), wrapError)
+        return this.skip()
       }
 
       this.timeout(timeoutValue)
