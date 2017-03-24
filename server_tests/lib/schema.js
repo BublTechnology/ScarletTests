@@ -830,6 +830,11 @@ let Schema = function (options_) {
     }
   }
 
+  let inProgressCaptureMaybeMultiple = {
+    required: ['_bublCaptureStatus'],
+    properties: inProgressCaptureMultiple.properties
+  }
+
   let inProgressCapture = {
     required: ['_bublCaptureStatus'],
     properties: {
@@ -862,7 +867,7 @@ let Schema = function (options_) {
   this._commandInProgress2 = {
     [this.names.commandBublStream]: this._commandInProgress1[this.names.commandBublStream],
     [this.names.commandTakePicture]: inProgressCapture,
-    [this.names.commandStartCapture]: inProgressCaptureMultiple,
+    [this.names.commandStartCapture]: inProgressCaptureMaybeMultiple,
     [this.names.commandBublTimelapse]: inProgressCaptureMultiple,
     [this.names.commandBublCaptureVideo]: inProgressCapture
   }
