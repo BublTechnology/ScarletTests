@@ -572,7 +572,7 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError)
     })
 
-    it('returns one entry without thumbnail when entryCount=1 and includeThumb=false and server has 1 image', function () {
+    it('returns 1 entry when entryCount=1 and includeThumb=false and server has 1 image', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -591,7 +591,7 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError)
     })
 
-    it('returns one entry and a continuation token when entryCount = 1 and server has 2 images', function () {
+    it('returns 1 entry and a continuation token when entryCount = 1 and server has 2 images', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -614,7 +614,7 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError)
     })
 
-    it('returns one entry when called with continuation token and entryCount=1 and server has 2 images', function () {
+    it('returns 1 entry when called with continuation token and entryCount=1 and server has 2 images', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -647,7 +647,7 @@ describe('RUST API TEST SUITE', function () {
         .catch(wrapError)
     })
 
-    it('returns two entries and no continuation token when entryCount = 2 when server has 2 images', function () {
+    it('returns 2 entries and no continuation token when entryCount = 2 when server has 2 images', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
