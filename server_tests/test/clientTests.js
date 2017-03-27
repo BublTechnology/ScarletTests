@@ -599,8 +599,10 @@ describe('RUST API TEST SUITE', function () {
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandTakePicture)
           if (isOSC1) {
+            // eslint-disable-next-line no-underscore-dangle
             assert.equal(res.results._bublFileUris.length, 3)
           } else {
+            // eslint-disable-next-line no-underscore-dangle
             assert.equal(res.results._bublFileUrls.length, 3)
           }
         })
@@ -1036,7 +1038,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect missingParameter Error. camera.delete cannot delete file when fileUri/fileUrls are not provided', function () {
+    it('throw missingParameter error when fileUri/fileUrls are not provided', function () {
       if (isOSC1) {
         return testClient.delete()
         .then(
@@ -1187,7 +1189,8 @@ describe('RUST API TEST SUITE', function () {
         }).then((res) => {
           expectedVideoCount++
           totalEntryCount++
-          validate.done(res, schema.names.commandStartCapture)}, wrapError),
+          validate.done(res, schema.names.commandStartCapture)
+        }, wrapError),
           deferred.promise])
       }).catch(wrapError)
     })
@@ -1284,7 +1287,7 @@ describe('RUST API TEST SUITE', function () {
       }).catch(wrapError)
     })
 
-    it('Lists actual number of files remaining if requested entryCount is bigger than the files remaining', function () {
+    it('Lists actual number of files remaining if entryCount exceeds the files remaining', function () {
       return testClient.listFiles('all', totalEntryCount + 10, 1024)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -2022,7 +2025,8 @@ describe('RUST API TEST SUITE', function () {
             .then(deferred.resolve, deferred.reject)
           }
         }).then((res) => {
-          validate.done(res, schema.names.commandStartCapture)}, wrapError),
+          validate.done(res, schema.names.commandStartCapture)
+        }, wrapError),
           deferred.promise])
       }, wrapError)
     })
@@ -2036,7 +2040,7 @@ describe('RUST API TEST SUITE', function () {
         captureMode: 'interval',
         captureInterval: 3,
         captureNumber: 3
-       })
+      })
       .then(function onVideo () {
         return Q.all([testClient.startCapture(function onStatusChange (res) {
           if (!captureStart) {
@@ -2047,7 +2051,8 @@ describe('RUST API TEST SUITE', function () {
             .then(deferred.resolve, deferred.reject)
           }
         }).then((res) => {
-          validate.done(res, schema.names.commandStartCapture)}, wrapError),
+          validate.done(res, schema.names.commandStartCapture)
+        }, wrapError),
           deferred.promise])
       }, wrapError)
     })
@@ -2077,7 +2082,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw disabledCommand error if attempt to start a video capture during an active open-ended capture', function () {
+    it('Throw disabledCommand error when starting a capture during an open-ended capture', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var captureStart = false
@@ -2105,7 +2110,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Throw disabledCommand error if attempt to start an interval capture during an active open-ended capture', function () {
+    it('Throw disabledCommand error if starting an interval capture during an open-ended capture', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var captureStart = false
@@ -2140,7 +2145,6 @@ describe('RUST API TEST SUITE', function () {
     // Skip for now until invalidParameterName reporting implemented
     it.skip('Throw invalidParameterName error if an unsupported parameter is entered', function () {
       this.timeout(timeoutValue)
-      var sessionId
 
       return testClient.setOptions(undefined, { captureMode: 'video' })
       .then((res) => {
