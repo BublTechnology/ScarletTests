@@ -81,10 +81,10 @@ describe('RUST API TEST SUITE', function () {
       sessionId = res.results.sessionId
       if (isOSC1) {
         return testClient.closeSession(sessionId)
-            .then((res) => validate.done(res, schema.names.commandCloseSession))
+            .then((output) => validate.done(output, schema.names.commandCloseSession))
       } else {
         return testClient.setOptions(sessionId, { clientVersion: 2 })
-            .then((res) => validate.done(res, schema.names.commandSetOptions))
+            .then((output) => validate.done(output, schema.names.commandSetOptions))
       }
     }, function onError (err) {
       if (err.error.code === "unknownCommand") {
@@ -139,14 +139,14 @@ describe('RUST API TEST SUITE', function () {
             assert.equal(res.state.sessionId, sessionId)
             oldFingerprint = res.fingerprint
             return testClient.closeSession(sessionId)
-            .then(function onSuccess (res) {
-              validate.done(res, schema.names.commandCloseSession)
+            .then(function onClose (output) {
+              validate.done(output, schema.names.commandCloseSession)
               return testClient.getState()
             })
-            .then(function onSuccess (res) {
-              validate.state(res)
-              assert.notEqual(res.state.fingerprint, oldFingerprint)
-              assert.notEqual(res.state.sessionId, sessionId)
+            .then(function onReturn (sta) {
+              validate.state(sta)
+              assert.notEqual(sta.state.fingerprint, oldFingerprint)
+              assert.notEqual(sta.state.sessionId, sessionId)
             })
           }
         }).catch(wrapError)
@@ -209,16 +209,15 @@ describe('RUST API TEST SUITE', function () {
           if (isOSC1) {
             assert.equal(res.state.sessionId, sessionId)
             return testClient.closeSession(sessionId)
-            .then(function onSuccess (res) {
-              validate.done(res, schema.names.commandCloseSession)
+            .then(function onClose (output) {
+              validate.done(output, schema.names.commandCloseSession)
               return testClient.checkForUpdates(oldFingerprint)
             })
-          }
-          else {
+          } else {
             // Only easily changeable state is _bublLatestCapture in OSC2.0
             return testClient.takePicture()
-            .then(function onSuccess (res) {
-              validate.done(res, schema.names.takePicture)
+            .then(function onPicture (pic) {
+              validate.done(pic, schema.names.takePicture)
               return testClient.checkForUpdates(oldFingerprint)
             })
           }
@@ -919,7 +918,7 @@ describe('RUST API TEST SUITE', function () {
           return testClient.setOptions(sessionId, { captureMode: 'video' })
         }).then(function onSuccess (res) {
           validate.done(res, schema.names.commandSetOptions)
-          return Q.all([testClient.startCapture(function onStatusChange (res) {
+          return Q.all([testClient.startCapture(function onStatusChange (sta) {
             if (!captureStart) {
               captureStart = true
               Q.delay(5000)
@@ -954,7 +953,7 @@ describe('RUST API TEST SUITE', function () {
           return testClient.setOptions(sessionId, { captureMode: 'video' })
         }).then(function onSuccess (res) {
           validate.done(res, schema.names.commandSetOptions)
-          return Q.all([testClient.startCapture(function onStatusChange (res) {
+          return Q.all([testClient.startCapture(function onStatusChange (sta) {
             if (!captureStart) {
               captureStart = true
               Q.delay(5000)
@@ -991,7 +990,7 @@ describe('RUST API TEST SUITE', function () {
           return testClient.setOptions(sessionId, { captureMode: 'video' })
         }).then(function onSuccess (res) {
           validate.done(res, schema.names.commandSetOptions)
-          return Q.all([testClient.startCapture(function onStatusChange (res) {
+          return Q.all([testClient.startCapture(function onStatusChange (sta) {
             if (!captureStart) {
               captureStart = true
               Q.delay(5000)
@@ -1178,7 +1177,7 @@ describe('RUST API TEST SUITE', function () {
       })
       .then(function onVideo (res) {
         validate.done(res, schema.names.commandSetOptions)
-        return Q.all([testClient.startCapture(function onStatusChange (res) {
+        return Q.all([testClient.startCapture(function onStatusChange (sta) {
           if (!startCapture) {
             startCapture = true
             Q.delay(5000)
@@ -1186,10 +1185,10 @@ describe('RUST API TEST SUITE', function () {
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
-        }).then((res) => {
+        }).then((output) => {
           expectedVideoCount++
           totalEntryCount++
-          validate.done(res, schema.names.commandStartCapture)
+          validate.done(output, schema.names.commandStartCapture)
         }, wrapError),
           deferred.promise])
       }).catch(wrapError)
@@ -2090,7 +2089,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.setOptions(undefined, { captureMode: 'video' })
       .then((res) => {
         validate.done(res, schema.names.commandSetOptions)
-        return Q.all([testClient.startCapture(function onStatusChange (res) {
+        return Q.all([testClient.startCapture(function onStatusChange (sta) {
           if (!captureStart) {
             captureStart = true
             return testClient.startCapture()
@@ -2105,7 +2104,7 @@ describe('RUST API TEST SUITE', function () {
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
-        }).then((res) => validate.done(res, schema.names.commandStartCapture),
+        }).then((output) => validate.done(output, schema.names.commandStartCapture),
           wrapError), deferred.promise])
       })
     })
@@ -2137,7 +2136,7 @@ describe('RUST API TEST SUITE', function () {
             .catch(wrapError)
             .then(deferred.resolve, deferred.reject)
           }
-        }).then((res) => validate.done(res, schema.names.commandStartCapture)),
+        }).then((output) => validate.done(output, schema.names.commandStartCapture)),
           deferred.promise])
       })
     })
@@ -2407,27 +2406,27 @@ describe('RUST API TEST SUITE', function () {
                 .then(function () {
                   return testClient.bublPoll(commandId, fingerprint)
                 })
-                .then(function onSuccess (res) {
-                  validate.bublPoll(res)
-                  assert.notEqual(res.fingerprint, fingerprint)
-                  assert.equal(res.command.id, commandId)
-                  fingerprint = res.fingerprint
+                .then(function onSuccess (sta) {
+                  validate.bublPoll(sta)
+                  assert.notEqual(sta.fingerprint, fingerprint)
+                  assert.equal(sta.command.id, commandId)
+                  fingerprint = sta.fingerprint
                   return testClient.bublStop(commandId)
                 })
-                .then(function onSuccess (res) {
-                  assert(Object.keys(res).length === 0)
+                .then(function onSuccess (output) {
+                  assert(Object.keys(output).length === 0)
                   return testClient.bublPoll(commandId, fingerprint, 4)
                 })
-                .then(function onSuccess (res) {
-                  validate.bublPoll(res)
-                  assert.notEqual(res.fingerprint, fingerprint)
-                  assert.equal(res.command.id, commandId)
+                .then(function onSuccess (sta) {
+                  validate.bublPoll(sta)
+                  assert.notEqual(sta.fingerprint, fingerprint)
+                  assert.equal(sta.command.id, commandId)
                 })
                 .then(deferred.resolve, deferred.reject)
               }
             })
-            .then(function onSuccess (res) {
-              validate.done(res, schema.names.commandStartCapture)
+            .then(function onSuccess (vid) {
+              validate.done(vid, schema.names.commandStartCapture)
             }, wrapError),
             deferred.promise
           ])
