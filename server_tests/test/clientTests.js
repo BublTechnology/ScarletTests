@@ -83,7 +83,7 @@ describe('RUST API TEST SUITE', function () {
 
   // OSC INFO
   describe('Testing /osc/info endpoint', function () {
-    it('Expect success. /osc/info returns correct info', function () {
+    it('Successfullly returns the correct info', function () {
       return testClient.getInfo()
         .then((res) => {
           validate.info(res)
@@ -105,7 +105,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect success. /osc/state endpoint successfully returns state when state has not changed', function () {
+    it('Successfully returns when state has not changed', function () {
       return testClient.getState()
         .then(function onSuccess (res) {
           validate.state(res)
@@ -115,7 +115,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. confirming /osc/state endpoint returns correct value when state has changed', function () {
+    it('Successfully returns correct value when state has changed', function () {
       var oldFingerprint
 
       return testClient.getState()
@@ -168,7 +168,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('successfully gets updates when state has not changed', function () {
+    it('Successfully gets updates when state has not changed', function () {
       return testClient.getState()
         .then(function onSuccess (res) {
           validate.state(res)
@@ -184,7 +184,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. /osc/checkForUpdates endpoint successfully gets updates when state has changed', function () {
+    it('Successfully gets updates when state has changed', function () {
       this.timeout(timeoutValue)
 
       return testClient.getState()
@@ -213,7 +213,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('successfully gets updates when state has not changed with waitTimeout set to 2', function () {
+    it('Successfully gets updates when state has not changed with waitTimeout set to 2s', function () {
       var state
 
       this.timeout(timeoutValue)
@@ -244,7 +244,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws missingParameter when no fingerprint is provided', function () {
+    it('Throws missingParameter when no fingerprint is provided', function () {
       return testClient.checkForUpdates()
         .then(expectError,
           (err) => validate.error(err, schema.names.checkForUpdates, schema.errors.missingParameter)
@@ -274,7 +274,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.startSession successfully starts a session', function () {
+    it('Successfully starts a session', function () {
       return testClient.startSession()
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandStartSession)
@@ -282,7 +282,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('successfully starts a session when a timeout value of 30 is specified', function () {
+    it('Successfully starts a session when timeout value is 30s', function () {
       return testClient.startSession(30)
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandStartSession)
@@ -291,7 +291,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.startSession will timeout after the the specified timeout value', function () {
+    it('Times out after the the specified timeout value', function () {
       this.timeout(timeoutValue)
       return testClient.startSession(5)
         .then(function onSuccess (res) {
@@ -309,7 +309,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws cameraInExclusiveUse while another session is already running', function () {
+    it('Throws cameraInExclusiveUse while another session is already running', function () {
       return testClient.startSession()
         .then(
           (res) => {
@@ -326,7 +326,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when incorrect timeout type is provided', function () {
+    it('Throws invalidParameterValue when incorrect timeout type is provided', function () {
       return testClient.startSession('wrongtype')
         .then(
           expectError,
@@ -367,12 +367,12 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.updateSession successfully updates a session', function () {
+    it('Successfully updates a session', function () {
       return testClient.updateSession(sessionId)
         .then((res) => validate.done(res, schema.names.commandUpdateSession))
     })
 
-    it('successfully updates a session with a timeout value specified', function () {
+    it('Successfully updates a session with a timeout value specified', function () {
       return testClient.updateSession(sessionId, 15)
         .then(
           (res) => {
@@ -381,7 +381,7 @@ describe('RUST API TEST SUITE', function () {
           })
     })
 
-    it('throws missingParameter when sessionId is not specified', function () {
+    it('Throws missingParameter when sessionId is not specified', function () {
       return testClient.updateSession()
         .then(
           expectError,
@@ -393,7 +393,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when sessionId is an incorrect type', function () {
+    it('Throws invalidParameterValue when sessionId is an incorrect type', function () {
       return testClient.updateSession('wrongtype')
         .then(
           expectError,
@@ -405,7 +405,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when timeout is an incorrect type', function () {
+    it('Throws invalidParameterValue when timeout is an incorrect type', function () {
       return testClient.updateSession(sessionId, 'wrongtype')
         .then(
           expectError,
@@ -446,12 +446,12 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.closeSession successfully closes a session', function () {
+    it('Successfully closes a session', function () {
       return testClient.closeSession(sessionId)
         .then((res) => validate.done(res, schema.names.commandCloseSession))
     })
 
-    it('throws missingParameter when sessionId is not provided', function () {
+    it('Throws missingParameter when sessionId is not provided', function () {
       return testClient.closeSession()
         .then(
           expectError,
@@ -463,7 +463,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when sessionId is an incorrect type', function () {
+    it('Throws invalidParameterValue when sessionId is an incorrect type', function () {
       return testClient.closeSession('wrongtype')
         .then(
           expectError,
@@ -475,7 +475,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when no session is active', function () {
+    it('Throws invalidParameterValue when no session is active', function () {
       return testClient.closeSession(sessionId)
         .then(
           (res) => {
@@ -544,7 +544,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect success.  camera.takePicture successfully takes a picture', function () {
+    it('Successfully takes a picture', function () {
 
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
@@ -553,7 +553,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.takePicture successfully takes an HDR picture', function () {
+    it('Successfully takes an HDR picture', function () {
       this.timeout(timeoutValue * 2)
       return testClient.setOptions(sessionId, {
         hdr: isOSC1 ? true : 'hdr'
@@ -574,7 +574,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws invalidParameterValue when incorrect sessionId type is provided', function () {
+    it('Throws invalidParameterValue when incorrect sessionId type is provided', function () {
       return testClient.takePicture('wrongtype')
         .then(
           expectError,
@@ -586,7 +586,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws missingParameter when sessionId is not provided', function () {
+    it('Throws missingParameter when sessionId is not provided', function () {
       if (!isOSC1) {
         return this.skip()
       }
@@ -638,7 +638,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('returns one entry when provided with entryCount = 1 when server has 1 image', function () {
+    it('Returns 1 entry when entryCount = 1 and server has 1 image', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -656,7 +656,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('returns 1 entry when entryCount=1 and includeThumb=false and server has 1 image', function () {
+    it('Returns 1 entry when entryCount = 1, includeThumb = false and server has 1 image', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -674,7 +674,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('returns 1 entry and a continuation token when entryCount = 1 and server has 2 images', function () {
+    it('Returns 1 entry and a continuationToken when entryCount = 1 and server has 2 images', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -696,7 +696,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('returns 1 entry when called with continuation token and entryCount=1 and server has 2 images', function () {
+    it('Returns 1 entry when called with continuationToken, entryCount=1 and server has 2 images', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -728,7 +728,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('returns 2 entries and no continuation token when entryCount = 2 when server has 2 images', function () {
+    it('Returns 2 entries and no continuationToken when entryCount = 2 and server has 2 images', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -750,7 +750,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.listImages lists zero images when no images are in the system', function () {
+    it('Lists zero images when server has no images', function () {
       return testClient.listImages(2, false)
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandListImages)
@@ -763,7 +763,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws missingParameter when entryCount is not provided', function () {
+    it('Throws missingParameter when entryCount is not provided', function () {
       return testClient.listImages()
         .then(
           expectError,
@@ -775,7 +775,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Expect missingParameter Error. camera.listImages cannot list images when maxSize is not provided', function () {
+    it('Throws missingParameter when maxSize is not provided', function () {
       return testClient.listImages(1, true)
         .then(
           expectError,
@@ -787,7 +787,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throw missingParameter when maxSize is not provided and includeThumb defaults to true', function () {
+    it('Throws missingParameter when maxSize is not provided and includeThumb defaults to true', function () {
       return testClient.listImages(1, undefined)
         .then(
           expectError,
@@ -799,7 +799,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when false token is given', function () {
+    it('Throws invalidParameterValue when false token is given', function () {
       return testClient.listImages('wrongtype')
         .then(
           expectError,
@@ -844,7 +844,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect success. camera.delete successfully deletes file when provided with valid fileUri/fileUrl', function () {
+    it('Successfully deletes file when provided with valid fileUri/fileUrl', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -862,7 +862,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('successfully delete all files when fileUrls only constains string "all"', function () {
+    it('Successfully deletes all files when fileUrls only constains string "all"', function () {
       if (isOSC1) {
         return this.skip()
       }
@@ -896,7 +896,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('successfully delete all images when fileUrls only constains string "image"', function () {
+    it('Successfully deletes all images when fileUrls only constains string "image"', function () {
       if (isOSC1) {
         return this.skip()
       }
@@ -932,7 +932,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('successfully delete all images when fileUrls only constains string "video"', function () {
+    it('Successfully deletes all vidoes when fileUrls only constains string "video"', function () {
       if (isOSC1) {
         return this.skip()
       }
@@ -968,7 +968,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws invalidParameterValue when incorrect fileUri/fileUrls type is provided', function () {
+    it('Throws invalidParameterValue when incorrect fileUri/fileUrls type is provided', function () {
       if (isOSC1) {
         return testClient.delete('wrongtype')
         .then(
@@ -992,7 +992,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('throw missingParameter error when fileUri/fileUrls are not provided', function () {
+    it('Throws missingParameter when fileUri/fileUrls is not provided', function () {
       if (isOSC1) {
         return testClient.delete()
         .then(
@@ -1049,7 +1049,7 @@ describe('RUST API TEST SUITE', function () {
 
     })
 
-    it('Expect success. camera.getImage successfully gets image when provided with a valid fileUri', function () {
+    it('Successfully gets image when provided with a valid fileUri', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -1060,7 +1060,7 @@ describe('RUST API TEST SUITE', function () {
         .then((res) => validate.checkForBinary(res))
     })
 
-    it('successfully gets image when provided with a valid fileUri and maxSize', function () {
+    it('Successfully gets image when provided with a valid fileUri and maxSize', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -1071,14 +1071,14 @@ describe('RUST API TEST SUITE', function () {
         .then((res) => validate.checkForBinary(res))
     })
 
-    it('Expect missingParameter Error. camera.getImage cannot get image when fileUri is not provided', function () {
+    it('Thorws missingParameter when fileUri is not provided', function () {
       return testClient.getImage()
         .then(expectError,
           (err) => validate.error(err, schema.names.commandGetImage, schema.errors.missingParameter)
       )
     })
 
-    it('Expect invalidParameterValue Error. camera.getImage cannot get image when fileUri is incorrect', function () {
+    it('Throws invalidParameterValue when fileUri is incorrect', function () {
       return testClient.getImage('wrongtype')
         .then(
           expectError,
@@ -1156,7 +1156,6 @@ describe('RUST API TEST SUITE', function () {
         assert.equal(res.results.fileUrls.length, 0)
       })
     })
-    // testClient.listFiles(fileType, entryCount, maxThumbSize, startPosition(opstion))
 
     it('Successfully lists correct entries when fileType is supported', function () {
       return testClient.listFiles('image', expectedImageCount, 1024)
@@ -1180,7 +1179,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Returns maximum number of entries when requested entryCount exceeds totalEntries', function () {
+    it('Returns totalEntries when requested entryCount exceeds totalEntries', function () {
       var maxEntries
       var maxThumbnails = []
 
@@ -1201,7 +1200,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Lists file entries starting from startPosition', function () {
+    it('Lists file entries from startPosition', function () {
       var shortList
       var expectedList
 
@@ -1219,7 +1218,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Returns empty array if startPosition is bigger than the position of the last entry', function () {
+    it('Returns empty array if startPosition is bigger than the final entry', function () {
       return testClient.listFiles('all', totalEntryCount, 1024, totalEntryCount)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -1246,7 +1245,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Exclude thumbnails from list entries when maxThumbSize set to null', function () {
+    it('Excludes thumbnails from listed entries when maxThumbSize set to null', function () {
       return testClient.listFiles('all', totalEntryCount, null)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -1256,7 +1255,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Throw missingParameter error if fileType not specified', function () {
+    it('Throws missingParameter if fileType not specified', function () {
       return testClient.listFiles(undefined, totalEntryCount, 1024)
       .then(expectError,
         (err) => validate.error(
@@ -1266,7 +1265,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw missingParameter error if entryCount not specified', function () {
+    it('Throws missingParameter if entryCount not specified', function () {
       return testClient.listFiles('all', undefined, 1024)
       .then(expectError,
         (err) => validate.error(
@@ -1277,7 +1276,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     // Skip for now until invalidParameterName reporting implemented
-    it.skip('Throw invalidParameterName error if fileType is "thumbnail"', function () {
+    it.skip('Throws invalidParameterName if fileType is "thumbnail"', function () {
       return testClient.listFiles('thumbnail', totalEntryCount, 1024)
       .then(expectError,
         (err) => validate.error(
@@ -1287,7 +1286,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw invalidParameterValue error if entryCount is negative', function () {
+    it('Throws invalidParameterValue if entryCount is negative', function () {
       return testClient.listFiles('all', -10, 1024)
       .then(expectError,
         (err) => validate.error(
@@ -1297,7 +1296,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw invalidParameterValue error if entryCount is the wrong type', function () {
+    it('Throws invalidParameterValue if entryCount is the wrong type', function () {
       return testClient.listFiles('all', 'wrongtype', 1024)
       .then(expectError,
         (err) => validate.error(
@@ -1307,7 +1306,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw invalidParameterValue error if maxThumbSize is negative', function () {
+    it('Throws invalidParameterValue if maxThumbSize is negative', function () {
       return testClient.listFiles('all', totalEntryCount, -1024)
       .then(expectError,
         (err) => validate.error(
@@ -1317,7 +1316,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw invalidParameterValue Error if maxThumbSize is the wrong type', function () {
+    it('Throws invalidParameterValue if maxThumbSize is the wrong type', function () {
       return testClient.listFiles('all', totalEntryCount, 'wrongtype')
       .then(expectError,
         (err) => validate.error(
@@ -1327,7 +1326,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Return empty array if no files on the SD card', function () {
+    it('Returns empty array if no files on the SD card', function () {
       return testClient.delete2(['all'])
       .then((res) => testClient.listFiles('all', totalEntryCount, 1024))
       .then(function onSuccess (res) {
@@ -1377,14 +1376,14 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera.getMetadata successfully gets metadata when provided with a valid fileUri', function () {
+    it('Successfully gets metadata when provided with a valid fileUri', function () {
       return testClient.getMetadata(fileUri)
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandGetMetadata)
         })
     })
 
-    it('throws invalidParameterValue when fileUri does not exist', function () {
+    it('Throws invalidParameterValue when fileUri does not exist', function () {
       return testClient.getMetadata('wrongtype')
         .then(
           expectError,
@@ -1396,7 +1395,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws missingParameter when fileUri is not provided', function () {
+    it('Throws missingParameter when fileUri is not provided', function () {
       return testClient.getMetadata()
         .then(
           expectError,
@@ -1446,7 +1445,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('gets correct options when gettable options are set to supported values', function () {
+    it('Gets correct options when gettable options are set to supported values', function () {
       return testClient.getOptions(sessionId, specifiedOptions)
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandGetOptions)
@@ -1456,7 +1455,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect missingParameter Error. camera.getOptions cannot get options when options is not provided', function () {
+    it('Throws missingParameter when options is not provided', function () {
       return testClient.getOptions(sessionId)
         .then(
           expectError,
@@ -1468,7 +1467,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws missingParameter when sessionId is not provided', function () {
+    it('Throws missingParameter when sessionId is not provided', function () {
       if (!isOSC1) {
         return this.skip()
       }
@@ -1487,7 +1486,7 @@ describe('RUST API TEST SUITE', function () {
     // Also, for this test needs to report different error based on OSC version
     // OSC1: invalidParameterValue OSC2: invalidParameterName
     // Skip for now until invalidParameterName reporting implemented in osc-client 2
-    it('throws invalidParameterValue when options is set to unsupported value', function () {
+    it('Throws invalidParameterValue when options is set to unsupported value', function () {
       if (isBublcam && serverVersion < 2) {
         return this.skip()
       }
@@ -1505,7 +1504,7 @@ describe('RUST API TEST SUITE', function () {
 
     // Doesn't work properly since OSC1 doesn't report invalidParameterName
     // Skip for now until invalidParameterName reporting implemented
-    it.skip('throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
+    it.skip('Throws invalidParameterName if OSC1 camera requests OSC2-specific options', function () {
       if (isBublcam && serverVersion < 2) {
         return this.skip()
       }
@@ -1570,14 +1569,14 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it(' successfully sets options when sleepDelay option is set to supported value', function () {
+    it('Successfully sets sleepDelay option to supported value', function () {
       return testClient.setOptions(sessionId, { sleepDelay: 5 })
         .then(
           (res) => validate.done(res, schema.names.commandSetOptions)
         )
     })
 
-    it('throws invalidParameterValue when sleepDelay option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when sleepDelay option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { sleepDelay: -1 })
         .then(
           expectError,
@@ -1589,14 +1588,14 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when offDelay option is set to supported value', function () {
+    it('Successfully sets offDelay option to supported value', function () {
       return testClient.setOptions(sessionId, { offDelay: 5 })
         .then(
           (res) => validate.done(res, schema.names.commandSetOptions)
         )
     })
 
-    it('throws invalidParameterValue when offDelay option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when offDelay option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { offDelay: -1 })
         .then(
           expectError,
@@ -1608,14 +1607,14 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when imageStabilization option is set to supported value', function () {
+    it('Successfully sets imageStabilization option to supported value', function () {
       return testClient.setOptions(sessionId, {
         imageStabilization: 'off'
       })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when imageStabilization option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when imageStabilization option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { imageStabilization: 'UNSUPPORTED' })
         .then(
           expectError,
@@ -1627,14 +1626,14 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when hdr option is set to supported value', function () {
+    it('Successfully sets hdr option to supported value', function () {
       return testClient.setOptions(sessionId, {
         hdr: isOSC1 ? true : 'hdr'
       })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
-      })
+    })
 
-    it('throws invalidParameterValue when hdr option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when hdr option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { hdr: 'UNSUPPORTED' })
         .then(
           expectError,
@@ -1646,7 +1645,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when captureMode option is set to supported value _bublVideo', function () {
+    it('Successfully sets captureMode option to supported value _bublVideo', function () {
       if (!isBublcam || !isOSC1) {
         return this.skip()
       }
@@ -1657,14 +1656,14 @@ describe('RUST API TEST SUITE', function () {
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('successfully sets options when captureMode option is set to supported value Image', function () {
+    it('Successfully sets captureMode option to supported value Image', function () {
       return testClient.setOptions(sessionId, {
         captureMode: 'image'
       })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when captureMode option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when captureMode option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { captureMode: 'UNSUPPORTED' })
         .then(
           expectError,
@@ -1676,14 +1675,14 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when exposureProgram option is set to supported value', function () {
+    it('Successfully sets exposureProgram option to supported value', function () {
       return testClient.setOptions(sessionId, {
         exposureProgram: 2
       })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when exposureProgram option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when exposureProgram option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { exposureProgram: -1 })
         .then(
           expectError,
@@ -1695,14 +1694,14 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when whiteBalance option is set to supported value', function () {
+    it('Successfully sets whiteBalance option to supported value', function () {
       return testClient.setOptions(sessionId, {
         whiteBalance: 'auto'
       })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when whiteBalance option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when whiteBalance option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { whiteBalance: 'UNSUPPORTED' })
         .then(
           expectError,
@@ -1714,7 +1713,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when fileFormat option is set to supported value raw for image', function () {
+    it('Successfully sets fileFormat option to supported value raw for image', function () {
       if (isBubl1 || isMock) {
         return testClient.setOptions(sessionId, rawFileFormat)
           .then((res) => validate.done(res, schema.names.commandSetOptions))
@@ -1723,12 +1722,12 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('successfully sets options when fileFormat option is set to supported value jpeg for image', function () {
+    it('Successfully sets fileFormat option to supported value jpeg for image', function () {
       return testClient.setOptions(sessionId, jpegFileFormat)
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when fileFormat option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when fileFormat option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { fileFormat: 'UNSUPPORTED' })
         .then(
           expectError,
@@ -1740,7 +1739,7 @@ describe('RUST API TEST SUITE', function () {
         )
     })
 
-    it('successfully sets options when _bublVideoFileFormat option is set to supported value', function () {
+    it('Successfully sets _bublVideoFileFormat option to supported value', function () {
       if (!isBublcam || !isOSC1) {
         return this.skip()
       }
@@ -1749,7 +1748,7 @@ describe('RUST API TEST SUITE', function () {
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('successfully sets options when _bublVideoFileFormat option is set to supported value (SD)', function () {
+    it('Successfully sets _bublVideoFileFormat option to supported value (SD)', function () {
       if (isBubl1 || (isMock && isOSC1)) {
         return testClient.setOptions(sessionId,
           { _bublVideoFileFormat: { type: 'mp4', width: 1440, height: 1440 } })
@@ -1759,7 +1758,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('throws invalidParameterValue when _bublVideoFileFormat option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when _bublVideoFileFormat option is set to unsupported value', function () {
       if (!isBublcam || !isOSC1) {
         return this.skip()
       }
@@ -1776,12 +1775,12 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('successfully sets options when exposureDelay option is set to supported value', function () {
+    it('Successfully sets exposureDelay option to supported value', function () {
       return testClient.setOptions(sessionId, { exposureDelay: 4 })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when exposureDelay option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when exposureDelay option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { exposureDelay: -1 })
         .then(
           expectError,
@@ -1793,7 +1792,7 @@ describe('RUST API TEST SUITE', function () {
         )
     })
 
-    it('successfully sets options when dateTimeZone option is set to supported value', function () {
+    it('Successfully sets dateTimeZone option to supported value', function () {
       if (!isBublcam) {
         return this.skip()
       }
@@ -1802,14 +1801,14 @@ describe('RUST API TEST SUITE', function () {
       .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('successfully sets options when dateTimeZone option is set to supported value and bubl timezone', function () {
+    it('Successfully sets dateTimeZone option to supported value and bubl timezone', function () {
       return testClient.setOptions(sessionId, {
         dateTimeZone: '2015:07:23 14:27:39-04:00|America/Toronto'
       })
         .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('successfully sets options when wifiPassword option is set to supported value', function () {
+    it('Successfully sets wifiPassword option to supported value', function () {
       if (testViaWifi) {
         return this.skip()
       }
@@ -1818,7 +1817,7 @@ describe('RUST API TEST SUITE', function () {
       .then((res) => validate.done(res, schema.names.commandSetOptions))
     })
 
-    it('throws invalidParameterValue when wifiPassword option is set to unsupported value', function () {
+    it('Throws invalidParameterValue when wifiPassword option is set to unsupported value', function () {
       return testClient.setOptions(sessionId, { wifiPassword: '1234' })
         .then(
           expectError,
@@ -1830,7 +1829,7 @@ describe('RUST API TEST SUITE', function () {
         )
     })
 
-    it('Expect missingParameter Error. camera.setOptions cannot set options when options is not provided', function () {
+    it('Throws missingParameter when options is not provided', function () {
       return testClient.setOptions(sessionId, undefined)
         .then(
           expectError,
@@ -1844,7 +1843,7 @@ describe('RUST API TEST SUITE', function () {
 
     // Does not work properly with current BublScarlet OSC 1.0
     // Skip for now until invalidParameterName reporting implemented
-    it.skip('throw invalidParameterName when setting to an OSC2.0-specific option on an OSC1.0 camera', function () {
+    it.skip('Throws invalidParameterName when setting to an OSC2.0-specific option on an OSC1.0 camera', function () {
       if (!isOSC1) {
         return this.skip()
       }
@@ -1888,7 +1887,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('successfully grabs command status after take picture has been called', function () {
+    it('Successfully grabs command status after takePicture has been called', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
 
@@ -1908,7 +1907,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws missingParameter when command ID is not provided', function () {
+    it('Throws missingParameter when command ID is not provided', function () {
       return testClient.commandsStatus().then(
         expectError,
         (err) => validate.error(
@@ -1918,7 +1917,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when incorrect sessionId is provided', function () {
+    it('Throws invalidParameterValue when incorrect sessionId is provided', function () {
       return testClient.commandsStatus('wrongtype').then(
         expectError,
         (err) => validate.error(
@@ -1986,7 +1985,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Throw disabledCommand error if startCapture in captureModes other than video or interval', function () {
+    it('Throws disabledCommand if startCapture in captureModes other than video or interval', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var captureStart = false
@@ -2010,7 +2009,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Throw disabledCommand error when starting a capture during an open-ended capture', function () {
+    it('Throws disabledCommand when starting a capture during an open-ended capture', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var captureStart = false
@@ -2037,7 +2036,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it('Throw disabledCommand error if starting an interval capture during an open-ended capture', function () {
+    it('Throws disabledCommand if starting an interval capture during an open-ended capture', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var captureStart = false
@@ -2069,7 +2068,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     // Skip for now until invalidParameterName reporting implemented
-    it.skip('Throw invalidParameterName error if an unsupported parameter is entered', function () {
+    it.skip('Throws invalidParameterName if an unsupported parameter is entered', function () {
       this.timeout(timeoutValue)
 
       return testClient.setOptions(undefined, { captureMode: 'video' })
@@ -2165,7 +2164,7 @@ describe('RUST API TEST SUITE', function () {
         deferred.promise]))
     })
 
-    it('Throw disabledCommand Error if there is not active capture to be stopped', function () {
+    it('Throws disabledCommand if there is not active capture to be stopped', function () {
       return testClient.stopCapture()
       .then(expectError,
       (err) => validate.error(
@@ -2176,7 +2175,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     // Skip for now until invalidParameterName reporting implemented
-    it.skip('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
+    it.skip('Throws invalidParameterName if an unsupported parameter is entered', function () {
       return testClient.stopCapture('unsupported')
       .then(expectError,
         (err) => validate.error(
@@ -2195,13 +2194,13 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Successfully reset all options back to default values', function () {
+    it('Successfully resets all options back to default values', function () {
       return testClient.reset()
       .then((res) => validate.done(res, schema.names.commandReset))
     })
 
     // Skip for now until invalidParameterName reporting implemented
-    it.skip('Throw invalidParameterName Error if an unsupported parameter is entered', function () {
+    it.skip('Throws invalidParameterName if an unsupported parameter is entered', function () {
       return testClient.reset(defaultOptionsFile)
       .then(expectError,
       (err) => validate.error(
@@ -2244,7 +2243,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('returns immediately if no waitTimeout argument is provided', function () {
+    it('Returns immediately if no waitTimeout is provided', function () {
       this.timeout(timeoutValue)
       var deferred = Q.defer()
       var commandId = ''
@@ -2275,7 +2274,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('Expect success. /osc/commands/_bublPoll returns once command state has changed', function () {
+    it('Returns once command state has changed', function () {
       this.timeout(timeoutValue)
       var fingerprint = ''
       var commandId = ''
@@ -2354,7 +2353,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('successfully gets updates when state has not changed with waitTimeout set to 5', function () {
+    it('Gets updates when state has not changed with waitTimeout set to 5', function () {
       this.timeout(timeoutValue)
       var fingerprint = ''
       var commandId = ''
@@ -2438,7 +2437,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('throws missingParameter when no commandId is provided', function () {
+    it('Throws missingParameter when no commandId is provided', function () {
       return testClient.bublPoll(undefined, '').then(
         expectError,
         (err) => validate.error(
@@ -2449,7 +2448,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws missingParameter when no fingerprint is provided', function () {
+    it('Throws missingParameter when no fingerprint is provided', function () {
       this.timeout(timeoutValue)
       var stopped = false
       var deferred = Q.defer()
@@ -2476,7 +2475,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws invalidParameterValue when commandId is invalid', function () {
+    it('Throws invalidParameterValue when commandId is invalid', function () {
       this.timeout(timeoutValue)
       return testClient.bublPoll('wrongtype', '').then(
         expectError,
@@ -2488,7 +2487,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws invalidParameterValue when waitTimeout is invalid', function () {
+    it('Throws invalidParameterValue when waitTimeout is invalid', function () {
       this.timeout(timeoutValue)
       var commandId = ''
       var deferred = Q.defer()
@@ -2560,7 +2559,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect missingParameter Error. sessionId is mandatory for command camera._bublTimelapse', function () {
+    it('Throws missingParameter when sessionId is not provided', function () {
       return testClient.bublTimelapse().then(
         expectError,
         (err) => validate.error(
@@ -2571,7 +2570,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('Expect invalidParameterValue Error. camera._bublTimelapse expects active session\'s sessionId', function () {
+    it('Throws invalidParameterValue when provided sessionId is invalid', function () {
       return testClient.bublTimelapse(sessionId + '0').then(
         expectError,
         (err) => validate.error(
@@ -2582,7 +2581,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws cameraInExclusiveUse when another timelapse capture procedure is already active', function () {
+    it('Throws cameraInExclusiveUse when another timelapse capture procedure is already active', function () {
       this.timeout(timeoutValue * 2)
       var commandId
       var deferred = Q.defer()
@@ -2611,7 +2610,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws cameraInExclusiveUse when a video capture procedure is already active', function () {
+    it('Throws cameraInExclusiveUse when a video capture procedure is already active', function () {
       this.timeout(timeoutValue * 2)
       var commandId
       var deferred = Q.defer()
@@ -2639,7 +2638,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('Expect success. camera._bublTimelapse successfully captures with default settings', function () {
+    it('Successfully captures with default settings', function () {
       this.timeout(timeoutValue * 4)
       var stopped = false
       var deferred = Q.defer()
@@ -2661,7 +2660,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('captures with specific timelapse interval and count, then finishes within a reasonable time', function () {
+    it('Finishes captures with specific timelapse interval and count within a reasonable time', function () {
       this.timeout(120000)
       var timelapseInterval = 10
       var timelapseCount = 3
@@ -2746,7 +2745,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
 
-    it('Expect success.  camera._bublCaptureVideo successfully captures a video', function () {
+    it('Successfully captures a video', function () {
       this.timeout(timeoutValue)
       var stopped = false
       var deferred = Q.defer()
@@ -2770,7 +2769,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws cameraInExclusiveUse when a video capture is already active', function () {
+    it('Throws cameraInExclusiveUse when a video capture is already active', function () {
       this.timeout(timeoutValue)
       var stopped = false
       var deferred = Q.defer()
@@ -2802,7 +2801,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws invalidParameterValue when incorrect sessionId type is provided', function () {
+    it('Throws invalidParameterValue when incorrect sessionId type is provided', function () {
       return testClient.bublCaptureVideo('wrongtype').then(
         expectError,
         (err) => validate.error(
@@ -2813,7 +2812,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws missingParameter when sessionId is not provided', function () {
+    it('Throws missingParameter when sessionId is not provided', function () {
       return testClient.bublCaptureVideo().then(
         expectError,
         (err) => validate.error(
@@ -2879,7 +2878,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect success.  camera._bublStop successfully stops a video capture', function () {
+    it('Successfully stops a video capture', function () {
       this.timeout(timeoutValue)
       var stopped = false
       var commandId
@@ -2909,7 +2908,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws invalidParameterValue when incorrect commandId type is provided', function () {
+    it('Throws invalidParameterValue when incorrect commandId type is provided', function () {
       return testClient.bublStop('wrongtype').then(
         expectError,
         (err) => validate.error(
@@ -2920,7 +2919,7 @@ describe('RUST API TEST SUITE', function () {
       )
     })
 
-    it('throws missingParameter when commandId is not provided', function () {
+    it('Throws missingParameter when commandId is not provided', function () {
       return testClient.bublStop().then(expectError,
         (err) => validate.error(
           err,
@@ -2980,7 +2979,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect success.  camera._bublStream successfully streams', function () {
+    it('Successfully streams', function () {
       this.timeout(10000)
       var commandId
       var deferred = Q.defer()
@@ -3003,7 +3002,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('Expect success. camera._bublStream can start another stream when a stream is already active', function () {
+    it('Successfully starts another stream when a stream is already active', function () {
       this.timeout(timeoutValue)
       var commandId1
       var commandId2
@@ -3041,7 +3040,7 @@ describe('RUST API TEST SUITE', function () {
       ])
     })
 
-    it('throws invalidParameterValue when incorrect sessionId type is provided', function () {
+    it('Throws invalidParameterValue when incorrect sessionId type is provided', function () {
       return testClient.bublStream('wrongtype')
         .then(expectError, function onError (err) {
           validate.error(
@@ -3051,7 +3050,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect missingParameter Error. camera._bublStream cannot stream when sessionId is not provided', function () {
+    it('Throws missingParameter when sessionId is not provided for _bublStream', function () {
       // Only OSC1 _bublStream needs sessionId
       if (!isOSC1) {
         return this.skip()
@@ -3100,7 +3099,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera._bublGetImage successfully gets image when provided with a valid fileUri', function () {
+    it('Successfully gets image when provided with a valid fileUri', function () {
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then(function onSuccess (res) {
@@ -3113,7 +3112,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws invalidParameterValue when fileUri is incorrect', function () {
+    it('Throws invalidParameterValue when fileUri is incorrect', function () {
       return testClient.bublGetImage('wrongtype')
         .then(expectError, function onError (err) {
           validate.error(
@@ -3132,7 +3131,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('Expect success. /osc/_bublUpdate endpoint successfully returned status code 200', function () {
+    it('Successfully returned status code 200', function () {
       this.timeout(timeoutValue)
       return testClient.bublUpdate('dummy_content')
         .then(function onSuccess (res) {
@@ -3182,7 +3181,7 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-    it('throws missingParameter unless the active session\'s sessionId is provided', function () {
+    it('Throws missingParameter unless the active session\'s sessionId is provided', function () {
       // Only OSC1 _bublShutdown needs sessionId
       if (!isOSC1) {
         return this.skip()
@@ -3198,7 +3197,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws invalidParameterValue when incorrect sessionId is provided', function () {
+    it('Throws invalidParameterValue when incorrect sessionId is provided', function () {
       this.timeout(timeoutValue)
       return testClient.bublShutdown(sessionId + '0')
         .then(expectError, function onError (err) {
@@ -3209,7 +3208,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('throws invalidParameterValue when incorrect shutdownDelay value type is provided', function () {
+    it('Throws invalidParameterValue when incorrect shutdownDelay value type is provided', function () {
       this.timeout(timeoutValue)
       return testClient.bublShutdown(sessionId, '...')
         .then(expectError, function onError (err) {
@@ -3220,7 +3219,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('Expect success. camera._bublShutdown successfully returned', function () {
+    it('Successfully returned', function () {
       if (!isMock) {
         // FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
         return testClient.closeSession(sessionId)
@@ -3234,7 +3233,7 @@ describe('RUST API TEST SUITE', function () {
         })
     })
 
-    it('successfully returned when specific shutdownDelay is provided and returned at appropriate time', function () {
+    it('Successfully returned at appropriate time when specific shutdownDelay is provided', function () {
       if (!isMock) {
         // FORCE SESSSION CLOSURE BECAUSE OF MOCHA BUG
         return testClient.closeSession(sessionId)
