@@ -247,7 +247,7 @@ describe('RUST API TEST SUITE', function () {
     it('Throws missingParameter when no fingerprint is provided', function () {
       return testClient.checkForUpdates()
         .then(expectError,
-          (err) => validate.error(err, schema.names.checkForUpdates, schema.errors.missingParameter)
+          (err) => validate.error(err._raw, schema.names.checkForUpdates, schema.errors.missingParameter)
       )
     })
   })
@@ -319,7 +319,7 @@ describe('RUST API TEST SUITE', function () {
           }).then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandStartSession,
             schema.errors.cameraInExclusiveUse
           )
@@ -331,7 +331,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandStartSession,
             schema.errors.invalidParameterError
           )
@@ -386,7 +386,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandUpdateSession,
             schema.errors.missingParameter
           )
@@ -398,7 +398,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandUpdateSession,
             schema.errors.invalidParameterValue
           )
@@ -410,7 +410,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandUpdateSession,
             schema.errors.invalidParameterValue
           )
@@ -456,7 +456,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandCloseSession,
             schema.errors.missingParameter
           )
@@ -468,7 +468,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandCloseSession,
             schema.errors.invalidParameterValue
           )
@@ -484,7 +484,7 @@ describe('RUST API TEST SUITE', function () {
           }).then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandCloseSession,
             schema.errors.invalidParameterValue
           )
@@ -579,7 +579,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandTakePicture,
             schema.errors.invalidParameterValue
           )
@@ -595,7 +595,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandTakePicture,
             schema.errors.missingParameter
           )
@@ -768,7 +768,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandListImages,
             schema.errors.missingParameter
           )
@@ -780,7 +780,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandListImages,
             schema.errors.missingParameter
           )
@@ -792,7 +792,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandListImages,
             schema.errors.missingParameter
           )
@@ -804,7 +804,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandListImages,
             schema.errors.invalidParameterValue
           )
@@ -974,7 +974,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandDelete,
             schema.errors.invalidParameterValue
           )
@@ -984,7 +984,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandDelete,
             schema.errors.invalidParameterValue
           )
@@ -998,7 +998,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandDelete,
             schema.errors.missingParameter
           )
@@ -1008,7 +1008,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandDelete,
             schema.errors.missingParameter
           )
@@ -1074,7 +1074,7 @@ describe('RUST API TEST SUITE', function () {
     it('Thorws missingParameter when fileUri is not provided', function () {
       return testClient.getImage()
         .then(expectError,
-          (err) => validate.error(err, schema.names.commandGetImage, schema.errors.missingParameter)
+          (err) => validate.error(err._raw, schema.names.commandGetImage, schema.errors.missingParameter)
       )
     })
 
@@ -1083,7 +1083,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetImage,
             schema.errors.invalidParameterValue
           )
@@ -1259,7 +1259,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles(undefined, totalEntryCount, 1024)
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.missingParameter)
       )
@@ -1269,7 +1269,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('all', undefined, 1024)
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.missingParameter)
       )
@@ -1280,7 +1280,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('thumbnail', totalEntryCount, 1024)
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.invalidParameterName)
       )
@@ -1290,7 +1290,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('all', -10, 1024)
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.invalidParameterValue)
       )
@@ -1300,7 +1300,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('all', 'wrongtype', 1024)
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.invalidParameterValue)
       )
@@ -1310,7 +1310,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('all', totalEntryCount, -1024)
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.invalidParameterValue)
       )
@@ -1320,7 +1320,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.listFiles('all', totalEntryCount, 'wrongtype')
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandListFiles,
           schema.errors.invalidParameterValue)
       )
@@ -1388,7 +1388,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetMetadata,
             schema.errors.invalidParameterValue
           )
@@ -1400,7 +1400,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetMetadata,
             schema.errors.missingParameter
           )
@@ -1460,7 +1460,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetOptions,
             schema.errors.missingParameter
           )
@@ -1475,7 +1475,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetOptions,
             schema.errors.missingParameter
           )
@@ -1495,7 +1495,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1516,7 +1516,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.getOptions(sessionId, ['captureInterval'])
         .then(expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandGetOptions,
             schema.errors.invalidParameterName
           )
@@ -1581,7 +1581,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1600,7 +1600,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1619,7 +1619,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1638,7 +1638,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1668,7 +1668,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1687,7 +1687,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1706,7 +1706,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1732,7 +1732,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1768,7 +1768,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1785,7 +1785,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1822,7 +1822,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterValue
           )
@@ -1834,7 +1834,7 @@ describe('RUST API TEST SUITE', function () {
         .then(
           expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.missingParameter
           )
@@ -1851,7 +1851,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.setoptions(sessionId, { captureInterval: 5 })
         .then(expectError,
           (err) => validate.error(
-            err,
+            err._raw,
             schema.names.commandSetOptions,
             schema.errors.invalidParameterName
           )
@@ -1911,7 +1911,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.commandsStatus().then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandsStatus,
           schema.errors.missingParameter)
       )
@@ -1921,7 +1921,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.commandsStatus('wrongtype').then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandsStatus,
           schema.errors.invalidParameterValue
         )
@@ -2003,7 +2003,7 @@ describe('RUST API TEST SUITE', function () {
         }), deferred.promise])
       }).then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandStartCapture,
           schema.errors.disabledCommand)
       )
@@ -2023,7 +2023,7 @@ describe('RUST API TEST SUITE', function () {
             return testClient.startCapture()
             .then(expectError, function faileSecondCapture (err) {
               validate.error(
-                err,
+                err._raw,
                 schema.names.commandStartCapture,
                 schema.errors.disabledCommand
               )
@@ -2054,7 +2054,7 @@ describe('RUST API TEST SUITE', function () {
             }).then(() => testClient.startCapture())
             .then(expectError, function faileSecondCapture (err) {
               validate.error(
-                err,
+                err._raw,
                 schema.names.commandStartCapture,
                 schema.errors.disabledCommand
               )
@@ -2078,7 +2078,7 @@ describe('RUST API TEST SUITE', function () {
       })
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandStartCapture,
           schema.errors.invalidParameterName
         )
@@ -2168,7 +2168,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.stopCapture()
       .then(expectError,
       (err) => validate.error(
-        err,
+        err._raw,
         schema.names.commandStopCapture,
         schema.errors.disabledCommand)
       )
@@ -2179,7 +2179,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.stopCapture('unsupported')
       .then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandStopCapture,
           schema.errors.invalidParameterName)
       )
@@ -2204,7 +2204,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.reset(defaultOptionsFile)
       .then(expectError,
       (err) => validate.error(
-        err,
+        err._raw,
         schema.names.commandReset,
         schema.errors.invalidParameterName)
       )
@@ -2441,7 +2441,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublPoll(undefined, '').then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandsBublPoll,
           schema.errors.missingParameter
         )
@@ -2459,7 +2459,7 @@ describe('RUST API TEST SUITE', function () {
             .then(expectError,
               (err) => {
                 validate.error(
-                  err,
+                  err._raw,
                   schema.names.commandsBublPoll,
                   schema.errors.missingParameter)
                 stopped = true
@@ -2480,7 +2480,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublPoll('wrongtype', '').then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandsBublPoll,
           schema.errors.invalidParameterValue
         )
@@ -2500,7 +2500,7 @@ describe('RUST API TEST SUITE', function () {
               (res) => { deferred.reject(expectError(res)) },
               (err) => {
                 validate.error(
-                  err,
+                  err._raw,
                   schema.names.commandsBublPoll,
                   schema.errors.invalidParameterValue
                 )
@@ -2563,7 +2563,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublTimelapse().then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandBublTimelapse,
           schema.errors.missingParameter
         )
@@ -2574,7 +2574,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublTimelapse(sessionId + '0').then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandBublTimelapse,
           schema.errors.invalidParameterValue
         )
@@ -2595,7 +2595,7 @@ describe('RUST API TEST SUITE', function () {
             .then(
               () => assert.fail('Should have received cameraInExclusiveUse'),
               (err) => validate.error(
-                err,
+                err._raw,
                 schema.names.commandBublTimelapse,
                 schema.errors.cameraInExclusiveUse
               )
@@ -2623,7 +2623,7 @@ describe('RUST API TEST SUITE', function () {
             .then(
               () => assert.fail('Should have received cameraInExclusiveUseError'),
               (err) => validate.error(
-                err,
+                err._raw,
                 schema.names.commandBublTimelapse,
                 schema.errors.cameraInExclusiveUse
               )
@@ -2783,7 +2783,7 @@ describe('RUST API TEST SUITE', function () {
               expectError,
               (err) => {
                 validate.error(
-                  err,
+                  err._raw,
                   schema.names.commandBublCaptureVideo,
                   schema.errors.cameraInExclusiveUse
                 )
@@ -2805,7 +2805,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublCaptureVideo('wrongtype').then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandBublCaptureVideo,
           schema.errors.invalidParameterValue
         )
@@ -2816,7 +2816,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublCaptureVideo().then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandBublCaptureVideo,
           schema.errors.missingParameter
         )
@@ -2912,7 +2912,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublStop('wrongtype').then(
         expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandsBublStop,
           schema.errors.invalidParameterValue
         )
@@ -2922,7 +2922,7 @@ describe('RUST API TEST SUITE', function () {
     it('Throws missingParameter when commandId is not provided', function () {
       return testClient.bublStop().then(expectError,
         (err) => validate.error(
-          err,
+          err._raw,
           schema.names.commandsBublStop,
           schema.errors.missingParameter)
       )
@@ -3044,7 +3044,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublStream('wrongtype')
         .then(expectError, function onError (err) {
           validate.error(
-            err,
+            err._raw,
             schema.names.commandBublStream,
             schema.errors.invalidParameterValue)
         })
@@ -3059,7 +3059,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublStream()
         .then(expectError, function onError (err) {
           validate.error(
-            err,
+            err._raw,
             schema.names.commandBublStream,
             schema.errors.missingParameter)
         })
@@ -3116,7 +3116,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublGetImage('wrongtype')
         .then(expectError, function onError (err) {
           validate.error(
-            err,
+            err._raw,
             schema.names.commandGetImage,
             schema.errors.invalidParameterValue)
         })
@@ -3191,7 +3191,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublShutdown()
         .then(expectError, function onError (err) {
           validate.error(
-            err,
+            err._raw,
             schema.names.commandBublShutdown,
             schema.errors.missingParameter)
         })
@@ -3202,7 +3202,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublShutdown(sessionId + '0')
         .then(expectError, function onError (err) {
           validate.error(
-            err,
+            err._raw,
             schema.names.commandBublShutdown,
             schema.errors.invalidParameterValue)
         })
@@ -3213,7 +3213,7 @@ describe('RUST API TEST SUITE', function () {
       return testClient.bublShutdown(sessionId, '...')
         .then(expectError, function onError (err) {
           validate.error(
-            err,
+            err._raw,
             schema.names.commandBublShutdown,
             schema.errors.invalidParameterValue)
         })
