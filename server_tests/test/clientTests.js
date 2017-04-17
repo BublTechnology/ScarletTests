@@ -157,8 +157,8 @@ describe('RUST API TEST SUITE', function () {
     afterEach(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -264,8 +264,8 @@ describe('RUST API TEST SUITE', function () {
 
     afterEach(function () {
       return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
+        .then(function (sessionId) {
+          if (sessionId) {
             return testClient.closeSession(sessionId)
               .then(function onSuccess (res) {
                 validate.done(res, schema.names.commandCloseSession)
@@ -359,8 +359,8 @@ describe('RUST API TEST SUITE', function () {
 
     afterEach(function () {
       return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
+        .then(function (sessionId) {
+          if (sessionId) {
             return testClient.closeSession(sessionId)
               .then((res) => validate.done(res, schema.names.commandCloseSession))
           }
@@ -438,8 +438,8 @@ describe('RUST API TEST SUITE', function () {
 
     afterEach(function () {
       return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
+        .then(function (sessionId) {
+          if (sessionId) {
             return testClient.closeSession(sessionId)
               .then((res) => validate.done(res, schema.names.commandCloseSession))
           }
@@ -532,8 +532,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then((res) => validate.done(res, schema.names.commandCloseSession))
             }
@@ -624,8 +624,8 @@ describe('RUST API TEST SUITE', function () {
       }
 
       return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
+        .then(function (sessionId) {
+          if (sessionId) {
             return testClient.closeSession(sessionId)
               .then((res) => validate.done(res, schema.names.commandCloseSession))
           }
@@ -825,8 +825,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -1029,8 +1029,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -1357,8 +1357,8 @@ describe('RUST API TEST SUITE', function () {
       }
 
       return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
+        .then(function (sessionId) {
+          if (sessionId) {
             return testClient.closeSession(sessionId)
               .then(function onSuccess (res) {
                 validate.done(res, schema.names.commandCloseSession)
@@ -1425,8 +1425,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -1867,8 +1867,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -2223,8 +2223,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -2538,8 +2538,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -2723,8 +2723,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -2854,8 +2854,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -2955,8 +2955,8 @@ describe('RUST API TEST SUITE', function () {
     after(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)
@@ -3076,8 +3076,8 @@ describe('RUST API TEST SUITE', function () {
       }
 
       return Utility.checkActiveSession()
-        .then(function (isActive) {
-          if (isActive) {
+        .then(function (sessionId) {
+          if (sessionId) {
             return testClient.closeSession(sessionId)
               .then(function onSuccess (res) {
                 validate.done(res, schema.names.commandCloseSession)
@@ -3157,8 +3157,8 @@ describe('RUST API TEST SUITE', function () {
     afterEach(function () {
       if (isOSC1) {
         return Utility.checkActiveSession()
-          .then(function (isActive) {
-            if (isActive) {
+          .then(function (sessionId) {
+            if (sessionId) {
               return testClient.closeSession(sessionId)
                 .then(function onSuccess (res) {
                   validate.done(res, schema.names.commandCloseSession)

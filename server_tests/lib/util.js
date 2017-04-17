@@ -49,7 +49,7 @@ var Util = function (client) {
   this.checkActiveSession = function () {
     return testClient.getState()
       .then(function (res) {
-        return res.state.sessionId !== ''
+        return res.state.sessionId
       })
   }
 
