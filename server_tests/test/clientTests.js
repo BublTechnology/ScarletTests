@@ -1148,7 +1148,7 @@ describe('RUST API TEST SUITE', function () {
       })
     })
 
-    it.only('Successfully lists correct entries when fileType is supported', function () {
+    it('Successfully lists correct entries when fileType is supported', function () {
       return testClient.listFiles('image', expectedImageCount, 1024)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
