@@ -1580,7 +1580,7 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Successfully sets offDelay option to supported value', function () {
-      return testClient.setOptions(sessionId, { offDelay: 5 })
+      return testClient.setOptions(sessionId, { offDelay: 1200 })
         .then(
           (res) => validate.done(res, schema.names.commandSetOptions)
         )
