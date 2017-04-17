@@ -4,7 +4,7 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>.
 // This file may not be copied, modified, or distributed
 // except according to those terms.
-// jscs:disable disallowDanglingUnderscores
+/* eslint-disable no-underscore-dangle */
 /* global describe, it, before, beforeEach, after, afterEach */
 
 'use strict'
@@ -73,8 +73,8 @@ describe('RUST API TEST SUITE', function () {
             .then((output) => validate.done(output, schema.names.commandSetOptions))
       }
     }, function onError (err) {
-      if (err.error.code === "unknownCommand") {
-        Promise.resolve("Already in OSC 2.0")
+      if (err.oscCode === 'unknownCommand') {
+        Promise.resolve('Already in OSC 2.0')
       } else {
         throw err
       }
@@ -511,7 +511,6 @@ describe('RUST API TEST SUITE', function () {
         return testClient.reset()
           .then(function onSuccess (res) {
             validate.done(res, schema.names.commandReset)
-          }, function onError (err) {
           })
       }
     })
@@ -528,8 +527,6 @@ describe('RUST API TEST SUITE', function () {
           validate.done(res, schema.names.commandReset)
         })
       }
-
-
     })
 
     after(function () {
@@ -545,7 +542,6 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Successfully takes a picture', function () {
-
       this.timeout(timeoutValue)
       return testClient.takePicture(sessionId)
         .then((res) => {
@@ -565,10 +561,8 @@ describe('RUST API TEST SUITE', function () {
         .then(function onSuccess (res) {
           validate.done(res, schema.names.commandTakePicture)
           if (isOSC1) {
-            // eslint-disable-next-line no-underscore-dangle
             assert.equal(res.results._bublFileUris.length, 3)
           } else {
-            // eslint-disable-next-line no-underscore-dangle
             assert.equal(res.results._bublFileUrls.length, 3)
           }
         })
@@ -818,8 +812,6 @@ describe('RUST API TEST SUITE', function () {
     var fileUri
     var fileUrl
 
-
-
     before(function () {
       if (isOSC1) {
         return testClient.startSession()
@@ -1046,7 +1038,6 @@ describe('RUST API TEST SUITE', function () {
             }
           })
       }
-
     })
 
     it('Successfully gets image when provided with a valid fileUri', function () {
@@ -1106,7 +1097,7 @@ describe('RUST API TEST SUITE', function () {
       }
       this.timeout(timeoutValue * 2)
       // delete exisiting files on SD card, if any
-      return testClient.delete2(["all"])
+      return testClient.delete2(['all'])
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandDelete)
         assert.equal(res.results.fileUrls.length, 0)
@@ -1150,14 +1141,14 @@ describe('RUST API TEST SUITE', function () {
         return this.skip()
       }
       // delete all files on SD card
-      return testClient.delete2(["all"])
+      return testClient.delete2(['all'])
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandDelete)
         assert.equal(res.results.fileUrls.length, 0)
       })
     })
 
-    it('Successfully lists correct entries when fileType is supported', function () {
+    it.only('Successfully lists correct entries when fileType is supported', function () {
       return testClient.listFiles('image', expectedImageCount, 1024)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -2542,7 +2533,6 @@ describe('RUST API TEST SUITE', function () {
         return testClient.reset()
           .then((res) => validate.done(res, schema.names.commandReset))
       }
-
     })
 
     after(function () {
@@ -2744,7 +2734,6 @@ describe('RUST API TEST SUITE', function () {
       }
     })
 
-
     it('Successfully captures a video', function () {
       this.timeout(timeoutValue)
       var stopped = false
@@ -2847,7 +2836,6 @@ describe('RUST API TEST SUITE', function () {
         return testClient.reset()
           .then((res) => validate.done(res, schema.names.commandReset))
       }
-
     })
 
     afterEach(function () {
@@ -2861,7 +2849,6 @@ describe('RUST API TEST SUITE', function () {
         return testClient.reset()
           .then((res) => validate.done(res, schema.names.commandReset))
       }
-
     })
 
     after(function () {
