@@ -15,72 +15,97 @@ var fs = require('fs')
  *    1) client: a reference to an object which possesses the required osc http request calls
  *       such as oscCommandsStartSessionCall, oscCommandsCloseSessionCall, etc.
  */
-var Util = function (client) {
-  var testClient = client
+var Util = function (client, options_) {
+  let testClient = client
+  let options = options_ || {}
+  options.apiLevel = options.apiLevel || 1
+  options.model = options.model || 'bubl1'
 
-  /* restoreDefaultOptions(optionsFile):
-   * restore the camera options to what are specified in the options JSON file
-   *  - argument:
-   *      1) optionsFile: string containing the path to the option JSON file
-   *         eg: './defaults/mock.json'
-   *
-  */
-  this.restoreDefaultOptions = function (optionsFile) {
+  let loadJsonFile = function (optionsFile) {
     var deferred = Q.defer()
     fs.readFile(optionsFile, 'utf8', function (err, data) {
-      var sessionId
-      if (err) {
-        deferred.reject(JSON.parse(err))
-      } else {
-        testClient.getState()
-          .then(function (res) {
-            sessionId = res.state.sessionId
-            return testClient.setOptions(sessionId, JSON.parse(data))
-          })
-          .then(deferred.resolve, deferred.reject)
-      }
+      Q(data).then((res) => {
+        if (err) {
+          throw err
+        } else {
+          return JSON.parse(res)
+        }
+      }).then(deferred.resolve, deferred.reject)
     })
     return deferred.promise
   }
 
-  /* checkActiveSession():
-   * checks to see if there is an active session on the camera
-  */
-  this.checkActiveSession = function () {
+  let openSession = function () {
     return testClient.getState()
-      .then(function (res) {
-        return res.state.sessionId
+      .then(function (state) {
+        if (state.state.sessionId) {
+          return state.state.sessionId
+        } else {
+          return testClient.startSession()
+            .then((res) => res.results.sessionId)
+        }
       })
+  }
+
+  let deleteImages = function (uris) {
+    if (options.apiLevel < 2) {
+      var calls = []
+      for (var i = 0; i < uris.length; i++) {
+        calls.push((testClient.delete(uris[i])))
+      }
+      return Q.all(calls)
+    } else {
+      return testClient.delete2(uris)
+    }
+  }
+
+  /* restoreDefaultOptions():
+   * restore the camera options to its defaults; leaks an open session
+  */
+  this.restoreDefaultOptions = function (keepSession) {
+    let optionsFile = options.model === 'bubl2' ? './defaults/bubl2.json' : './defaults/mock.json'
+
+    if (options.apiLevel < 2) {
+      return Q.all([openSession(), loadJsonFile(optionsFile)])
+        .then(function onSuccess (res) {
+          let sessionId = res[0]
+          return testClient.setOptions(sessionId, res[1])
+            .then(() => {
+              if (!keepSession) {
+                return testClient.closeSession(sessionId)
+              }
+            })
+        })
+    } else {
+      return testClient.reset()
+    }
+  }
+
+  /* closeActiveSession():
+   * closes any active session on the camera
+  */
+  this.closeActiveSession = function () {
+    if (options.apiLevel < 2) {
+      return testClient.getState()
+      .then(function (res) {
+        if (res.state.sessionId) {
+          return testClient.closeSession(res.state.sessionId)
+        }
+      })
+    }
   }
 
   /* deleteAllImages():
    * removes all images from the camera.
   */
   this.deleteAllImages = function () {
-    var deferred = Q.defer()
-    var totalImages
-    testClient.listImages(1, false)
-      .then(function (res) {
-        totalImages = res.results.totalEntries
-        return testClient.listImages(totalImages, false)
-      })
-      .then(function (res) {
-        Q.all(deleteImages(res))
-          .then(function () {
-            deferred.resolve({
-              commandStatus: 'done'
-            })
-          })
-      })
-    return deferred.promise
-  }
-
-  var deleteImages = function (res) {
-    var calls = []
-    for (var i = 0; i < res.results.entries.length; i++) {
-      calls.push((testClient.delete(res.results.entries[i].uri)))
+    if (options.apiLevel < 2) {
+      return testClient.listImages(1, false)
+        .then((res) => testClient.listImages(res.results.totalEntries, false))
+        .then((res) => deleteImages(res.results.entries.map((entry) => entry.uri)))
+    } else {
+      return testClient.delete2(['all'])
     }
-    return calls
   }
 }
 
