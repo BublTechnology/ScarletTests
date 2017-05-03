@@ -1061,6 +1061,8 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Successfully lists correct entries when fileType is supported', function () {
+      this.timeout(timeoutValue * 2) // Debug-mode scarlet_server takes time for thumbnails
+
       return testClient.listFiles('image', expectedImageCount, 1024)
       .then(function onSuccess (res) {
         validate.done(res, schema.names.commandListFiles)
@@ -1083,6 +1085,8 @@ describe('RUST API TEST SUITE', function () {
     })
 
     it('Returns totalEntries when requested entryCount exceeds totalEntries', function () {
+      this.timeout(timeoutValue * 2) // Debug-mode scarlet_server takes time for thumbnails
+
       var maxEntries
       var maxThumbnails = []
 
