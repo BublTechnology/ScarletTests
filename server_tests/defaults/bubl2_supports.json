@@ -2,6 +2,9 @@
   "captureMode": "image",
   "captureModeSupport": [
     "image",
+    "interval",
+    "video",
+    "walkaround",
     "_bublVideo"
   ],
   "exposureProgram": 2,
@@ -32,9 +35,9 @@
       "width": 4896
     },
     {
-      "height": 4896,
-      "type": "raw",
-      "width": 4896
+      "type": "mp4",
+      "height": 2448,
+      "width": 2448
     }
   ],
   "exposureDelay": 4,
@@ -75,8 +78,15 @@
     "lng": 0
   },
   "dateTimeZone": "2015:07:08 15:54:44-04:00",
-  "hdr": false,
-  "hdrSupport": true,
+  "hdr": "off",
+  "hdrSupport": [
+    "off",
+    "hdr1",
+    "hdr2",
+    "hdr3",
+    "hdr4",
+    "hdr5"
+  ],
   "exposureBracket": {
     "autoMode": true
   },
@@ -92,6 +102,26 @@
   "imageStabilization": "off",
   "imageStabilizationSupport": [ "off" ],
   "wifiPassword": "********",
+  "previewFormat": {
+    "width": 1224,
+    "height": 1224,
+    "framerate": 30
+  },
+  "previewFormatSupport": {
+    "width": 1224,
+    "height": 1224,
+    "framerate": 30
+  },
+  "captureNumber": 0,
+  "captureNumberSupport": {
+    "minNumber": 1,
+    "maxNumber": 99999
+  },
+  "remainingVideoSeconds": "randomNumberForNow",
+  "pollingDelay": 2,
+  "delayProcessing": true,
+  "delayProcessingSupport": [true],
+  "clientVersion": 1
   "_bublVideoFileFormat": {
     "height": 1920,
     "type": "mp4",
